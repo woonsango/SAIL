@@ -1,0 +1,10 @@
+# ignore wandb directory
+wandb/
+output/
+*.pt
+*.json
+*.zip
+data/image/
+data/image_embedding/
+data/text_embedding/
+slurm_logs/
