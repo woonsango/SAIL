@@ -13,14 +13,16 @@ from transformers.activations import ACT2FN
 class SiglipMLP(nn.Module):
     def __init__(self, input_dim, intermediate_dim, output_dim):
         super().__init__()
-        self.activation_fn = nn.GELU()
-        self.fc1 = nn.Linear(input_dim, intermediate_dim)
-        self.fc2 = nn.Linear(intermediate_dim, output_dim)
+        self.pre_norm = nn.LayerNorm(input_dim)
+        self.proj = nn.Sequential(
+            nn.Linear(input_dim, intermediate_dim),
+            nn.GELU(),
+            nn.Linear(intermediate_dim, output_dim)
+        )
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
-        hidden_states = self.fc1(hidden_states)
-        hidden_states = self.activation_fn(hidden_states)
-        hidden_states = self.fc2(hidden_states)
+        hidden_states = self.pre_norm(hidden_states)
+        hidden_states = hidden_states+self.proj(hidden_states)
         return hidden_states
 
 class VLContrastHead(nn.Module):
@@ -32,8 +34,11 @@ class VLContrastHead(nn.Module):
             self.vision_mapping_network = nn.Linear(vision_dimesion, target_dimension)
             self.text_mapping_network = nn.Linear(text_dimension, target_dimension)
         else:
-            self.vision_mapping_network = SiglipMLP(vision_dimesion, target_dimension, target_dimension)
-            self.text_mapping_network = SiglipMLP(text_dimension, target_dimension, target_dimension)
+            # self.vision_mapping_network = SiglipMLP(vision_dimesion, target_dimension, target_dimension)
+            # self.text_mapping_network = SiglipMLP(text_dimension, target_dimension, target_dimension)
+            self.vision_mapping_network = nn.Linear(vision_dimesion, target_dimension)
+            self.text_mapping_network = nn.Linear(text_dimension, target_dimension)
+            self.mapping_network = SiglipMLP(target_dimension, target_dimension, target_dimension)
 
         self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
         self.text_layer_norm = nn.LayerNorm(text_dimension)
@@ -43,21 +48,15 @@ class VLContrastHead(nn.Module):
         self._initialize_weights()
     
     def _initialize_weights(self):
-        if self.linear:
-            torch.nn.init.xavier_uniform_(self.vision_mapping_network.weight)
-            torch.nn.init.zeros_(self.vision_mapping_network.bias)
-            torch.nn.init.xavier_uniform_(self.text_mapping_network.weight)
-            torch.nn.init.zeros_(self.text_mapping_network.bias)
-        else:
-            # Xavier initialization for SiglipMLP layers
-            for layer in [self.vision_mapping_network.fc1, self.vision_mapping_network.fc2,
-                        self.text_mapping_network.fc1, self.text_mapping_network.fc2]:
-                torch.nn.init.xavier_uniform_(layer.weight)
-                torch.nn.init.zeros_(layer.bias)
-        
-        for layer in [self.vision_layer_norm, self.text_layer_norm]:
-            torch.nn.init.ones_(layer.weight)
-            torch.nn.init.zeros_(layer.bias)
+
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                torch.nn.init.xavier_uniform_(module.weight)
+                if module.bias is not None:
+                    torch.nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.LayerNorm):
+                torch.nn.init.ones_(module.weight)
+                torch.nn.init.zeros_(module.bias)
 
         # Initialize logit_scale and logit_bias
         logit_scale_init = torch.log(torch.tensor(10.0))
@@ -73,12 +72,14 @@ class VLContrastHead(nn.Module):
         if vision_embeddings is not None:
             vision_embeddings = self.vision_layer_norm(vision_embeddings)
             vision_embeddings = self.vision_mapping_network(vision_embeddings) 
+            vision_embeddings = self.mapping_network(vision_embeddings)
         else:
             vision_embeddings = None
         
         if text_embeddings is not None:
             text_embeddings = self.text_layer_norm(text_embeddings)
             text_embeddings = self.text_mapping_network(text_embeddings)
+            text_embeddings = self.mapping_network(text_embeddings)
         else:
             text_embeddings = None
 
