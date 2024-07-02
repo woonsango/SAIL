@@ -47,6 +47,8 @@ def batch_collate_fn(batch):
     images = {'pixel_values': images}
     return text_list, images
 
+
+
 if __name__ == "__main__":
 
 

@@ -72,14 +72,16 @@ class VLContrastHead(nn.Module):
         if vision_embeddings is not None:
             vision_embeddings = self.vision_layer_norm(vision_embeddings)
             vision_embeddings = self.vision_mapping_network(vision_embeddings) 
-            vision_embeddings = self.mapping_network(vision_embeddings)
+            if not self.linear:
+                vision_embeddings = self.mapping_network(vision_embeddings)
         else:
             vision_embeddings = None
         
         if text_embeddings is not None:
             text_embeddings = self.text_layer_norm(text_embeddings)
             text_embeddings = self.text_mapping_network(text_embeddings)
-            text_embeddings = self.mapping_network(text_embeddings)
+            if not self.linear:
+                text_embeddings = self.mapping_network(text_embeddings)
         else:
             text_embeddings = None
 

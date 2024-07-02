@@ -38,6 +38,8 @@ def parse_args():
     parser.add_argument("--data_path", type=str, help="path to json file containing text and image paths")
     parser.add_argument("--image_dir", type=str, help="directory containing image directory")
 
+    # model arch variant
+    parser.add_argument("--only_linear_head", action='store_true', help="use linear projection head")
 
     parser.add_argument("--batch_size", type=int, default=128, help="training batch size") 
     parser.add_argument("--num_workers", type=int, default=4, help="number of workers for dataloader")   
@@ -85,18 +87,24 @@ def train(args):
         model = VLContrastHead(vision_dimesion=1536, text_dimension=768, device=device)
         dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers)
     else:
-        model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device)
+        model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device, linear=args.only_linear_head)
         model.freeze_except_vlhead()
         dataloader = DataLoader(dataset, collate_fn=batch_collate_fn, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
-
     tokenizer = AutoTokenizer.from_pretrained('sentence-transformers/all-mpnet-base-v2')
+    total_samples = len(dataset)
+    num_training_steps = estimate_num_training_steps(total_samples, args.batch_size, args.num_epochs)
+    optimizer = Lion(model.parameters(), lr=1e-4, weight_decay=1e-7)
+    scheduler = get_cosine_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=math.ceil(0.1*num_training_steps),
+        num_training_steps=num_training_steps
+    )
 
      # Load the latest checkpoint if available
     start_epoch = 0
     checkpoint_files = [f for f in os.listdir(output_path) if f.startswith('checkpoint_') and f.endswith('.pth')]
     if checkpoint_files:
-        
         latest_checkpoint = max(checkpoint_files, key=lambda x: int(x.split('_')[1].split('.')[0]))
         logging.info(f"Loading checkpoint for VL head: {latest_checkpoint}")
         checkpoint_path = os.path.join(output_path, latest_checkpoint)
@@ -105,17 +113,17 @@ def train(args):
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         start_epoch = checkpoint['epoch'] + 1
+        for state in optimizer.state.values():
+            for k, v in state.items():
+                if isinstance(v, torch.Tensor):
+                    state[k] = v.to(device)
 
+    # Training
     model.train()
     model = model.to(device)
-    optimizer = Lion(model.parameters(), lr=1e-4, weight_decay=1e-7)
-    total_samples = len(dataset)
-    num_training_steps = estimate_num_training_steps(total_samples, args.batch_size, args.num_epochs)
-    scheduler = get_cosine_schedule_with_warmup(
-        optimizer,
-        num_warmup_steps=math.ceil(0.1*num_training_steps),
-        num_training_steps=num_training_steps
-    )
+    
+    
+    
     logging.info(f"Total samples: {total_samples}, Num training steps: {num_training_steps}")
     
     for epoch in range(start_epoch, args.num_epochs):

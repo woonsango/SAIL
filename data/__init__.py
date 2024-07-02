@@ -1,6 +1,6 @@
 from .embedding_data import LazyVLEmbeddingDataset
 from .vldata import VLDataset, batch_collate_fn
-
+from .imagenet_constant import IMAGENET_CLASSES, IMAGENET_TEMPLATES
 def build_dataset(args):
 
     if args.data_path is not None and args.image_dir is not None:
@@ -10,3 +10,5 @@ def build_dataset(args):
         return LazyVLEmbeddingDataset(args.text_embedding_dir, args.image_embedding_dir)
     else:
         raise ValueError("Please provide either json_path and image_dir or text_embedding_dir and image_embedding_dir")
+
+

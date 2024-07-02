@@ -9,7 +9,7 @@ if __name__ == "__main__":
     model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device, linear=False)
     weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data/model_20.pth'
     checkpoint = torch.load(weights_path, map_location=device)
-    model.load_state_dict(checkpoint)
+    # model.load_state_dict(checkpoint)
     model = model.to(device)
     model.eval()
     text = ['a photo of a cat', 'a photo of a dog']
@@ -18,6 +18,7 @@ if __name__ == "__main__":
     image0 = Image.open('/home/mila/l/le.zhang/scratch/light_align/cat.jpeg')
     image1 = Image.open('/home/mila/l/le.zhang/scratch/light_align/dog.jpeg')
     images = model.vision_model.image_processor([image0,image1], return_tensors="pt").to(device)
+    breakpoint()
     with torch.no_grad():
         _, _,logits = model(images, text)
     print(logits)
