@@ -150,7 +150,7 @@ if __name__ == "__main__":
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     if linear:
         model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device, linear=True)
-        weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data_only_linear_head/checkpoint_92.pth'
+        weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data_only_linear_head/checkpoint_52.pth'
     else:
         model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device, linear=False)
         weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data_linear_shared_head/checkpoint_72.pth'
