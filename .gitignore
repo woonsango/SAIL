@@ -10,3 +10,6 @@ data/text_embedding/
 slurm_logs/
 logs/
 *.pyc
+# 忽略所有__pychache__文件夹
+__pycache__/
+data/__pycache__/
