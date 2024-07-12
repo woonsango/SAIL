@@ -1,16 +1,10 @@
 ## Training
 
-- Single-GPU Training
+- Please first download dataset and encode them into embeddings, please refer to `encode.sh`
 
-  `bash train_raw_single.sh`
-
-- Muti-GPUs Training
-  - yet to be implemented
+- For single and multi GPU trainninig, run `bash train.sh`
 
 ## Evaluation
 
-Currently support only zero-shot image-text evaluation tasks including classification and retrieval
-
-- **COCO Retrieval** `python coco_zs_retrieval_n.py`
-- **ImageNet Classification** `python imagenet_zs_classification.py`
+- modify configuration in `eval.sh` and run it
 
