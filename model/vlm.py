@@ -11,7 +11,12 @@ import torch
 from transformers.activations import ACT2FN
 
 class SiglipMLP(nn.Module):
-    def __init__(self, input_dim, intermediate_dim, output_dim):
+    def __init__(
+            self, 
+            input_dim: int, 
+            intermediate_dim: int, 
+            output_dim: int,
+    ):
         super().__init__()
         self.pre_norm = nn.LayerNorm(input_dim)
         self.proj = nn.Sequential(
@@ -26,11 +31,18 @@ class SiglipMLP(nn.Module):
         return hidden_states
 
 class VLContrastHead(nn.Module):
-    def __init__(self, vision_dimesion, text_dimension, device, target_dimension=512, linear=False):
+    def __init__(
+            self,
+            vision_dimesion: int,
+            text_dimension: int,
+            target_dimension:int = 512,
+            linear_align: bool = False,
+            cast_dtype: Optional[torch.dtype] = None,
+    ):
         super(VLContrastHead, self).__init__()
-        self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
-        self.linear = linear
-        if self.linear:
+        self.cast_dtype = cast_dtype
+        self.linear_align = linear_align
+        if self.linear_align:
             self.vision_mapping_network = nn.Linear(vision_dimesion, target_dimension)
             self.text_mapping_network = nn.Linear(text_dimension, target_dimension)
         else:
@@ -64,46 +76,61 @@ class VLContrastHead(nn.Module):
         self.logit_bias.data.fill_(torch.tensor(-10.0))
         
     
-    def forward(self, vision_embeddings=None, text_embeddings=None):
+    def forward(self, image_features=None, text_features=None, compute_logits = False):
 
-        if vision_embeddings is None and text_embeddings is None:
-            raise ValueError("At least one of vision_embeddings and text_embeddings should be provided.")
+        if image_features is None and text_features is None:
+            raise ValueError("At least one of image_features and text_features should be provided.")
         
-        if vision_embeddings is not None:
-            vision_embeddings = self.vision_layer_norm(vision_embeddings)
-            vision_embeddings = self.vision_mapping_network(vision_embeddings) 
-            if not self.linear:
-                vision_embeddings = self.mapping_network(vision_embeddings)
+        if image_features is not None:
+            image_features = image_features.to(self.cast_dtype) 
+            image_features = self.vision_layer_norm(image_features)
+            image_features = self.vision_mapping_network(image_features) 
+            if not self.linear_align:
+                image_features = self.mapping_network(image_features)
+            image_features = F.normalize(image_features, dim=-1)
         else:
-            vision_embeddings = None
+            image_features = None
         
-        if text_embeddings is not None:
-            text_embeddings = self.text_layer_norm(text_embeddings)
-            text_embeddings = self.text_mapping_network(text_embeddings)
-            if not self.linear:
-                text_embeddings = self.mapping_network(text_embeddings)
+        if text_features is not None:
+            text_features = text_features.to(self.cast_dtype)
+            text_features = self.text_layer_norm(text_features)
+            text_features = self.text_mapping_network(text_features)
+            if not self.linear_align:
+                text_features = self.mapping_network(text_features)
+            text_features = F.normalize(text_features, dim=-1)
+            
         else:
-            text_embeddings = None
+            text_features = None
 
-        if vision_embeddings is not None and text_embeddings is not None:
-            norm_vision_embeddings = vision_embeddings / vision_embeddings.norm(p=2, dim=-1, keepdim=True)
-            norm_text_embeddings = text_embeddings / text_embeddings.norm(p=2, dim=-1, keepdim=True)
-            logits_per_text = torch.matmul(norm_text_embeddings, norm_vision_embeddings.t()) * self.logit_scale.exp() + self.logit_bias
+        if image_features is not None and text_features is not None and compute_logits:
+            logits_per_text = torch.matmul(text_features, image_features.t()) * self.logit_scale.exp() + self.logit_bias
         else:
             logits_per_text = None
       
-        return vision_embeddings, text_embeddings, logits_per_text
+        return {
+            "image_features": image_features,
+            "text_features": text_features,
+            "logits_per_text": logits_per_text,
+            "logit_scale": self.logit_scale.exp(),
+            "logit_bias": self.logit_bias,
+        }
     
 
 class VLContrastModel(nn.Module):
-    def __init__(self, vision_model_name, text_model_name, device=None, vlhead_weights_path=None, linear=False):
+    def __init__(
+            self,
+            vision_model_name: str,
+            text_model_name: str, 
+            vlhead_weights_path:str = None, 
+            linear_align:bool = False,
+            cast_dtype: Optional[torch.dtype] = None,
+    ):
         super(VLContrastModel, self).__init__()
-        self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
-        self.text_model = SentenceEmbedding(text_model_name, device)
-        self.vision_model = ImageEmbedding(vision_model_name, device)
-        self.vlhead = VLContrastHead(vision_dimesion=self.vision_model.model.config.hidden_size*2, text_dimension=self.text_model.model.config.hidden_size, device=self.device, linear=linear)
+        self.text_model = SentenceEmbedding(text_model_name)
+        self.vision_model = ImageEmbedding(vision_model_name)
+        self.vlhead = VLContrastHead(vision_dimesion=self.vision_model.model.config.hidden_size*2, text_dimension=self.text_model.model.config.hidden_size, linear_align=linear_align, cast_dtype=cast_dtype)
 
-        if vlhead_weights_path:
+        if vlhead_weights_path is not None:
             self.load_vlhead_weights(vlhead_weights_path)
 
     def freeze_except_vlhead(self):
@@ -120,24 +147,34 @@ class VLContrastModel(nn.Module):
             param.requires_grad = True
 
     def load_vlhead_weights(self, vlhead_weights_path):
-        weights = torch.load(vlhead_weights_path, map_location=self.device)
+        weights = torch.load(vlhead_weights_path)
+        if 'state_dict' in weights:
+            weights = weights['state_dict']
         self.vlhead.load_state_dict(weights)
         print(f"Loaded VL head weights from {vlhead_weights_path}")
     
     def encode_image(self, image, normalize: bool = False):
         features = self.vision_model(image)
-        vision_embeddings, _, _ = self.vlhead(vision_embeddings=features)
-        return F.normalize(vision_embeddings, dim=-1) if normalize else vision_embeddings
+        outputs = self.vlhead(image_features=features)
+        image_features = outputs['image_features']
+        return F.normalize(image_features, dim=-1) if normalize else image_features
     
     def encode_text(self, text, normalize: bool = False):
         features = self.text_model(text)
-        _, text_embeddings, _ = self.vlhead(text_embeddings=features)
-        return F.normalize(text_embeddings, dim=-1) if normalize else text_embeddings
+        outputs = self.vlhead(text_features=features)
+        text_features = outputs['text_features']
+        return F.normalize(text_features, dim=-1) if normalize else text_features
     
-    def forward(self, images=None, sentences=None):
-        norm_vision_embeddings = self.encode_image(images, normalize=True)
-        norm_text_embeddings = self.encode_text(sentences, normalize=True)
+    def forward(self, images=None, texts=None):
+        norm_image_features = self.encode_image(images, normalize=True)
+        norm_text_features = self.encode_text(texts, normalize=True)
         # Log the sizes of embeddings
-        logits_per_text = torch.matmul(norm_text_embeddings, norm_vision_embeddings.t()) * self.vlhead.logit_scale.exp() + self.vlhead.logit_bias
-        return norm_vision_embeddings, norm_text_embeddings, logits_per_text
+        logits_per_text = torch.matmul(norm_text_features, norm_image_features.t()) * self.vlhead.logit_scale.exp() + self.vlhead.logit_bias
+        return {
+            "image_features": norm_image_features,
+            "text_features": norm_text_features,
+            "logits_per_text": logits_per_text,
+            "logit_scale": self.vlhead.logit_scale.exp(),
+            "logit_bias": self.vlhead.logit_bias,
+        }
         

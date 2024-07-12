@@ -1,14 +1,65 @@
-from .embedding_data import LazyVLEmbeddingDataset
-from .vldata import VLDataset, batch_collate_fn
-from .imagenet_constant import IMAGENET_CLASSES, IMAGENET_TEMPLATES
-def build_dataset(args):
+from .embedding_data import VLEmbeddingDataset
+from torch.utils.data.distributed import DistributedSampler
+from dataclasses import dataclass
+from multiprocessing import Value
+from torch.utils.data import DataLoader
 
-    if args.data_path is not None and args.image_dir is not None:
-        return VLDataset(args.data_path, args.image_dir, transform=None, tokenizer=None)
-    
-    elif args.text_embedding_dir is not None or args.image_embedding_dir is not None:
-        return LazyVLEmbeddingDataset(args.text_embedding_dir, args.image_embedding_dir)
+class SharedEpoch:
+    def __init__(self, epoch: int = 0):
+        self.shared_epoch = Value('i', epoch)
+
+    def set_value(self, epoch):
+        self.shared_epoch.value = epoch
+
+    def get_value(self):
+        return self.shared_epoch.value
+
+@dataclass
+class DataInfo:
+    dataloader: DataLoader
+    sampler: DistributedSampler = None
+    shared_epoch: SharedEpoch = None
+    data_info: dict = None
+
+    def set_epoch(self, epoch):
+        if self.shared_epoch is not None:
+            self.shared_epoch.set_value(epoch)
+        if self.sampler is not None and isinstance(self.sampler, DistributedSampler):
+            self.sampler.set_epoch(epoch)
+
+def get_embedding_dataset(args, is_train, epoch=0):
+    input_filename = args.text_embedding_list and args.image_embedding_list
+    assert input_filename, "Please provide text_embedding_list and image_embedding_list"
+    dataset = VLEmbeddingDataset(
+        args.text_embedding_list,
+        args.image_embedding_list
+    )
+    num_samples = len(dataset)
+    sampler = DistributedSampler(dataset) if args.distributed and is_train else None
+    shuffle = is_train and sampler is None
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        shuffle=shuffle,
+        num_workers=args.workers,
+        pin_memory=True,
+        sampler=sampler,
+        drop_last=is_train,
+    )
+    dataloader.num_samples = num_samples
+    dataloader.num_batches = len(dataloader)
+
+
+    return DataInfo(dataloader, sampler, data_info={'num_samples': num_samples, 'visual_dim': dataset.visual_dim, 'text_dim': dataset.text_dim})
+
+def get_data(args, epoch=0):
+    data = {}
+    if args.text_embedding_list and args.image_embedding_list:
+        data['train'] = get_embedding_dataset(args, is_train=True, epoch=epoch)
     else:
-        raise ValueError("Please provide either json_path and image_dir or text_embedding_dir and image_embedding_dir")
+        raise ValueError(f"Unknown dataset type: {args.dataset_type}")
+    return data
+
 
 

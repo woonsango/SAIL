@@ -17,6 +17,7 @@ class ImageEmbedding(nn.Module):
         images = []
         for image_path in images_path:
             with Image.open(image_path) as img:
+                img = img.convert("RGB")
                 images.append(img.copy())
         return images
     

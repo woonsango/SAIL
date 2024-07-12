@@ -8,3 +8,4 @@ data/image/
 data/image_embedding/
 data/text_embedding/
 slurm_logs/
+logs/
