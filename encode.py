@@ -6,11 +6,10 @@ import numpy as np
 import json
 import argparse
 from model import SentenceEmbedding, ImageEmbedding
+from train.logger import setup_logging
 import logging
 
-logging.basicConfig(level=logging.INFO)
-# set up logging format
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+setup_logging(level= logging.INFO)
 
 
 DATADIR = {
@@ -35,44 +34,49 @@ def parse_args():
     parser.add_argument("--model_name", type=str, default='sentence-transformers/all-mpnet-base-v2', help="model name")
     parser.add_argument("--domain", type=str, choices=['text', 'image'], required=True, help="target type")
     parser.add_argument("--batch_size", type=int, default=5120, help="batch size")    
+    parser.add_argument("--resume", action='store_true', help="resume from encoding process")
     return parser.parse_args()
 
 
 
 if __name__ == "__main__":
     args = parse_args()
-
     with open(DATADIR[args.data]['annotation'], 'r') as f:
         data = json.load(f)
     if args.domain == 'text':
         logging.info(f'Encoding text data {args.data} with model {args.model_name} of batch size {args.batch_size}...')
-        output_dir = os.path.join('./data/text_embedding', args.model_name.split('/')[-1], args.data)
-        if os.path.exists(output_dir):
+        model_name = args.model_name.split('/')[-1]
+        output_dir = os.path.join('./data/text_embedding', model_name, args.data)
+        if not args.resume and os.path.exists(output_dir):
             logging.info(f'{output_dir} already exists, skipping...')
             exit()
         model = SentenceEmbedding(args.model_name)
         model.eval()
-        model_name = model.model.config._name_or_path.split('/')[-1]
         # load sentences
-        sentences = []
-        
-        for sample in data:
-            sentences.append(sample['conversations'][-1]['value'])
+        sentences = [sample['conversations'][-1]['value'] for sample in data]
         # batchify and encode
         idx=0
         for batch_idx in tqdm(range(0, len(sentences), args.batch_size)):
+            output_path = os.path.join(output_dir, f'{idx}.pt')
+            if args.resume and os.path.exists(output_path):
+                logging.info(f'{output_path} already exists, skipping...')
+                idx += 1
+                continue
             batch_sentences = sentences[batch_idx:batch_idx + args.batch_size]
             with torch.no_grad():
                 batch_embeddings = model.get_sentence_embeddings(batch_sentences).cpu()
-            output_path = os.path.join(output_dir, f'{idx}.pt')
+            
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             torch.save(batch_embeddings, output_path)
+            torch.cuda.empty_cache()  # 清理缓存
             idx += 1
     else:
         logging.info(f'Encoding image data {args.data} with model {args.model_name} of batch size {args.batch_size}...')
         model_name = args.model_name.split('/')[-1]
         output_dir = os.path.join('./data/image_embedding', model_name, args.data)
-        if os.path.exists(output_dir):
+    
+        
+        if not args.resume and os.path.exists(output_dir):
             logging.info(f'{output_dir} already exists, skipping...')
             exit()
         model = ImageEmbedding(args.model_name)
@@ -81,21 +85,22 @@ if __name__ == "__main__":
        
         # load image paths
         images = []
-        for sample in data:
-            images.append(os.path.join(DATADIR[args.data]['imagedir'],sample['image']))
+        images = [os.path.join(DATADIR[args.data]['imagedir'], sample['image']) for sample in data]
         # batchify and encode
         idx=0
         for batch_idx in tqdm(range(0, len(images), args.batch_size)):
+            output_path = os.path.join(output_dir, f'{idx}.pt')
+            if args.resume and os.path.exists(output_path):
+                logging.info(f'{output_path} already exists, skipping...')
+                idx += 1
+                continue
             batch_images = images[batch_idx:batch_idx + args.batch_size]
             with torch.no_grad():
                 batch_embeddings = model.get_visual_embeddings_from_directory(batch_images).cpu()
-        
-            output_path = os.path.join(output_dir, f'{idx}.pt')
+            
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             torch.save(batch_embeddings, output_path)
+            torch.cuda.empty_cache()  # 清理缓存
             idx += 1
-        # save metadata
-        # with open(os.path.join('./data/image_embedding', model_name, 'metadata.json'), 'w') as f:
-        #     json.dump({'encoded_model_name': model_name, 'chunk_size': args.batch_size, 'total_data_num': len(images)}, f)
 
 

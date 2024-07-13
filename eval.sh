@@ -10,10 +10,10 @@
 #SBATCH --output=./slurm_logs/eval/output-%j.txt
 #SBATCH --error=./slurm_logs/eval/error-%j.txt 
 
-vision_model="facebook/dinov2-base"
+# vision_model="facebook/dinov2-base"
 vision_model="facebook/dinov2-large"
 
-text_model="sentence-transformers/all-mpnet-base-v2"
+# text_model="sentence-transformers/all-mpnet-base-v2"
 text_model="Alibaba-NLP/gte-large-en-v1.5"
 # text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
 
