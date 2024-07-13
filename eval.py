@@ -65,11 +65,11 @@ def parse_args():
 def main():
     # load model, get device, decide eval dataset
     args = parse_args()
-    epoch_num = 1
-    training_info_str = "test"
-    model_prefix = "test"
+    # epoch_num = 1
+    # training_info_str = "test"
+    # model_prefix = "test"
 
-    # epoch_num, training_info_str, model_prefix = extract_info_from_path(args.head_weights_path)
+    epoch_num, training_info_str, model_prefix = extract_info_from_path(args.head_weights_path)
     output_path = os.path.join(
         args.results_dir, args.task, model_prefix, f"{training_info_str}.json"
     )
@@ -96,11 +96,11 @@ def main():
             images_dir=args.images_dir,
         )
     elif args.task == "coco":
-        coco_root = "/home/mila/q/qian.yang/scratch/coco2017/val2017"
-        coco_ann_file = "/home/mila/q/qian.yang/scratch/coco2017/2017/annotations/captions_val2017.json"
+        # coco_root = "/home/mila/q/qian.yang/scratch/coco2017/val2017"
+        # coco_ann_file = "/home/mila/q/qian.yang/scratch/coco2017/2017/annotations/captions_val2017.json"
 
-        # coco_root = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/val2017"
-        # coco_ann_file = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json"
+        coco_root = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/val2017"
+        coco_ann_file = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json"
         results = coco_eval(
             model,
             bs=args.batch_size,
