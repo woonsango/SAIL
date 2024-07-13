@@ -105,4 +105,4 @@ class ImageNetV2Dataset(Dataset):
         img, label = Image.open(self.fnames[i]), int(self.fnames[i].parent.name)
         if self.transform is not None:
             img = self.transform(img)
-        return img, label
+        return img, label, self.fnames[i].name
