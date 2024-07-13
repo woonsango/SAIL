@@ -8,6 +8,7 @@ data/image/
 data/image_embedding/
 data/text_embedding/
 slurm_logs/
+<<<<<<< HEAD
 logs/
 *.pyc
 # 忽略所有__pychache__文件夹
