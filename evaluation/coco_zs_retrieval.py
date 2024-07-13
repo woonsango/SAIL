@@ -1,28 +1,38 @@
 import torch
-from torchvision.datasets import CocoCaptions
+from .coco_dataset import CocoCaptions
 import torch.utils.data as dutils
 from typing import List
-import clip
+import os
 from tqdm import tqdm
 import torch.nn as nn
 from .utils import get_model_device
 
-    
+
 def coco_collate_fn(batch):
     text_list = []
     image_list = []
+    index_list = []
     for item in batch:
-        image, text = item
+        image, text, index = item
         text_list.append(text)
         image_list.append(image)
+        index_list.append(index)
     # print(image_list)
     images = torch.cat(image_list)
     # print(images.shape)
-    images = {'pixel_values': images}
-    return text_list, images
+    images = {"pixel_values": images}
+    return text_list, images, index_list
+
 
 # Encodes all text and images in a dataset
-def encode_dataset(model, dataset: dutils.Dataset, device, batch_size = 16):
+def encode_dataset(
+    model,
+    dataset: dutils.Dataset,
+    device,
+    batch_size=16,
+    text_model_name: str = "sentence-transformers/all-mpnet-base-v2",
+    vision_model_name: str = "facebook/dinov2-base",
+):
     with torch.no_grad():
         # image_to_text_map[i] gives the corresponding text indices for the ith image
         #  (as there are multiple pieces of text for each image)
@@ -31,8 +41,6 @@ def encode_dataset(model, dataset: dutils.Dataset, device, batch_size = 16):
         # text_to_image_map[i] gives the corresponding image index for the ith text
         text_to_image_map = []
 
-        dataloader = dutils.DataLoader(dataset, collate_fn=coco_collate_fn, batch_size=batch_size, shuffle=False)
-
         image_encodings = []
         text_encodings = []
 
@@ -40,24 +48,110 @@ def encode_dataset(model, dataset: dutils.Dataset, device, batch_size = 16):
         image_index = 0
         captions_per_image = 5
 
-        for text, images in tqdm(dataloader):
-            images = {key: value.to(device) for key, value in images.items()} # B x 3 x 224 x 224
-            batch_size = len(text)
-            text_list = []
-            for i in text:
-                text_list.extend(i[:captions_per_image])
-            text_tokens = model.text_model.tokenizer(text_list, padding=True, truncation=True, return_tensors='pt').to(device) # (B*5) x 77
-            # Update text_to_image_map and image_to_text_map for this batch
-            for i in range(batch_size):
-                # the next image corresponds to text captions [text_index ... text_index + captions_per_image - 1]
-                text_indices = list(range(text_index, text_index + captions_per_image))
-                image_to_text_map.append(text_indices)
-                text_index += captions_per_image
-                # Each of the next captions_per_image text captions correspond to the same image
-                text_to_image_map += [image_index] * captions_per_image
-                image_index += 1
-            image_encodings.append(model.encode_image(images))
-            text_encodings.append(model.encode_text(text_tokens))
+        if not os.path.exists(
+            f"./evaluation/backbone_features/{vision_model_name}/coco.pt"
+        ) or not os.path.exists(
+            f"./evaluation/backbone_features/{text_model_name}/coco.pt"
+        ):
+            dataloader = dutils.DataLoader(
+                dataset,
+                collate_fn=coco_collate_fn,
+                batch_size=batch_size,
+                shuffle=False,
+            )
+            pre_encode_image_features = {}
+            pre_encode_text_features = {}
+            for text, images, indexs in tqdm(dataloader):
+                images = {
+                    key: value.to(device) for key, value in images.items()
+                }  # B x 3 x 224 x 224
+                batch_size = len(text)
+                text_list = []
+                for i in text:
+                    text_list.extend(i[:captions_per_image])
+                text_tokens = model.text_model.tokenizer(
+                    text_list, padding=True, truncation=True, return_tensors="pt"
+                ).to(
+                    device
+                )  # (B*5) x 77
+                # Update text_to_image_map and image_to_text_map for this batch
+                for i in range(batch_size):
+                    # the next image corresponds to text captions [text_index ... text_index + captions_per_image - 1]
+                    text_indices = list(
+                        range(text_index, text_index + captions_per_image)
+                    )
+                    image_to_text_map.append(text_indices)
+                    text_index += captions_per_image
+                    # Each of the next captions_per_image text captions correspond to the same image
+                    text_to_image_map += [image_index] * captions_per_image
+                    image_index += 1
+                image_features, encoded_image_features = (
+                    model.encode_image_return_encodedFeatures(images)
+                )
+                image_encodings.append(image_features)
+                text_features, encoded_text_features = (
+                    model.encode_text_return_encodedFeatures(text_tokens)
+                )
+                text_encodings.append(text_features)
+                for i, index in enumerate(indexs):
+                    pre_encode_image_features[index] = encoded_image_features[i].cpu()
+                    # for text we have 5 captions per image
+                    pre_encode_text_features[index] = encoded_text_features[
+                        i * 5 : (i + 1) * 5
+                    ].cpu()
+            os.makedirs(
+                f"./evaluation/backbone_features/{vision_model_name}", exist_ok=True
+            )
+            with open(
+                f"./evaluation/backbone_features/{vision_model_name}/coco.pt", "wb"
+            ) as f:
+                torch.save(pre_encode_image_features, f)
+            os.makedirs(
+                f"./evaluation/backbone_features/{text_model_name}", exist_ok=True
+            )
+            with open(
+                f"./evaluation/backbone_features/{text_model_name}/coco.pt", "wb"
+            ) as f:
+                torch.save(pre_encode_text_features, f)
+        else:
+            with open(
+                f"./evaluation/backbone_features/{vision_model_name}/coco.pt", "rb"
+            ) as f:
+                pre_encode_image_features = torch.load(f)
+            with open(
+                f"./evaluation/backbone_features/{text_model_name}/coco.pt", "rb"
+            ) as f:
+                pre_encode_text_features = torch.load(f)
+            batched_pre_encode_image_features = {}
+            for i, (key, value) in enumerate(pre_encode_image_features.items()):
+                if i % batch_size == 0:
+                    batched_pre_encode_image_features[i // batch_size] = {}
+                batched_pre_encode_image_features[i // batch_size][key] = value
+            for i, batch in tqdm(batched_pre_encode_image_features.items()):
+                encoded_image_features = []
+                encoded_text_features = []
+                for key, value in batch.items():
+                    encoded_image_features.append(value)
+                    encoded_text_features.append(pre_encode_text_features[key])
+                encoded_image_features = torch.stack(encoded_image_features).to(device)
+                image_features = model.encode_image_head(encoded_image_features)
+                image_encodings.append(image_features)
+                encoded_text_features = torch.stack(encoded_text_features).to(device)
+                # resize 
+                encoded_text_features=encoded_text_features.view(-1,encoded_text_features.shape[-1])
+                text_features = model.encode_text_head(encoded_text_features)
+                text_encodings.append(text_features)
+                batch_size = len(image_features)
+                for i in range(batch_size):
+                    # the next image corresponds to text captions [text_index ... text_index + captions_per_image - 1]
+                    text_indices = list(
+                        range(text_index, text_index + captions_per_image)
+                    )
+                    image_to_text_map.append(text_indices)
+                    text_index += captions_per_image
+                    # Each of the next captions_per_image text captions correspond to the same image
+                    text_to_image_map += [image_index] * captions_per_image
+                    image_index += 1
 
         image_encodings = torch.cat(image_encodings)
         text_encodings = torch.cat(text_encodings)
@@ -71,10 +165,27 @@ def encode_dataset(model, dataset: dutils.Dataset, device, batch_size = 16):
         return image_encodings, text_encodings, text_to_image_map, image_to_text_map
 
 
-def recall_at_k(clip, dataset: dutils.Dataset, device, k_vals: List[int], batch_size: int):
+def recall_at_k(
+    clip,
+    dataset: dutils.Dataset,
+    device,
+    k_vals: List[int],
+    batch_size: int,
+    text_model_name: str = "sentence-transformers/all-mpnet-base-v2",
+    vision_model_name: str = "facebook/dinov2-base",
+):
     print("Encoding all data...")
-    image_encodings, text_encodings, text_to_image_map, image_to_text_map = encode_dataset(clip, dataset, device, batch_size=batch_size)
- 
+    image_encodings, text_encodings, text_to_image_map, image_to_text_map = (
+        encode_dataset(
+            clip,
+            dataset,
+            device,
+            batch_size=batch_size,
+            text_model_name=text_model_name,
+            vision_model_name=vision_model_name,
+        )
+    )
+
     num_text = text_encodings.shape[0]
     num_im = image_encodings.shape[0]
     captions_per_image = image_to_text_map.shape[1]
@@ -82,7 +193,9 @@ def recall_at_k(clip, dataset: dutils.Dataset, device, k_vals: List[int], batch_
     # text-to-image recall
     print("Text-to-image recall...")
 
-    dist_matrix = text_encodings @ image_encodings.T  # dist_matrix[i] gives logits for ith text
+    dist_matrix = (
+        text_encodings @ image_encodings.T
+    )  # dist_matrix[i] gives logits for ith text
 
     # Note: this matrix is pretty big (5000 x 25000 with dtype float16 = 250MB)
     #  torch.argsort runs out of memory for me (6GB VRAM) so I move to CPU for sorting
@@ -104,7 +217,6 @@ def recall_at_k(clip, dataset: dutils.Dataset, device, k_vals: List[int], batch_
         num_correct = correct.sum().item()
         text_to_image_recall.append(num_correct / num_text)
 
-
     # image-to-text recall
     print("Image-to-text recall...")
     dist_matrix = dist_matrix.T  # dist_matrix[i] gives logits for the ith image
@@ -124,28 +236,35 @@ def recall_at_k(clip, dataset: dutils.Dataset, device, k_vals: List[int], batch_
         #  For each image, check whether one of the 5 relevant captions was retrieved
         # Check if image matches its ith caption (for i=0..4)
         for i in range(captions_per_image):
-            contains_index = torch.eq(topk, image_to_text_map[:, i].unsqueeze(-1)).any(dim=1)
+            contains_index = torch.eq(topk, image_to_text_map[:, i].unsqueeze(-1)).any(
+                dim=1
+            )
             correct = torch.logical_or(correct, contains_index)
 
         num_correct = correct.sum().item()
-        image_to_text_recall.append(num_correct / num_im)#
+        image_to_text_recall.append(num_correct / num_im)  #
 
     print("Done.")
     return text_to_image_recall, image_to_text_recall
 
-class Processor():
+
+class Processor:
     def __init__(self, processor):
         self.processor = processor
+
     def __call__(self, images):
-        images = self.processor(images, return_tensors="pt")['pixel_values']
+        images = self.processor(images, return_tensors="pt")["pixel_values"]
         return images
 
+
 def coco_eval(
-        model: nn.Module,
-        bs: int = 1024, 
-        coco_root: str = "/home/mila/l/le.zhang/scratch/datasets",
-        coco_ann_file: str = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json",
-        k_vals: List[int] = [1, 5, 10]
+    model: nn.Module,
+    bs: int = 1024,
+    coco_root: str = "/home/mila/l/le.zhang/scratch/datasets",
+    coco_ann_file: str = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json",
+    k_vals: List[int] = [1, 5, 10],
+    text_model_name: str = "sentence-transformers/all-mpnet-base-v2",
+    vision_model_name: str = "facebook/dinov2-base",
 ):
     model.eval()
     device = get_model_device(model)
@@ -153,10 +272,18 @@ def coco_eval(
     dataset = CocoCaptions(
         root=coco_root,
         annFile=coco_ann_file,
-        transform=processor
+        transform=processor,
         # Note: almost all images have 5 captions, but 12/5000 have 6, and 1/5000 has 7 - I ignore these few extra captions.
     )
-    t2i, i2t = recall_at_k(model, dataset, device, k_vals=k_vals, batch_size=bs)
+    t2i, i2t = recall_at_k(
+        model,
+        dataset,
+        device,
+        k_vals=k_vals,
+        batch_size=bs,
+        text_model_name=text_model_name,
+        vision_model_name=vision_model_name,
+    )
     result_dict = {}
     print("Text-to-image Recall@K")
     for k, x in zip(k_vals, t2i):
@@ -167,36 +294,46 @@ def coco_eval(
     for k, x in zip(k_vals, i2t):
         print(f" R@{k}: {100*x:.2f}%")
         result_dict[f"I2T R@{k}"] = x
-    
 
     return result_dict
 
+
 if __name__ == "__main__":
-        # Change these to path of local COCO dataset:
+    # Change these to path of local COCO dataset:
     linear = True
     coco_root = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/val2017"
     coco_ann_file = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json"
 
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     if linear:
-        model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device, linear=True)
-        weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data_only_linear_head/checkpoint_52.pth'
+        model = VLContrastModel(
+            text_model_name="sentence-transformers/all-mpnet-base-v2",
+            vision_model_name="facebook/dinov2-base",
+            device=device,
+            linear=True,
+        )
+        weights_path = "/home/mila/l/le.zhang/scratch/light_align/output/raw_data_only_linear_head/checkpoint_52.pth"
     else:
-        model = VLContrastModel(text_model_name='sentence-transformers/all-mpnet-base-v2', vision_model_name='facebook/dinov2-base', device=device, linear=False)
-        weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data_linear_shared_head/checkpoint_72.pth'
+        model = VLContrastModel(
+            text_model_name="sentence-transformers/all-mpnet-base-v2",
+            vision_model_name="facebook/dinov2-base",
+            device=device,
+            linear=False,
+        )
+        weights_path = "/home/mila/l/le.zhang/scratch/light_align/output/raw_data_linear_shared_head/checkpoint_72.pth"
     checkpoint = torch.load(weights_path)
-    model.vlhead.load_state_dict(checkpoint['model_state_dict'])
+    model.vlhead.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
     model.eval()
     processor = Processor(model.vision_model.image_processor)
     dataset = CocoCaptions(
         root=coco_root,
         annFile=coco_ann_file,
-        transform=processor
+        transform=processor,
         # Note: almost all images have 5 captions, but 12/5000 have 6, and 1/5000 has 7 - I ignore these few extra captions.
     )
 
-    k_vals=[1, 5, 10, 50]
+    k_vals = [1, 5, 10, 50]
 
     t2i, i2t = recall_at_k(model, dataset, k_vals=k_vals, batch_size=512)
 
@@ -207,5 +344,3 @@ if __name__ == "__main__":
     print("Image-to-text Recall@K")
     for k, x in zip(k_vals, i2t):
         print(f" R@{k}: {100*x:.2f}%")
-
-
