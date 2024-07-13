@@ -19,9 +19,9 @@ conda activate openflamingo
 # model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
 vision_model="facebook/dinov2-large"
 text_model="Alibaba-NLP/gte-large-en-v1.5"
-# data="ALLaVALAION"
-data="ALLaVAVFLAN"
+data="ALLaVALAION"
+# data="ALLaVAVFLAN"
 
-python encode.py --domain image --model $vision_model  --batch_size 1024 --data $data
+# python encode.py --domain image --model $vision_model  --batch_size 1024 --data $data
 
-python encode.py --domain text --model $text_model  --batch_size 1024 --data $data
+python encode.py --domain text --model $text_model --batch_size 512 --data $data

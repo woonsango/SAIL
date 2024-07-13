@@ -59,10 +59,10 @@ if [[ "$SLURM_GPUS_ON_NODE" -gt 1 ]]; then
 else
     echo "Running on a single GPU"
     # Be sure to name the output folder with the text and vision model name
-    output_name="llava_vflan_gtedinoL_bs_${bs}_lion_mean"
+    output_name="llava_vflan_laion_gtedinoL_bs_${bs}_lion_mean"
     python main.py \
-           --text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/LLaVA558K /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN \
-           --image-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/LLaVA558K /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN  \
+           --text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/LLaVA558K /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVALAION \
+           --image-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/LLaVA558K /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVALAION\
            --dataset-type embedding \
            --linear-align \
            --seed 42 \
