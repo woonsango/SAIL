@@ -44,7 +44,7 @@ class SentenceEmbedding(nn.Module):
     
     def get_sentence_embeddings(self, sentences: List[str]):
         # Tokenize sentences
-        encoded_input = self.tokenizer(sentences, padding=True, truncation=True, return_tensors='pt').to(self.device)
+        encoded_input = self.tokenizer(sentences, padding=True, truncation=True, max_length=1024, return_tensors='pt').to(self.device)
         return self.forward(encoded_input)
     
     def forward(self, inputs):

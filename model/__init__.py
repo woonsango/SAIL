@@ -33,7 +33,8 @@ def create_model(
         target_dimension:int = 512,
         precision: str = 'fp32', 
         device: Union[str, torch.device] = 'cpu', 
-        linear_align: bool = False
+        linear_align: bool = False,
+        linear_type: str = 'linear',
 ):  
     if isinstance(device, str):
         device = torch.device(device)
@@ -42,9 +43,9 @@ def create_model(
 
     if vision_model_name is not None and text_model_name is not None:
         # full vlm
-        model = VLContrastModel(text_model_name=text_model_name, vision_model_name=vision_model_name, vlhead_weights_path=head_weights_path, linear_align=linear_align, cast_dtype=cast_dtype)
+        model = VLContrastModel(text_model_name=text_model_name, vision_model_name=vision_model_name, target_dimension=target_dimension, vlhead_weights_path=head_weights_path, linear_align=linear_align,  linear_type=linear_type, cast_dtype=cast_dtype)
     else:
-       model = VLContrastHead(vision_dimesion, text_dimension, target_dimension, linear_align, cast_dtype=cast_dtype)
+       model = VLContrastHead(vision_dimesion, text_dimension, target_dimension, linear_align,  linear_type=linear_type, cast_dtype=cast_dtype)
 
     model.to(device=device)
     
@@ -56,6 +57,8 @@ def create_loss(args):
         return SigLipLoss(
             rank=args.rank,
             world_size=args.world_size,
+            diagonal_weight=args.diagonal_weight,
+            binary_classification= not args.linear_align,
         )
     else:
         return ClipLoss(

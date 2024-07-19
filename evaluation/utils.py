@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import torch
 
 def check_epoch_exists(json_file, epoch):
     """
@@ -54,3 +55,14 @@ def extract_info_from_path(path):
 
 def get_model_device(model):
     return next(model.parameters()).device
+
+
+# Encodes all text and images in a dataset
+def save_features(features, save_path):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "wb") as f:
+        torch.save(features, f)
+
+def load_features(save_path):
+    with open(save_path, "rb") as f:
+        return torch.load(f)

@@ -9,7 +9,7 @@ from model import SentenceEmbedding, ImageEmbedding
 from train.logger import setup_logging
 import logging
 
-setup_logging(level= logging.INFO)
+setup_logging(log_file = None, level = logging.INFO)
 
 
 DATADIR = {
@@ -26,6 +26,19 @@ DATADIR = {
         'annotation':'/home/mila/l/le.zhang/scratch/datasets/allava_vflan/ALLaVA-Caption-VFLAN-4V.json',
         'imagedir':'/home/mila/l/le.zhang/scratch/datasets'
         },
+    'coco': {
+        'annotation':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment/jsons/coco.json',
+        'imagedir':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment'
+        },
+    'sam': {
+        'annotation':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment/jsons/sam.json',
+        'imagedir':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment'
+        },
+    'Sharegpt4vllava': {
+        'annotation':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment/jsons/llava_pretrain.json',
+        'imagedir':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment'
+        },
+    
 }
 # argparse for encoding sentences into embeddings and save them
 def parse_args():
@@ -41,8 +54,19 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    with open(DATADIR[args.data]['annotation'], 'r') as f:
-        data = json.load(f)
+
+    data_file = DATADIR[args.data]['annotation']
+    if data_file.endswith('.json'):
+        with open(DATADIR[args.data]['annotation'], 'r') as f:
+            data = json.load(f)
+    elif data_file.endswith('.jsonl'):
+        data = []
+        with open(DATADIR[args.data]['annotation'], 'r') as f:
+            for line in f:
+                data.append(json.loads(line))
+    else:
+        raise ValueError('Unsupported data format')
+    
     if args.domain == 'text':
         logging.info(f'Encoding text data {args.data} with model {args.model_name} of batch size {args.batch_size}...')
         model_name = args.model_name.split('/')[-1]

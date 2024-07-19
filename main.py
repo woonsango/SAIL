@@ -20,7 +20,7 @@ except ImportError:
     wandb = None
 
 from train.params import parse_args
-from train.logger import setup_logging
+from train.logger import setup_logging, format_num_params
 from train.scheduler import cosine_lr, const_lr, const_lr_cooldown
 from train.distributed import is_master, init_distributed_device, broadcast_object
 from train.file_utils import pt_load, check_exists
@@ -162,14 +162,23 @@ def main(args):
         precision = args.precision,
         device = device,
         linear_align = args.linear_align,
+        linear_type = args.linear_type,
         **model_kwargs
     )
+    # print trainanble parameters
     random_seed(args.seed, args.rank)
 
     if is_master(args):
         logging.info("Model:")
         logging.info(f"{str(model)}")
-        logging.info("Params:")
+        # trainable params
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        formatted_params = format_num_params(trainable_params)
+        logging.info(f"Number of trainable parameters: {formatted_params}")
+        # total params
+        total_params = sum(p.numel() for p in model.parameters())
+        formatted_params = format_num_params(total_params)
+        logging.info(f"Total number of parameters: {formatted_params}")
         params_file = os.path.join(args.logs, args.name, "params.txt")
         with open(params_file, "w") as f:
             for name in sorted(vars(args)):

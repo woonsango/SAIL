@@ -9,27 +9,8 @@ from .vision import ImageEmbedding
 import torch.nn.functional as F
 import torch
 from transformers.activations import ACT2FN
+from .linear import StarMLP, SiglipMLP, SwiGLU
 
-
-class SiglipMLP(nn.Module):
-    def __init__(
-        self,
-        input_dim: int,
-        intermediate_dim: int,
-        output_dim: int,
-    ):
-        super().__init__()
-        self.pre_norm = nn.LayerNorm(input_dim)
-        self.proj = nn.Sequential(
-            nn.Linear(input_dim, intermediate_dim),
-            nn.GELU(),
-            nn.Linear(intermediate_dim, output_dim),
-        )
-
-    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
-        hidden_states = self.pre_norm(hidden_states)
-        hidden_states = hidden_states + self.proj(hidden_states)
-        return hidden_states
 
 
 class VLContrastHead(nn.Module):
@@ -37,24 +18,30 @@ class VLContrastHead(nn.Module):
         self,
         vision_dimesion: int,
         text_dimension: int,
-        target_dimension: int = 512,
+        target_dimension: int,
         linear_align: bool = False,
+        linear_type: str = "linear",
         cast_dtype: Optional[torch.dtype] = None,
     ):
         super(VLContrastHead, self).__init__()
         self.cast_dtype = cast_dtype
         self.linear_align = linear_align
-        if self.linear_align:
-            self.vision_mapping_network = nn.Linear(vision_dimesion, target_dimension)
-            self.text_mapping_network = nn.Linear(text_dimension, target_dimension)
+        self.linear_type = linear_type
+        if linear_type == "star":
+            LinearLayer = StarMLP
+        elif linear_type == "mlp":
+            LinearLayer = SiglipMLP
+        elif linear_type == "swiglu":
+            LinearLayer = SwiGLU
         else:
-            # self.vision_mapping_network = SiglipMLP(vision_dimesion, target_dimension, target_dimension)
-            # self.text_mapping_network = SiglipMLP(text_dimension, target_dimension, target_dimension)
-            self.vision_mapping_network = nn.Linear(vision_dimesion, target_dimension)
-            self.text_mapping_network = nn.Linear(text_dimension, target_dimension)
-            self.mapping_network = SiglipMLP(
-                target_dimension, target_dimension, target_dimension
-            )
+            LinearLayer = nn.Linear
+        activation_fn = nn.ReLU6()
+        self.vision_mapping_network = LinearLayer(vision_dimesion, target_dimension, activation=activation_fn)
+        self.text_mapping_network = LinearLayer(text_dimension, target_dimension, activation=activation_fn)
+        
+        if not self.linear_align:
+            self.shared_layer_norm = nn.LayerNorm(target_dimension)
+            self.sigmoid = LinearLayer(target_dimension, 1)
 
         self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
         self.text_layer_norm = nn.LayerNorm(text_dimension)
@@ -85,31 +72,29 @@ class VLContrastHead(nn.Module):
             raise ValueError(
                 "At least one of image_features and text_features should be provided."
             )
-
+        
         if image_features is not None:
             image_features = image_features.to(self.cast_dtype)
             image_features = self.vision_layer_norm(image_features)
             image_features = self.vision_mapping_network(image_features)
-            if not self.linear_align:
-                image_features = self.mapping_network(image_features)
-            image_features = F.normalize(image_features, dim=-1)
-        else:
-            image_features = None
-
+           
         if text_features is not None:
             text_features = text_features.to(self.cast_dtype)
             text_features = self.text_layer_norm(text_features)
             text_features = self.text_mapping_network(text_features)
-            if not self.linear_align:
-                text_features = self.mapping_network(text_features)
-            text_features = F.normalize(text_features, dim=-1)
+            
 
-        else:
-            text_features = None
+        if not self.linear_align:
+            image_features = self.shared_layer_norm(image_features) # n,d   
+            text_features = self.shared_layer_norm(text_features) # n,d 
+            B, _ = image_features.shape
+            logits_per_text = self.sigmoid(image_features.unsqueeze(1).expand(-1, B, -1) * text_features.unsqueeze(1).expand(-1, B, -1)).squeeze(-1) # n,n
 
+            
+            
         if image_features is not None and text_features is not None and compute_logits:
             logits_per_text = (
-                torch.matmul(text_features, image_features.t()) * self.logit_scale.exp()
+                torch.matmul(F.normalize(text_features, dim=-1), F.normalize(image_features, dim=-1).t()) * self.logit_scale.exp()
                 + self.logit_bias
             )
         else:
@@ -129,41 +114,46 @@ class VLContrastModel(nn.Module):
         self,
         vision_model_name: str,
         text_model_name: str,
+        target_dimension: int ,
         vlhead_weights_path: str = None,
         linear_align: bool = False,
+        linear_type: str = "linear",
         cast_dtype: Optional[torch.dtype] = None,
     ):
         super(VLContrastModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
         self.vision_model = ImageEmbedding(vision_model_name)
         self.vlhead = VLContrastHead(
-            vision_dimesion=self.vision_model.model.config.hidden_size * 2,
-            text_dimension=self.text_model.model.config.hidden_size,
-            linear_align=linear_align,
-            cast_dtype=cast_dtype,
+            vision_dimesion = self.vision_model.model.config.hidden_size * 2,
+            text_dimension = self.text_model.model.config.hidden_size,
+            target_dimension = target_dimension,
+            linear_align = linear_align,
+            linear_type = linear_type,
+            cast_dtype = cast_dtype,
         )
 
         if vlhead_weights_path is not None:
             self.load_vlhead_weights(vlhead_weights_path)
 
+
     def freeze_except_vlhead(self):
-        # Freeze vision model
-        for param in self.vision_model.parameters():
+        self._freeze_parameters(self.vision_model)
+        self._freeze_parameters(self.text_model)
+        self._unfreeze_parameters(self.vlhead)
+
+    def _freeze_parameters(self, model):
+        for param in model.parameters():
             param.requires_grad = False
 
-        # Freeze text model
-        for param in self.text_model.parameters():
-            param.requires_grad = False
-
-        # Do not freeze vlhead
-        for param in self.vlhead.parameters():
+    def _unfreeze_parameters(self, model):
+        for param in model.parameters():
             param.requires_grad = True
 
     def load_vlhead_weights(self, vlhead_weights_path):
         weights = torch.load(vlhead_weights_path)
         if "state_dict" in weights:
             weights = weights["state_dict"]
-        self.vlhead.load_state_dict(weights)
+        self.vlhead.load_state_dict(weights, strict=False)
         print(f"Loaded VL head weights from {vlhead_weights_path}")
 
     def encode_image(self, image, normalize: bool = False):

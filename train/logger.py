@@ -24,3 +24,11 @@ def setup_logging(log_file, level, include_host=False):
         file_handler.setFormatter(formatter)
         logging.root.addHandler(file_handler)
 
+
+def format_num_params(num_params):
+    if num_params >= 1e9:
+        return f"{num_params / 1e9:.2f}B"
+    elif num_params >= 1e6:
+        return f"{num_params / 1e6:.2f}M"
+    else:
+        return f"{num_params:,}"

@@ -35,12 +35,6 @@ class ImageEmbedding(nn.Module):
         linear_input = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
         return linear_input
 
-# Example usage:
-# processor = ImageBatchProcessor()
-# image_dirs = ["path/to/dir1", "path/to/dir2"]
-# hidden_states = processor.process_images(image_dirs)
-# for states in hidden_states:
-#     print(list(states.shape))
 if __name__ == "__main__":
     processor = ImageEmbedding()
     breakpoint()

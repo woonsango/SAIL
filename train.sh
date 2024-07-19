@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=gtedino-bs32768
-#SBATCH --partition=short-unkillable                           # Ask for unkillable job
+#SBATCH --partition=short-unkillable                        # Ask for unkillable job
 #SBATCH --cpus-per-task=24                             # Ask for 2 CPUs
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a100l:1
@@ -16,9 +16,10 @@ conda activate openflamingo
 
 # setup training parameters
 epoch_num=300
-lr=1e-4
-bs=65536
-bs=32768
+lr=1e-5
+# bs=65536
+bs=4096
+# bs=4096
 
 timestamp=$(date +%Y%m%d%H%M%S)
 job_name=$SLURM_JOB_NAME
@@ -59,21 +60,28 @@ if [[ "$SLURM_GPUS_ON_NODE" -gt 1 ]]; then
 else
     echo "Running on a single GPU"
     # Be sure to name the output folder with the text and vision model name
-    output_name="llava_vflan_laion_gtedinoL_bs_${bs}_lion_mean"
+    # output_name="llava_laion_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_dgwt_10"
+    output_name="llava_vflan_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_swigluv2_d1024"
+    output_name="llava_vflan_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_star7_d128_binary"
+    # output_name="coco_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_star3_d1024"
+    # output_name="test2" 
     python main.py \
-           --text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/LLaVA558K /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVALAION \
-           --image-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/LLaVA558K /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVALAION\
+           --text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/sbu558k /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN \
+           --image-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/sbu558k /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN \
            --dataset-type embedding \
-           --linear-align \
+           --siglip \
            --seed 42 \
+           --resume latest \
            --save-frequency 10 \
            --report-to wandb \
            --batch-size $bs \
            --lr $lr \
-           --siglip \
            --epochs 300 \
            --workers 0 \
            --wd 1e-07 \
+           --target-dimension 128 \
+           --linear-type star \
+           --diagonal-weight 0 \
            --log-every-n-steps 10 \
            --wandb-project-name clip_training \
            --name $output_name

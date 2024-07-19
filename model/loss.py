@@ -298,6 +298,8 @@ class SigLipLoss(nn.Module):
             world_size=1,
             bidir=True,
             use_horovod=False,
+            binary_classification=False,
+            diagonal_weight:float = 0.0,
     ):
         super().__init__()
         self.cache_labels = cache_labels
@@ -306,6 +308,8 @@ class SigLipLoss(nn.Module):
         assert not use_horovod  # FIXME need to look at hvd ops for ring transfers
         self.use_horovod = use_horovod
         self.bidir = bidir
+        self.diagonal_weight = diagonal_weight
+        self.binary_classification = binary_classification
 
         # cache state FIXME cache not currently used, worthwhile?
         self.prev_num_logits = 0
@@ -323,9 +327,14 @@ class SigLipLoss(nn.Module):
             logits += logit_bias
         return logits
 
-    def _loss(self, image_features, text_features, logit_scale, logit_bias=None, negative_only=False):
+    def _loss(self, image_features, text_features, logit_scale, logit_bias=None, logits_per_text=None, negative_only=False):
         # breakpoint()
-        logits = self.get_logits(image_features, text_features, logit_scale, logit_bias)
+        image_features = F.normalize(image_features, p=2, dim=-1)
+        text_features = F.normalize(text_features, p=2, dim=-1)
+        if self.binary_classification and logits_per_text is not None:
+            logits = logits_per_text
+        else:
+            logits = self.get_logits(image_features, text_features, logit_scale, logit_bias)
         labels = self.get_ground_truth(
             image_features.device,
             image_features.dtype,
@@ -333,11 +342,21 @@ class SigLipLoss(nn.Module):
             negative_only=negative_only,
         )
         # loss = -F.logsigmoid(labels * logits).sum() / image_features.shape[0]
-        loss = -torch.mean(F.logsigmoid(labels * logits))
+
+        # my own implementation
+        loss = F.logsigmoid(labels * logits)
+        if self.diagonal_weight:
+            # avoid using .diag() and create mask to save memory
+            diagonal_indices = torch.arange(logits.size(0), device=logits.device)
+            diagonal_loss = loss[diagonal_indices, diagonal_indices]
+            weighted_diagonal_loss = diagonal_loss * (self.diagonal_weight-1)
+            loss[diagonal_indices, diagonal_indices] += weighted_diagonal_loss
+        # 计算最终的平均损失
+        loss = -torch.mean(loss)
         return loss
 
-    def forward(self, image_features, text_features, logit_scale, logit_bias, output_dict=False, **kwargs):
-        loss = self._loss(image_features, text_features, logit_scale, logit_bias)
+    def forward(self, image_features, text_features, logit_scale, logit_bias, logits_per_text=None, output_dict=False, **kwargs):
+        loss = self._loss(image_features, text_features, logit_scale, logit_bias, logits_per_text)
 
         if self.world_size > 1:
             # exchange text features w/ neighbour world_size - 1 times

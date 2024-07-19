@@ -9,7 +9,15 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import json
 from threading import Lock
+from torch.nn.utils.rnn import pad_sequence
 
+def custom_collate_fn(batch):
+    text_vectors, image_vectors = zip(*batch)
+    
+    text_vectors_padded = pad_sequence(text_vectors, batch_first=True)
+    image_vectors_padded = pad_sequence(image_vectors, batch_first=True)
+    
+    return text_vectors_padded, image_vectors_padded
 
 class VLEmbeddingDataset(Dataset):
     def __init__(self, text_embedding_list, image_embedding_list):
@@ -33,7 +41,7 @@ class VLEmbeddingDataset(Dataset):
         self.text_vectors = [vector for file in self.text_files for vector in torch.load(file)]
         self.image_vectors = [vector for file in self.image_files for vector in torch.load(file)]
         
-        assert len(self.text_vectors) == len(self.image_vectors), "text and image vectors have different lengths"
+        assert len(self.text_vectors) == len(self.image_vectors), f"text and image vectors have different lengths, {len(self.text_vectors)} vs {len(self.image_vectors)}"
         
         self.total_length = len(self.text_vectors)
         self.visual_dim = self.image_vectors[0].shape[0]
