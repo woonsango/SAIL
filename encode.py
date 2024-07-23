@@ -8,7 +8,8 @@ import argparse
 from model import SentenceEmbedding, ImageEmbedding
 from train.logger import setup_logging
 import logging
-
+import pandas as pd
+import csv
 setup_logging(log_file = None, level = logging.INFO)
 
 
@@ -38,6 +39,10 @@ DATADIR = {
         'annotation':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment/jsons/llava_pretrain.json',
         'imagedir':'/home/mila/l/le.zhang/scratch/datasets/Cambrian-Alignment'
         },
+    'dreamclipcc3m': {
+        'annotation':'/home/mila/l/le.zhang/scratch/datasets/DownloadCC3M/cc3m_3long_1raw_captions_filterd.csv',
+        'imagedir':'/home/mila/l/le.zhang/scratch/datasets/DownloadCC3M'
+        },
     
 }
 # argparse for encoding sentences into embeddings and save them
@@ -59,11 +64,25 @@ if __name__ == "__main__":
     if data_file.endswith('.json'):
         with open(DATADIR[args.data]['annotation'], 'r') as f:
             data = json.load(f)
+        sentences = [sample['conversations'][-1]['value'] for sample in data]
+        images = [os.path.join(DATADIR[args.data]['imagedir'], sample['image']) for sample in data]
     elif data_file.endswith('.jsonl'):
         data = []
         with open(DATADIR[args.data]['annotation'], 'r') as f:
             for line in f:
                 data.append(json.loads(line))
+        sentences = [sample['conversations'][-1]['value'] for sample in data]
+        images = [os.path.join(DATADIR[args.data]['imagedir'], sample['image']) for sample in data]
+    elif data_file.endswith('.csv'):
+        logging.info(f'Loading data from {DATADIR[args.data]["annotation"]}...')
+        images = []
+        sentences = []
+        with open(DATADIR[args.data]['annotation'], 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            _ = next(reader)
+            for row in reader:
+                images.append(os.path.join(DATADIR[args.data]['imagedir'], row[0]))
+                sentences.append(row[3])
     else:
         raise ValueError('Unsupported data format')
     
@@ -77,7 +96,7 @@ if __name__ == "__main__":
         model = SentenceEmbedding(args.model_name)
         model.eval()
         # load sentences
-        sentences = [sample['conversations'][-1]['value'] for sample in data]
+        
         # batchify and encode
         idx=0
         for batch_idx in tqdm(range(0, len(sentences), args.batch_size)):
@@ -105,11 +124,7 @@ if __name__ == "__main__":
             exit()
         model = ImageEmbedding(args.model_name)
         model.eval()
-        
        
-        # load image paths
-        images = []
-        images = [os.path.join(DATADIR[args.data]['imagedir'], sample['image']) for sample in data]
         # batchify and encode
         idx=0
         for batch_idx in tqdm(range(0, len(images), args.batch_size)):

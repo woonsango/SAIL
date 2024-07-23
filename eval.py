@@ -16,7 +16,7 @@ def parse_args():
     parser.add_argument(
         "--task",
         type=str,
-        choices=["imagenet", "coco", "winoground"],
+        choices=["imagenet", "COCO", "winoground"],
         default="imagenet",
         help="Task",
     )
@@ -109,7 +109,7 @@ def main():
     model.eval()
 
     # eval
-    if args.task == "imagenet":
+    if args.task.lower() == "imagenet":
         results = imagenet_eval(
             model,
             bs=args.batch_size,
@@ -118,7 +118,7 @@ def main():
             images_dir=args.images_dir,
             save_dir=args.save_dir,
         )
-    elif args.task == "coco":
+    elif args.task.lower() == "coco":
 
         coco_root = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/val2017"
         coco_ann_file = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json"
@@ -133,7 +133,7 @@ def main():
             save_dir=args.save_dir,
 
         )
-    elif args.task == "winoground":
+    elif args.task.lower() == "winoground":
         results = winoground_eval(
             model,
             text_model_name=text_model_name,

@@ -18,7 +18,8 @@ conda activate openflamingo
 epoch_num=300
 lr=1e-5
 # bs=65536
-bs=4096
+# bs=4096
+bs=32768
 # bs=4096
 
 timestamp=$(date +%Y%m%d%H%M%S)
@@ -61,15 +62,16 @@ else
     echo "Running on a single GPU"
     # Be sure to name the output folder with the text and vision model name
     # output_name="llava_laion_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_dgwt_10"
-    output_name="llava_vflan_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_swigluv2_d1024"
-    output_name="llava_vflan_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_star7_d128_binary"
+    # output_name="cc3m_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_swigluv2_d1024"
+    output_name="llava_vflan_cc3m_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_star7_d1024"
     # output_name="coco_gtedinoL_bs_${bs}_lion_mean_lr_${lr}_star3_d1024"
     # output_name="test2" 
     python main.py \
-           --text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/sbu558k /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN \
-           --image-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/sbu558k /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN \
+           --text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/dreamclipcc3m /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/LLaVA558K \
+           --image-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/dreamclipcc3m /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/LLaVA558K \
            --dataset-type embedding \
            --siglip \
+           --linear-align \
            --seed 42 \
            --resume latest \
            --save-frequency 10 \
@@ -79,7 +81,7 @@ else
            --epochs 300 \
            --workers 0 \
            --wd 1e-07 \
-           --target-dimension 128 \
+           --target-dimension 1024 \
            --linear-type star \
            --diagonal-weight 0 \
            --log-every-n-steps 10 \

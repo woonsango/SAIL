@@ -3,7 +3,7 @@
 #SBATCH --partition=unkillable                           # Ask for unkillable job
 #SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100l:1
+#SBATCH --gres=gpu:a100l.3:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
 #SBATCH --mem=32G           
 #SBATCH --time=3:00:00                                    
@@ -23,11 +23,11 @@ text_model="Alibaba-NLP/gte-large-en-v1.5"
 
 export HF_AUTH_TOKEN="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"
 
-for train in llava_vflan_gtedinoL_bs_32768_lion_mean_lr_1e-5_star7_d1024
+for train in cc3m_gtedinoL_bs_32768_lion_mean_lr_1e-5_star7_d1024
 do
     for epoch in {10..300..10}; 
     do
-        for task in imagenet winoground coco
+        for task in imagenet winoground COCO
         do
             checkpoint_path="./logs/${train}/checkpoints/epoch_${epoch}.pt"
             # check if the checkpoint exists

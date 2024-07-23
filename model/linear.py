@@ -3,7 +3,7 @@ from torch import nn
 from typing import Optional, Callable
 import torch.nn.functional as F
 
-# v3  
+# v7  
 class StarMLP(nn.Module):
     def __init__(
         self,

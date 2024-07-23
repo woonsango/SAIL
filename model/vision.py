@@ -1,10 +1,12 @@
 from transformers import AutoImageProcessor, Dinov2Model
 import torch
 import torch.nn as nn
-from PIL import Image
+from PIL import Image, ImageFile
 import os
 from typing import List, Tuple, Dict, Any, Union, Optional
 
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+Image.MAX_IMAGE_PIXELS = None
 class ImageEmbedding(nn.Module):
     def __init__(self, model_name="facebook/dinov2-base", device=None):
         super(ImageEmbedding, self).__init__()
