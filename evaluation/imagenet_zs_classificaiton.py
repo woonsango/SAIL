@@ -1,14 +1,14 @@
 import sys
 
 sys.path.append("/home/mila/l/le.zhang/scratch/light_align")
+
 from .imagenetv2 import ImageNetV2Dataset
+from .imagenetv1 import ImageNetWithPaths
 from .imagenet_constant import IMAGENET_CLASSES, IMAGENET_TEMPLATES
 import torch
 from model import VLContrastModel
 from tqdm import tqdm
 import os
-import json
-import clip
 from typing import Union, Optional
 import torch.nn as nn
 from .utils import get_model_device, save_features, load_features
@@ -157,13 +157,21 @@ def imagenet_eval(
     text_model_name: str = "all-mpnet-base-v2",
     vision_model_name: str = "dinov2-base",
     save_dir: Optional[str] = "./evaluation/backbone_features",
+    version: str = "v2",
 ):
-    save_backbone_features_path = os.path.join(
-        save_dir, f"{vision_model_name}/imagenet.pt"
-    )
-    save_backbone_classifier_features_path = os.path.join(
-        save_dir, f"{text_model_name}/classifier.pt"
-    )
+    if version == "v1":
+        save_backbone_features_path = os.path.join(
+            save_dir, f"{vision_model_name}/imagenet_v1.pt"
+        )
+        save_backbone_classifier_features_path = os.path.join(
+            save_dir, f"{text_model_name}/classifier_v1.pt"
+        )
+    else:
+        save_backbone_features_path = os.path.join(
+            save_dir, f"{vision_model_name}/imagenet.pt"
+        )
+        save_backbone_classifier_features_path = os.path.join(
+            save_dir, f"{text_model_name}/classifier.pt")
 
     model.eval()
     device = get_model_device(model)
@@ -182,7 +190,12 @@ def imagenet_eval(
 
     if not os.path.exists(save_backbone_features_path):
         print("Extracting backbone features")
-        images_dataset = ImageNetV2Dataset(
+        if version == "v1":
+            images_dataset = ImageNetWithPaths(
+                root=images_dir, split="val", transform=processor
+            )
+        else:
+            images_dataset = ImageNetV2Dataset(
             variant="matched-frequency", transform=processor, location=images_dir
         )
         loader = torch.utils.data.DataLoader(
