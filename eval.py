@@ -2,6 +2,7 @@ from evaluation import (
     imagenet_eval,
     winoground_eval,
     coco_eval,
+    SugarCrepe_eval,
     update_results_json,
     extract_info_from_path,
     check_epoch_exists,
@@ -16,8 +17,8 @@ def parse_args():
     parser.add_argument(
         "--task",
         type=str,
-        choices=["imagenet", "COCO", "winoground"],
-        default="imagenet",
+        choices=["imagenetv2", "COCO", "winoground", "imagenetv1", "sugar_crepe"],
+        default="imagenetv1",
         help="Task",
     )
     parser.add_argument(
@@ -101,11 +102,14 @@ def parse_args():
 def main():
     # load model, get device, decide eval dataset
     args = parse_args()
+    # for debug
     # epoch_num = 1
     # training_info_str = "test"
     # model_prefix = "test"
 
-    epoch_num, training_info_str, model_prefix = extract_info_from_path(args.head_weights_path)
+    epoch_num, training_info_str, model_prefix = extract_info_from_path(
+        args.head_weights_path
+    )
     output_path = os.path.join(
         args.results_dir, args.task, model_prefix,  f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json"
     )
@@ -119,7 +123,7 @@ def main():
         vision_model_name=args.vision_model,
         head_weights_path=args.head_weights_path,
         linear_align=args.linear_align,
-        linear_type = args.linear_type,
+        linear_type=args.linear_type,
         target_dimension=args.target_dimension,
         device=args.device,
         use_gmp=args.use_gmp,
@@ -131,7 +135,7 @@ def main():
     model.eval()
 
     # eval
-    if args.task.lower() == "imagenet":
+    if args.task.lower() == "imagenetv1":
         results = imagenet_eval(
             model,
             bs=args.batch_size,
@@ -139,6 +143,17 @@ def main():
             vision_model_name=vision_model_name,
             images_dir=args.images_dir,
             save_dir=args.save_dir,
+            version="v1",
+        )
+    elif args.task.lower() == "imagenetv2":
+        results = imagenet_eval(
+            model,
+            bs=args.batch_size,
+            text_model_name=text_model_name,
+            vision_model_name=vision_model_name,
+            images_dir=args.images_dir,
+            save_dir=args.save_dir,
+            version="v2",
         )
     elif args.task.lower() == "coco":
 
@@ -160,6 +175,15 @@ def main():
             text_model_name=text_model_name,
             vision_model_name=vision_model_name,
             save_dir=args.save_dir,
+        )
+    elif args.task.lower() == "sugar_crepe":
+        results = SugarCrepe_eval(
+            model,
+            text_model_name=text_model_name,
+            vision_model_name=vision_model_name,
+            images_dir=args.images_dir,
+            save_dir=args.save_dir,
+            bs=args.batch_size,
         )
 
     update_results_json(output_path, epoch_num, results)

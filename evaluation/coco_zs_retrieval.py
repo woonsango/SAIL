@@ -34,8 +34,12 @@ def encode_dataset(
     vision_model_name: str,
     save_dir: str = None,
 ):
-    save_backbone_image_features_path = os.path.join(save_dir, f"{vision_model_name}/coco.pt")
-    save_backbone_text_features_path = os.path.join(save_dir, f"{text_model_name}/coco.pt")
+    save_backbone_image_features_path = os.path.join(
+        save_dir, f"{vision_model_name}/coco.pt"
+    )
+    save_backbone_text_features_path = os.path.join(
+        save_dir, f"{text_model_name}/coco.pt"
+    )
     with torch.no_grad():
         # image_to_text_map[i] gives the corresponding text indices for the ith image
         #  (as there are multiple pieces of text for each image)
@@ -51,7 +55,9 @@ def encode_dataset(
         image_index = 0
         captions_per_image = 5
 
-        if not os.path.exists(save_backbone_image_features_path) or not os.path.exists(save_backbone_text_features_path):
+        if not os.path.exists(save_backbone_image_features_path) or not os.path.exists(
+            save_backbone_text_features_path
+        ):
             dataloader = dutils.DataLoader(
                 dataset,
                 collate_fn=coco_collate_fn,
@@ -84,12 +90,12 @@ def encode_dataset(
                     # Each of the next captions_per_image text captions correspond to the same image
                     text_to_image_map += [image_index] * captions_per_image
                     image_index += 1
-                image_features, encoded_image_features = (
-                    model.encode_image_return_encodedFeatures(images)
+                image_features, encoded_image_features = model.encode_image(
+                    images, return_encoded=True
                 )
                 image_encodings.append(image_features)
-                text_features, encoded_text_features = (
-                    model.encode_text_return_encodedFeatures(text_tokens)
+                text_features, encoded_text_features = model.encode_text(
+                    text_tokens, return_encoded=True
                 )
                 text_encodings.append(text_features)
                 for i, index in enumerate(indexs):
@@ -115,12 +121,18 @@ def encode_dataset(
                     encoded_image_features.append(value)
                     encoded_text_features.append(pre_encode_text_features[key])
                 encoded_image_features = torch.stack(encoded_image_features).to(device)
-                image_features = model.encode_image_head(encoded_image_features)
+                image_features = model.encode_image(
+                    encoded_image_features, is_pre_encoded=True
+                )
                 image_encodings.append(image_features)
                 encoded_text_features = torch.stack(encoded_text_features).to(device)
-                # resize 
-                encoded_text_features=encoded_text_features.view(-1,encoded_text_features.shape[-1])
-                text_features = model.encode_text_head(encoded_text_features)
+                # resize
+                encoded_text_features = encoded_text_features.view(
+                    -1, encoded_text_features.shape[-1]
+                )
+                text_features = model.encode_text(
+                    encoded_text_features, is_pre_encoded=True
+                )
                 text_encodings.append(text_features)
                 batch_size = len(image_features)
                 for i in range(batch_size):
@@ -152,8 +164,8 @@ def recall_at_k(
     device,
     k_vals: List[int],
     batch_size: int,
-    text_model_name: str ,
-    vision_model_name: str ,
+    text_model_name: str,
+    vision_model_name: str,
     save_dir: str = None,
 ):
     print("Encoding all data...")
@@ -263,11 +275,11 @@ def coco_eval(
         model,
         dataset,
         device,
-        k_vals = k_vals,
-        batch_size = bs,
-        text_model_name = text_model_name,
-        vision_model_name = vision_model_name,
-        save_dir = save_dir
+        k_vals=k_vals,
+        batch_size=bs,
+        text_model_name=text_model_name,
+        vision_model_name=vision_model_name,
+        save_dir=save_dir,
     )
     result_dict = {}
     print("Text-to-image Recall@K")
