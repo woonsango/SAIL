@@ -1,6 +1,7 @@
 import json
 import re
 import os
+import torch
 
 def check_epoch_exists(json_file, epoch):
     """
@@ -54,3 +55,41 @@ def extract_info_from_path(path):
 
 def get_model_device(model):
     return next(model.parameters()).device
+
+
+# Encodes all text and images in a dataset
+def save_features(features, save_path):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    with open(save_path, "wb") as f:
+        torch.save(features, f)
+
+def load_features(save_path):
+    with open(save_path, "rb") as f:
+        return torch.load(f)
+    
+def grouped_mean_pooling(tensor, m):
+    """
+    在d维度上将张量分成m组，并对每组进行平均池化。
+
+    参数:
+    tensor (torch.Tensor): 输入张量，形状为 (n, d)。
+    m (int): 分组的数量，d 必须能被 m 整除。
+
+    返回:
+    torch.Tensor: 平均池化后的张量，形状为 (n, m)。
+    """
+    n, d = tensor.shape
+
+    # 检查 d 是否能被 m 整除
+    assert d % m == 0, "d 维度必须能被 m 整除"
+
+    # 计算每组的大小
+    group_size = d // m
+
+    # 重塑张量，以便在 m 组上进行平均池化
+    tensor_reshaped = tensor.view(n, m, group_size)
+
+    # 对每组进行平均池化
+    pooled_result = tensor_reshaped.mean(dim=-1)
+
+    return pooled_result

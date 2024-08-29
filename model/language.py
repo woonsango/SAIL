@@ -29,13 +29,26 @@ def last_token_pool(last_hidden_states: torch.Tensor,
 
 
 class SentenceEmbedding(nn.Module):
-    def __init__(self, model_name='sentence-transformers/all-mpnet-base-v2', device=None):
+    def __init__(self, model_name='sentence-transformers/all-mpnet-base-v2'):
         super(SentenceEmbedding, self).__init__()
         self.model_name = model_name
+        if 'gte' in model_name:
+            self.xformer = True
+        else:
+            self.xformer = False
         self.ses = get_embedding_strategy(model_name)
-        self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(self.device)
+        if self.xformer:
+            self.model = AutoModel.from_pretrained(
+                    model_name,
+                    trust_remote_code=True,
+                    unpad_inputs=True,
+                    use_memory_efficient_attention=True,
+                    torch_dtype=torch.float16
+                ).to(self.device)
+        else:
+            self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(self.device)
     
     def mean_pooling(self, model_output: torch.Tensor, attention_mask):
         token_embeddings = model_output[0]  # First element of model_output contains all token embeddings
@@ -44,12 +57,17 @@ class SentenceEmbedding(nn.Module):
     
     def get_sentence_embeddings(self, sentences: List[str]):
         # Tokenize sentences
-        encoded_input = self.tokenizer(sentences, padding=True, truncation=True, return_tensors='pt').to(self.device)
+        encoded_input = self.tokenizer(sentences, padding=True, truncation=True, max_length=1024, return_tensors='pt').to(self.device)
         return self.forward(encoded_input)
     
     def forward(self, inputs):
         # Compute token embeddings
-        model_output = self.model(**inputs)
+        if self.xformer:
+            with torch.autocast(device_type=self.device.type, dtype=torch.float16):  # or bfloat16
+                with torch.inference_mode():
+                    model_output = self.model(**inputs)
+        else:
+            model_output = self.model(**inputs)
         if self.ses == 'mean':
             sentence_embeddings = self.mean_pooling(model_output, inputs['attention_mask'])
         elif self.ses == 'BOS':

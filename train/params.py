@@ -85,7 +85,42 @@ def parse_args(args):
         default=512,
         help="Dimension of text embeddings. Default set to 768 for all-mpnet-base-v2.",
     )
-
+    parser.add_argument(
+        "--diagonal-weight",
+        type=float,
+        default=0.0,
+        help="Weight for diagnal loss.",
+    )
+    parser.add_argument(
+        "--linear-type",
+        type=str,
+        default="linear",
+        help="Type of linear layer to use.",
+    )
+    parser.add_argument(
+        "--logit_scale",
+        type=float,
+        default=10.0,
+        help="Scale for linear layer.",
+    )
+    parser.add_argument(
+        "--logit_bias",
+        type=float,
+        default=-10.0,
+        help="Bias for linear layer.",
+    )
+    parser.add_argument(
+        "--use_gmp",
+        default=False,
+        action="store_true",
+        help="Use grouped mean pooling for image features.",
+    )
+    parser.add_argument(
+        "--gmp_groups",
+        type=int,
+        default=512,
+        help="Number of groups for grouped mean pooling.",
+    )
 
 
     parser.add_argument(

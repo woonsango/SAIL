@@ -1,17 +1,17 @@
 import sys
 
 sys.path.append("/home/mila/l/le.zhang/scratch/light_align")
+
 from .imagenetv2 import ImageNetV2Dataset
+from .imagenetv1 import ImageNetWithPaths
 from .imagenet_constant import IMAGENET_CLASSES, IMAGENET_TEMPLATES
 import torch
 from model import VLContrastModel
 from tqdm import tqdm
 import os
-import json
-import clip
 from typing import Union, Optional
 import torch.nn as nn
-from .utils import get_model_device
+from .utils import get_model_device, save_features, load_features, grouped_mean_pooling
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -34,139 +34,181 @@ def accuracy(output, target, topk=(1,)):
     ]
 
 
-def zeroshot_classifier(model, device, classnames, templates, tokenizer, model_name):
+def zeroshot_classifier(
+    model,
+    save_backbone_classifier_features_path,
+    device,
+    classnames,
+    templates,
+    tokenizer,
+    model_name,
+):
 
+    zeroshot_weights = []
+    backbone_path = save_backbone_classifier_features_path
+
+    # 使用 no_grad 模式避免计算图的创建
     with torch.no_grad():
-        zeroshot_weights = []
-        # check if ./evaluation/backbone_features/{model_name}/{evaluation_data}.pt exists
-        if os.path.exists(f"./evaluation/backbone_features/{model_name}/imagenet.pt"):
-            print("Loading backbone features from disk")
-            pre_encode_model_featuers = torch.load(
-                f"./evaluation/backbone_features/{model_name}/imagenet.pt"
-            )
+        if os.path.exists(backbone_path):
+            print(f"Loading backbone features {backbone_path} for classifier")
+            pre_encode_model_features = torch.load(backbone_path)
             for classname in tqdm(classnames):
-                pre_encode_model_featuers_class = pre_encode_model_featuers[
-                    classname
-                ].to(device)
-                class_embeddings = model.encode_text_head(
-                    pre_encode_model_featuers_class
-                )  # embed with head only
+                class_features = pre_encode_model_features[classname].to(device)
+                class_embeddings = model.encode_text(
+                    class_features, is_pre_encoded=True
+                )
                 class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
                 class_embedding = class_embeddings.mean(dim=0)
                 class_embedding /= class_embedding.norm()
                 zeroshot_weights.append(class_embedding)
         else:
-            print("Extracting backbone features")
-            pre_encode_model_featuers = {}
+            print("Extracting backbone features for classifier")
+            pre_encode_model_features = {}
             for classname in tqdm(classnames):
-                texts = [
-                    template.format(classname) for template in templates
-                ]  # format with class
-                texts = tokenizer(
+                texts = [template.format(classname) for template in templates]
+                tokens = tokenizer(
                     texts, padding=True, truncation=True, return_tensors="pt"
-                ).to(
-                    device
-                )  # tokenize
-                class_embeddings, pre_encode_model_featuer = (
-                    model.encode_text_return_encodedFeatures(texts)
-                )  # embed with head only
-                pre_encode_model_featuers[classname] = pre_encode_model_featuer.cpu()
+                ).to(device)
+                class_embeddings, class_features = model.encode_text(
+                    tokens, return_encoded=True
+                )
+                pre_encode_model_features[classname] = class_features.cpu()
                 class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
                 class_embedding = class_embeddings.mean(dim=0)
                 class_embedding /= class_embedding.norm()
                 zeroshot_weights.append(class_embedding)
-            os.makedirs(f"./evaluation/backbone_features/{model_name}", exist_ok=True)
-            torch.save(
-                pre_encode_model_featuers,
-                f"./evaluation/backbone_features/{model_name}/imagenet.pt",
-            )
-        zeroshot_weights = torch.stack(zeroshot_weights, dim=1).cuda()
+            os.makedirs(os.path.dirname(backbone_path), exist_ok=True)
+            torch.save(pre_encode_model_features, backbone_path)
+
+        zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to(device)
+
     return zeroshot_weights
+
+
+def extract_and_save_backbone_features(
+    model, device, dataloader, save_path, zeroshot_weights
+):
+    top1, top5, n = 0.0, 0.0, 0.0
+    pre_encode_image_features = {}
+
+    with torch.no_grad():
+        for images, target, image_name in tqdm(dataloader):
+            images, target = images.to(device), target.to(device)
+            image_features, encoded_features = model.encode_image(
+                {"pixel_values": images}, return_encoded=True
+            )
+
+            for j, name in enumerate(image_name):
+                pre_encode_image_features[name] = {
+                    "features": encoded_features[j].cpu(),
+                    "target": target[j].cpu(),
+                }
+            image_features /= image_features.norm(dim=-1, keepdim=True)
+            logits = 100.0 * image_features @ zeroshot_weights
+
+            acc1, acc5 = accuracy(logits, target, topk=(1, 5))
+            top1 += acc1
+            top5 += acc5
+            n += images.size(0)
+
+    save_features(pre_encode_image_features, save_path)
+
+    return top1, top5, n
+
+
+def evaluate_from_saved_features(
+    model, device, pre_encode_image_features, batch_size, zeroshot_weights
+):
+    top1, top5, n = 0.0, 0.0, 0.0
+    batched_pre_encode_image_features = {}
+
+    for i, (key, value) in enumerate(pre_encode_image_features.items()):
+        if i % batch_size == 0:
+            batched_pre_encode_image_features[i // batch_size] = {}
+        batched_pre_encode_image_features[i // batch_size][key] = value
+
+    with torch.no_grad():
+        for batch in tqdm(batched_pre_encode_image_features.values()):
+            encoded_features, targets = [], []
+            for value in batch.values():
+                encoded_features.append(value["features"])
+                targets.append(value["target"])
+
+            encoded_features = torch.stack(encoded_features).to(device)
+            targets = torch.stack(targets).to(device)
+
+            image_features = model.encode_image(encoded_features, is_pre_encoded=True)
+            image_features /= image_features.norm(dim=-1, keepdim=True)
+            logits = 100.0 * image_features @ zeroshot_weights
+
+            acc1, acc5 = accuracy(logits, targets, topk=(1, 5))
+            top1 += acc1
+            top5 += acc5
+            n += encoded_features.size(0)
+
+    return top1, top5, n
 
 
 def imagenet_eval(
     model: nn.Module,
     bs: int = 1024,
     images_dir: str = "/home/mila/l/le.zhang/scratch/datasets",
-    text_model_name: str = "sentence-transformers/all-mpnet-base-v2",
-    vision_model_name: str = "facebook/dinov2-base",
+    text_model_name: str = "all-mpnet-base-v2",
+    vision_model_name: str = "dinov2-base",
+    save_dir: Optional[str] = "./evaluation/backbone_features",
+    version: str = "v2",
 ):
+    if version == "v1":
+        save_backbone_features_path = os.path.join(
+            save_dir, f"{vision_model_name}/imagenet_v1.pt"
+        )
+        save_backbone_classifier_features_path = os.path.join(
+            save_dir, f"{text_model_name}/classifier_v1.pt"
+        )
+    else:
+        save_backbone_features_path = os.path.join(
+            save_dir, f"{vision_model_name}/imagenet.pt"
+        )
+        save_backbone_classifier_features_path = os.path.join(
+            save_dir, f"{text_model_name}/classifier.pt")
+
     model.eval()
     device = get_model_device(model)
     tokenizer = model.text_model.tokenizer
     processor = Processor(model.vision_model.image_processor)
+
     zeroshot_weights = zeroshot_classifier(
-        model, device, IMAGENET_CLASSES, IMAGENET_TEMPLATES, tokenizer, text_model_name
+        model,
+        save_backbone_classifier_features_path,
+        device,
+        IMAGENET_CLASSES,
+        IMAGENET_TEMPLATES,
+        tokenizer,
+        text_model_name,
     )
-    top1, top5, n = 0.0, 0.0, 0.0
-    if not os.path.exists(
-        f"./evaluation/backbone_features/{vision_model_name}/imagenet.pt"
-    ):
+
+    if not os.path.exists(save_backbone_features_path):
         print("Extracting backbone features")
-        images_dataset = ImageNetV2Dataset(
-            variant="matched-frequency",
-            transform=processor,
-            location=images_dir,
+        if version == "v1":
+            images_dataset = ImageNetWithPaths(
+                root=images_dir, split="val", transform=processor
+            )
+        else:
+            images_dataset = ImageNetV2Dataset(
+            variant="matched-frequency", transform=processor, location=images_dir
         )
         loader = torch.utils.data.DataLoader(
             images_dataset, batch_size=bs, num_workers=2
         )
-        pre_encode_image_features = {}
-        with torch.no_grad():
-            for i, (images, target, image_name) in enumerate(tqdm(loader)):
-                images = images.to(device)
-                target = target.to(device)
-
-                # predict
-                image_features, encoded_features = (
-                    model.encode_image_return_encodedFeatures({"pixel_values": images})
-                )
-                for j, name in enumerate(image_name):
-                    pre_encode_image_features[name] = {
-                        "features": encoded_features[j].cpu(),
-                        "target": target[j].cpu(),
-                    }
-                image_features /= image_features.norm(dim=-1, keepdim=True)
-                logits = 100.0 * image_features @ zeroshot_weights
-
-                # measure accuracy
-                acc1, acc5 = accuracy(logits, target, topk=(1, 5))
-                top1 += acc1
-                top5 += acc5
-                n += images.size(0)
-        os.makedirs(
-            f"./evaluation/backbone_features/{vision_model_name}", exist_ok=True
+        top1, top5, n = extract_and_save_backbone_features(
+            model, device, loader, save_backbone_features_path, zeroshot_weights
         )
-        with open(
-            f"./evaluation/backbone_features/{vision_model_name}/imagenet.pt", "wb"
-        ) as f:
-            torch.save(pre_encode_image_features, f)
     else:
-        print("Loading backbone features from disk")
-        pre_encode_image_features = torch.load(
-            f"./evaluation/backbone_features/{vision_model_name}/imagenet.pt"
+        print(f"Loading backbone image features from {save_backbone_features_path}")
+        pre_encode_image_features = load_features(save_backbone_features_path)
+        top1, top5, n = evaluate_from_saved_features(
+            model, device, pre_encode_image_features, bs, zeroshot_weights
         )
-        # split the pre_encode_image_features into batches
-        batched_pre_encode_image_features = {}
-        for i, (key, value) in enumerate(pre_encode_image_features.items()):
-            if i % bs == 0:
-                batched_pre_encode_image_features[i // bs] = {}
-            batched_pre_encode_image_features[i // bs][key] = value
-        for i, batch in tqdm(batched_pre_encode_image_features.items()):
-            encoded_features = []
-            targets = []
-            for key, value in batch.items():
-                encoded_features.append(value["features"])
-                targets.append(value["target"])
-            encoded_features = torch.stack(encoded_features).to(device)
-            targets = torch.stack(targets).to(device)
-            image_features = model.encode_image_head(encoded_features)
-            image_features /= image_features.norm(dim=-1, keepdim=True)
-            logits = 100.0 * image_features @ zeroshot_weights
-            acc1, acc5 = accuracy(logits, targets, topk=(1, 5))
-            top1 += acc1
-            top5 += acc5
-            n += encoded_features.size(0)
 
     top1 = (top1 / n) * 100
     top5 = (top5 / n) * 100

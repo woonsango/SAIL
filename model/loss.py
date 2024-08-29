@@ -298,6 +298,8 @@ class SigLipLoss(nn.Module):
             world_size=1,
             bidir=True,
             use_horovod=False,
+            binary_classification=False,
+            diagonal_weight:float = 0.0,
     ):
         super().__init__()
         self.cache_labels = cache_labels
@@ -306,6 +308,8 @@ class SigLipLoss(nn.Module):
         assert not use_horovod  # FIXME need to look at hvd ops for ring transfers
         self.use_horovod = use_horovod
         self.bidir = bidir
+        self.diagonal_weight = diagonal_weight
+        self.binary_classification = binary_classification
 
         # cache state FIXME cache not currently used, worthwhile?
         self.prev_num_logits = 0
@@ -322,10 +326,71 @@ class SigLipLoss(nn.Module):
         if logit_bias is not None:
             logits += logit_bias
         return logits
+    
+    def random_mask(self, v1, v2, r: float):
+        """
+        随机从每个向量中挑选 k 个维度，同时保证梯度传导
+        :param v1: 第一个向量, 形状为 (n, d)
+        :param v2: 第二个向量, 形状为 (n, d)
+        :param r: 选择的维度比例（例如 0.5 表示选择一半的维度）
+        :return: 选中的维度对应的子向量 v1 和 v2
+        """
+        assert v1.shape == v2.shape, "两个张量的形状必须相同"
+        n, d = v1.shape
+        k = int(d * r)
+        
+        # 获取 v1 所在设备
+        device = v1.device
+        
+        # 在相同的设备上生成随机索引
+        indices = torch.randperm(d, device=device)[:k]  # 从 d 中随机选择 k 个不重复的索引
+        # 选取对应维度
+        selected_v1 = v1[:, indices]  # 使用高级索引选择维度
+        selected_v2 = v2[:, indices]
+        
+        return selected_v1, selected_v2
+    
+    def grouped_mean_pooling(self, tensor, m):
+        """
+        在d维度上将张量分成m组，并对每组进行平均池化。
 
-    def _loss(self, image_features, text_features, logit_scale, logit_bias=None, negative_only=False):
+        参数:
+        tensor (torch.Tensor): 输入张量，形状为 (n, d)。
+        m (int): 分组的数量，d 必须能被 m 整除。
+
+        返回:
+        torch.Tensor: 平均池化后的张量，形状为 (n, m)。
+        """
+        n, d = tensor.shape
+
+        # 检查 d 是否能被 m 整除
+        assert d % m == 0, "d 维度必须能被 m 整除"
+
+        # 计算每组的大小
+        group_size = d // m
+
+        # 重塑张量，以便在 m 组上进行平均池化
+        tensor_reshaped = tensor.view(n, m, group_size)
+
+        # 对每组进行平均池化
+        # pooled_result = tensor_reshaped.mean(dim=-1)
+        pooled_result, _ = tensor_reshaped.max(dim=-1)
+
+        return pooled_result
+    def _loss(self, image_features, text_features, logit_scale, logit_bias=None, logits_per_text=None, negative_only=False):
         # breakpoint()
-        logits = self.get_logits(image_features, text_features, logit_scale, logit_bias)
+        
+        # grouped mean pooling
+        # image_features = self.grouped_mean_pooling(image_features, 512)
+        # text_features = self.grouped_mean_pooling(text_features, 512)
+        
+        image_features = F.normalize(image_features, p=2, dim=-1)
+        text_features = F.normalize(text_features, p=2, dim=-1)
+        # image_features, text_features = self.random_mask(image_features, text_features, 0.7)
+        if self.binary_classification and logits_per_text is not None:
+            logits = logits_per_text
+        else:
+            logits = self.get_logits(image_features, text_features, logit_scale, logit_bias)
         labels = self.get_ground_truth(
             image_features.device,
             image_features.dtype,
@@ -333,11 +398,22 @@ class SigLipLoss(nn.Module):
             negative_only=negative_only,
         )
         # loss = -F.logsigmoid(labels * logits).sum() / image_features.shape[0]
-        loss = -torch.mean(F.logsigmoid(labels * logits))
+        if labels.shape!= logits.shape:
+            breakpoint()
+        # my own implementation
+        loss = F.logsigmoid(labels * logits)
+        if self.diagonal_weight:
+            # avoid using .diag() and create mask to save memory
+            diagonal_indices = torch.arange(logits.size(0), device=logits.device)
+            diagonal_loss = loss[diagonal_indices, diagonal_indices]
+            weighted_diagonal_loss = diagonal_loss * (self.diagonal_weight-1)
+            loss[diagonal_indices, diagonal_indices] += weighted_diagonal_loss
+        # 计算最终的平均损失
+        loss = -torch.mean(loss)
         return loss
 
-    def forward(self, image_features, text_features, logit_scale, logit_bias, output_dict=False, **kwargs):
-        loss = self._loss(image_features, text_features, logit_scale, logit_bias)
+    def forward(self, image_features, text_features, logit_scale, logit_bias, logits_per_text=None, output_dict=False, **kwargs):
+        loss = self._loss(image_features, text_features, logit_scale, logit_bias, logits_per_text)
 
         if self.world_size > 1:
             # exchange text features w/ neighbour world_size - 1 times

@@ -1,0 +1,28 @@
+text_embedding_list:
+  - /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/coco
+  - /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVALAION
+  - /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/ALLaVAVFLAN
+  - /home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-large-en-v1.5/LLaVA558K
+image_embedding_list:
+  - /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/coco
+  - /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVALAION
+  - /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/ALLaVAVFLAN
+  - /home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/LLaVA558K
+dataset_type: embedding
+linear_align: true
+seed: 42
+resume: latest
+save_frequency: 10
+report_to: wandb
+batch_size: ${bs}
+lr: ${lr}
+siglip: true
+epochs: 300
+workers: 0
+wd: 1e-07
+target_dimension: 1024
+linear_type: star
+diagonal_weight: 0
+log_every_n_steps: 10
+wandb_project_name: clip_training
+name: ${output_name}

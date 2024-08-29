@@ -1,4 +1,4 @@
-from .embedding_data import VLEmbeddingDataset
+from .embedding_data import VLEmbeddingDataset, custom_collate_fn
 from torch.utils.data.distributed import DistributedSampler
 from dataclasses import dataclass
 from multiprocessing import Value
@@ -37,10 +37,10 @@ def get_embedding_dataset(args, is_train, epoch=0):
     num_samples = len(dataset)
     sampler = DistributedSampler(dataset) if args.distributed and is_train else None
     shuffle = is_train and sampler is None
-
     dataloader = DataLoader(
         dataset,
         batch_size=args.batch_size,
+        collate_fn=custom_collate_fn,
         shuffle=shuffle,
         num_workers=args.workers,
         pin_memory=True,
