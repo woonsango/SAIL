@@ -92,7 +92,6 @@ def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args
     
         data_time_m.update(time.time() - end)
         optimizer.zero_grad()
-
         with autocast():
             model_out = model(images, texts)
             logit_scale = model_out["logit_scale"]

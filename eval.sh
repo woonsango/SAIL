@@ -23,11 +23,12 @@ text_model="Alibaba-NLP/gte-large-en-v1.5"
 
 export HF_AUTH_TOKEN="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"
 
-for train in cc3m_gtedinoL_bs_32768_lion_mean_lr_1e-5_star7_d1024
+for train in cc3m_test1_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7_d1024_scale10_negbias10_gmp512
 do
     for epoch in {10..300..10}; 
     do
         for task in imagenet winoground COCO
+        # for task in imagenet
         do
             checkpoint_path="./logs/${train}/checkpoints/epoch_${epoch}.pt"
             # check if the checkpoint exists
@@ -53,7 +54,10 @@ do
                 --text-model $text_model \
                 --linear-align \
                 --linear-type star \
-                --target-dimension 1024
+                --target-dimension 1024 \
+                --use_gmp \
+                --gmp_groups 512 \
+                --overwrite
         done
     done
 done

@@ -1,4 +1,4 @@
-from transformers import AutoImageProcessor, Dinov2Model
+from transformers import AutoImageProcessor, AutoModel
 import torch
 import torch.nn as nn
 from PIL import Image, ImageFile
@@ -12,7 +12,7 @@ class ImageEmbedding(nn.Module):
         super(ImageEmbedding, self).__init__()
         self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
         self.image_processor = AutoImageProcessor.from_pretrained(model_name)
-        self.model = Dinov2Model.from_pretrained(model_name).to(self.device)
+        self.model = AutoModel.from_pretrained(model_name).to(self.device)
 
 
     def load_images_from_directory(self, images_path: List[str]) -> List[Image.Image]:

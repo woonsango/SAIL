@@ -1,7 +1,7 @@
 import sys
 
 sys.path.append("/home/mila/l/le.zhang/scratch/light_align")
-from .imagenetv2 import ImageNetV2Dataset
+from .imagenetv2_dataset import ImageNetV2Dataset
 from .imagenet_constant import IMAGENET_CLASSES, IMAGENET_TEMPLATES
 import torch
 from model import VLContrastModel
@@ -11,7 +11,7 @@ import json
 import clip
 from typing import Union, Optional
 import torch.nn as nn
-from .utils import get_model_device, save_features, load_features
+from .utils import get_model_device, save_features, load_features, grouped_mean_pooling
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -33,8 +33,10 @@ def accuracy(output, target, topk=(1,)):
         for k in topk
     ]
 
-def zeroshot_classifier(model, save_backbone_classifier_features_path, device, classnames, templates, tokenizer, model_name):
-
+def zeroshot_classifier(model, save_backbone_classifier_features_path, device, classnames, templates, tokenizer):
+    """
+    Encode the classnames with prompt templates "a photo of <class>" and save the backbone features if not already saved.
+    """
     zeroshot_weights = []
     backbone_path = save_backbone_classifier_features_path
 
@@ -46,6 +48,7 @@ def zeroshot_classifier(model, save_backbone_classifier_features_path, device, c
             for classname in tqdm(classnames):
                 class_features = pre_encode_model_features[classname].to(device)
                 class_embeddings = model.encode_text_head(class_features)
+                # multiple template average
                 class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
                 class_embedding = class_embeddings.mean(dim=0)
                 class_embedding /= class_embedding.norm()
@@ -84,7 +87,6 @@ def extract_and_save_backbone_features(model, device, dataloader, save_path, zer
                     "features": encoded_features[j].cpu(),
                     "target": target[j].cpu(),
                 }
-            
             image_features /= image_features.norm(dim=-1, keepdim=True)
             logits = 100.0 * image_features @ zeroshot_weights
             
@@ -144,7 +146,7 @@ def imagenet_eval(
     processor = Processor(model.vision_model.image_processor)
 
     zeroshot_weights = zeroshot_classifier(
-        model, save_backbone_classifier_features_path, device, IMAGENET_CLASSES, IMAGENET_TEMPLATES, tokenizer, text_model_name
+        model, save_backbone_classifier_features_path, device, IMAGENET_CLASSES, IMAGENET_TEMPLATES, tokenizer
     )
 
     if not os.path.exists(save_backbone_features_path):

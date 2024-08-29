@@ -66,3 +66,30 @@ def save_features(features, save_path):
 def load_features(save_path):
     with open(save_path, "rb") as f:
         return torch.load(f)
+    
+def grouped_mean_pooling(tensor, m):
+    """
+    在d维度上将张量分成m组，并对每组进行平均池化。
+
+    参数:
+    tensor (torch.Tensor): 输入张量，形状为 (n, d)。
+    m (int): 分组的数量，d 必须能被 m 整除。
+
+    返回:
+    torch.Tensor: 平均池化后的张量，形状为 (n, m)。
+    """
+    n, d = tensor.shape
+
+    # 检查 d 是否能被 m 整除
+    assert d % m == 0, "d 维度必须能被 m 整除"
+
+    # 计算每组的大小
+    group_size = d // m
+
+    # 重塑张量，以便在 m 组上进行平均池化
+    tensor_reshaped = tensor.view(n, m, group_size)
+
+    # 对每组进行平均池化
+    pooled_result = tensor_reshaped.mean(dim=-1)
+
+    return pooled_result

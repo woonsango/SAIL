@@ -76,8 +76,25 @@ def parse_args():
         type=int,
         default=512,
         help="Dimension of text embeddings. Default set to 768 for all-mpnet-base-v2.",
+    ),
+    parser.add_argument(
+        "--use_gmp",
+        default=False,
+        action="store_true",
+        help="Use grouped mean pooling for image features.",
     )
-
+    parser.add_argument(
+        "--gmp_groups",
+        type=int,
+        default=512,
+        help="Number of groups for grouped mean pooling.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        default=False,
+        action="store_true",
+        help="Overwrite existing results.",
+    )
     return parser.parse_args()
 
 
@@ -90,11 +107,13 @@ def main():
 
     epoch_num, training_info_str, model_prefix = extract_info_from_path(args.head_weights_path)
     output_path = os.path.join(
-        args.results_dir, args.task, model_prefix, f"{training_info_str}.json"
+        args.results_dir, args.task, model_prefix,  f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json"
     )
-    if check_epoch_exists(output_path, epoch_num):
+    if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
         print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
         return
+    elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
+        print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
     model = create_model(
         text_model_name=args.text_model,
         vision_model_name=args.vision_model,
@@ -103,6 +122,9 @@ def main():
         linear_type = args.linear_type,
         target_dimension=args.target_dimension,
         device=args.device,
+        use_gmp=args.use_gmp,
+        gmp_groups=args.gmp_groups
+
     )
     text_model_name = args.text_model.split("/")[-1]
     vision_model_name = args.vision_model.split("/")[-1]
@@ -131,7 +153,6 @@ def main():
             vision_model_name=vision_model_name,
             k_vals=[1, 5, 10],
             save_dir=args.save_dir,
-
         )
     elif args.task.lower() == "winoground":
         results = winoground_eval(

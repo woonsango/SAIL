@@ -161,8 +161,12 @@ def main(args):
         target_dimension = args.target_dimension,
         precision = args.precision,
         device = device,
+        use_gmp=args.use_gmp,
+        gmp_groups=args.gmp_groups,
         linear_align = args.linear_align,
         linear_type = args.linear_type,
+        logit_scale = args.logit_scale,
+        logit_bias = args.logit_bias,
         **model_kwargs
     )
     # print trainanble parameters

@@ -37,7 +37,6 @@ def get_embedding_dataset(args, is_train, epoch=0):
     num_samples = len(dataset)
     sampler = DistributedSampler(dataset) if args.distributed and is_train else None
     shuffle = is_train and sampler is None
-
     dataloader = DataLoader(
         dataset,
         batch_size=args.batch_size,

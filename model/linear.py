@@ -20,7 +20,8 @@ class StarMLP(nn.Module):
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         x1, x2 = self.f1(hidden_states), self.f2(hidden_states)
-        x1 = torch.clamp(x1, min=-1e6, max=1e6)
+        x1 = torch.clamp(x1, min=-1e3, max=1e3)
+        x2 = torch.clamp(x2, min=-1e3, max=1e3)
         if self.act:
             x = self.act(x1) * x2
         else:
