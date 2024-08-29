@@ -111,6 +111,9 @@ def main():
         args.head_weights_path
     )
     output_path = os.path.join(
+        args.results_dir, args.task, model_prefix, f"{training_info_str}.json"
+    )
+    output_path = os.path.join(
         args.results_dir, args.task, model_prefix,  f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json"
     )
     if check_epoch_exists(output_path, epoch_num) and not args.overwrite:

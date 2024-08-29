@@ -33,10 +33,17 @@ def accuracy(output, target, topk=(1,)):
         for k in topk
     ]
 
-def zeroshot_classifier(model, save_backbone_classifier_features_path, device, classnames, templates, tokenizer):
-    """
-    Encode the classnames with prompt templates "a photo of <class>" and save the backbone features if not already saved.
-    """
+
+def zeroshot_classifier(
+    model,
+    save_backbone_classifier_features_path,
+    device,
+    classnames,
+    templates,
+    tokenizer,
+    model_name,
+):
+
     zeroshot_weights = []
     backbone_path = save_backbone_classifier_features_path
 
