@@ -24,9 +24,7 @@ def SugarCrepe_eval_task(
     pre_encode_text_features,
     device,
 ):
-    image_score = []
     text_score = []
-    score = []
     dataset = SugarCrepeFilenames(root=images_dir, ann_file=ann_file)
 
     filename_loader = torch.utils.data.DataLoader(
@@ -108,9 +106,12 @@ def SugarCrepe_eval(
             pre_encode_image_features = {}
             with torch.no_grad():
                 for batch_images, batch_texts, image_name, ann_idx in tqdm(dataloader):
-
+                    batch_texts_list=[]
+                    for i, texts in enumerate(batch_texts[0]):
+                        batch_texts_list.append(texts)
+                        batch_texts_list.append(batch_texts[1][i])
                     batch_texts = model.text_model.tokenizer(
-                        [text for i, texts in enumerate(batch_texts) for text in texts],
+                        batch_texts_list,
                         padding=True,
                         truncation=True,
                         return_tensors="pt",
