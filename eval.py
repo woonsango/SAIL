@@ -103,9 +103,9 @@ def main():
     # load model, get device, decide eval dataset
     args = parse_args()
     # for debug
-    # epoch_num = 1
-    # training_info_str = "test"
-    # model_prefix = "test"
+    epoch_num = 1
+    training_info_str = "test"
+    model_prefix = "test"
 
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
         args.head_weights_path
