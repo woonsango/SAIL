@@ -23,9 +23,7 @@ def SugarCrepe_eval_task(
     pre_encode_text_features,
     device,
 ):
-    image_score = []
     text_score = []
-    score = []
     dataset = SugarCrepeFilenames(root=images_dir, ann_file=ann_file)
 
     filename_loader = torch.utils.data.DataLoader(
