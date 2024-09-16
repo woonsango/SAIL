@@ -32,7 +32,8 @@ def get_embedding_dataset(args, is_train, epoch=0):
     assert input_filename, "Please provide text_embedding_list and image_embedding_list"
     dataset = VLEmbeddingDataset(
         args.text_embedding_list,
-        args.image_embedding_list
+        args.image_embedding_list,
+        args.train_num_samples
     )
     num_samples = len(dataset)
     sampler = DistributedSampler(dataset) if args.distributed and is_train else None
@@ -60,6 +61,5 @@ def get_data(args, epoch=0):
     else:
         raise ValueError(f"Unknown dataset type: {args.dataset_type}")
     return data
-
 
 

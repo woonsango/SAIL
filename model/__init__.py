@@ -35,7 +35,6 @@ def create_model(
         target_dimension:int = 512,
         precision: str = 'fp32', 
         device: Union[str, torch.device] = 'cpu', 
-        linear_align: bool = False,
         linear_type: str = 'linear',
         logit_scale: float = 10.0,
         logit_bias: float = -10.0,
@@ -46,15 +45,11 @@ def create_model(
         device = torch.device(device)
 
     cast_dtype = get_cast_dtype(precision)
-
     if vision_model_name is not None and text_model_name is not None:
-        # full vlm
-        model = VLContrastModel(text_model_name=text_model_name, vision_model_name=vision_model_name, target_dimension=target_dimension, vlhead_weights_path=head_weights_path, linear_align=linear_align,  linear_type=linear_type, cast_dtype=cast_dtype, use_gmp=use_gmp, gmp_groups=gmp_groups)
+        model = VLContrastModel(text_model_name=text_model_name, vision_model_name=vision_model_name, target_dimension=target_dimension, vlhead_weights_path=head_weights_path,  linear_type=linear_type, cast_dtype=cast_dtype, use_gmp=use_gmp, gmp_groups=gmp_groups)
     else:
-       model = VLContrastHead(vision_dimesion, text_dimension, target_dimension, linear_align,  linear_type=linear_type, cast_dtype=cast_dtype, logit_scale=logit_scale, logit_bias=logit_bias, use_gmp=use_gmp, gmp_groups=gmp_groups)
-
+       model = VLContrastHead(vision_dimesion, text_dimension, target_dimension, linear_type=linear_type, cast_dtype=cast_dtype, logit_scale=logit_scale, logit_bias=logit_bias, use_gmp=use_gmp, gmp_groups=gmp_groups)
     model.to(device=device)
-
     return model
 
 
@@ -63,8 +58,7 @@ def create_loss(args):
         return SigLipLoss(
             rank=args.rank,
             world_size=args.world_size,
-            diagonal_weight=args.diagonal_weight,
-            binary_classification=not args.linear_align,
+            diagonal_weight=args.diagonal_weight
         )
     else:
         return ClipLoss(

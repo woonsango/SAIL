@@ -5,7 +5,6 @@ import torch
 from subprocess import call
 from .sugar_crepe import SugarCrepe, SugarCrepeFilenames
 
-
 class Processor:
     def __init__(self, processor):
         self.processor = processor
@@ -49,13 +48,14 @@ def SugarCrepe_eval_task(
         batch_images = batch_images.to(device)
         batch_images_ = batch_images.view(B * nim, dim)  # B*nim, C, H, W
         # compute the embedding of images and texts
-        with torch.no_grad():
-            batch_images_emb = model.encode_image(
-                batch_images_, is_pre_encoded=True
-            ).view(B, nim, -1)
-            batch_texts_emb = model.encode_text(batch_texts_, is_pre_encoded=True).view(
-                B, nt, -1
-            )
+        with torch.amp.autocast(device_type='cuda'):
+            with torch.no_grad():
+                batch_images_emb = model.encode_image(
+                    batch_images_, is_pre_encoded=True
+                ).view(B, nim, -1)
+                batch_texts_emb = model.encode_text(batch_texts_, is_pre_encoded=True).view(
+                    B, nt, -1
+                )
         gt = torch.arange(min(nim, nt)).to(device)
         for i in range(B):
             # iteratve over instances
@@ -104,35 +104,36 @@ def SugarCrepe_eval(
             print(f"Extracting backbone features for {task}")
             pre_encode_text_features = {}
             pre_encode_image_features = {}
-            with torch.no_grad():
-                for batch_images, batch_texts, image_name, ann_idx in tqdm(dataloader):
-                    batch_texts_list=[]
-                    for i, texts in enumerate(batch_texts[0]):
-                        batch_texts_list.append(texts)
-                        batch_texts_list.append(batch_texts[1][i])
-                    batch_texts = model.text_model.tokenizer(
-                        batch_texts_list,
-                        padding=True,
-                        truncation=True,
-                        return_tensors="pt",
-                    ).to(device)
-                    class_embeddings, class_features = model.encode_text(
-                        batch_texts, return_encoded=True
-                    )
-                    for j, idx in enumerate(ann_idx):
-                        # each image has two captions
-                        pre_encode_text_features[int(idx)] = [
-                            class_features[j * 2].cpu(),
-                            class_features[j * 2 + 1].cpu(),
-                        ]
-                    batch_images = batch_images.to(device)
-                    image_features, encoded_features = model.encode_image(
-                        {"pixel_values": batch_images}, return_encoded=True
-                    )
-                    for j, name in enumerate(image_name):
-                        pre_encode_image_features[name] = encoded_features[j].cpu()
-            save_features(pre_encode_text_features, text_feature_path)
-            save_features(pre_encode_image_features, image_feature_path)
+            with torch.amp.autocast(device_type='cuda'):
+                with torch.no_grad():
+                    for batch_images, batch_texts, image_name, ann_idx in tqdm(dataloader):
+                        batch_texts_list=[]
+                        for i, texts in enumerate(batch_texts[0]):
+                            batch_texts_list.append(texts)
+                            batch_texts_list.append(batch_texts[1][i])
+                        batch_texts = model.text_model.tokenizer(
+                            batch_texts_list,
+                            padding=True,
+                            truncation=True,
+                            return_tensors="pt",
+                        ).to(device)
+                        class_embeddings, class_features = model.encode_text(
+                            batch_texts, return_encoded=True
+                        )
+                        for j, idx in enumerate(ann_idx):
+                            # each image has two captions
+                            pre_encode_text_features[int(idx)] = [
+                                class_features[j * 2].cpu(),
+                                class_features[j * 2 + 1].cpu(),
+                            ]
+                        batch_images = batch_images.to(device)
+                        image_features, encoded_features = model.encode_image(
+                            {"pixel_values": batch_images}, return_encoded=True
+                        )
+                        for j, name in enumerate(image_name):
+                            pre_encode_image_features[name] = encoded_features[j].cpu()
+                save_features(pre_encode_text_features, text_feature_path)
+                save_features(pre_encode_image_features, image_feature_path)
         else:
             print(f"Loading backbone text features from {text_feature_path}")
             pre_encode_text_features = load_features(text_feature_path)

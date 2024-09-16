@@ -12,8 +12,7 @@ import math
 import numpy as np
 import torch
 from torch import optim
-from torch.cuda.amp import GradScaler
-
+import yaml
 try:
     import wandb
 except ImportError:
@@ -148,7 +147,6 @@ def main(args):
 
     )
     assert len(data), 'At least one train or eval dataset must be specified.'
-
     
     # load model 
     model_kwargs = {}
@@ -163,7 +161,6 @@ def main(args):
         device = device,
         use_gmp=args.use_gmp,
         gmp_groups=args.gmp_groups,
-        linear_align = args.linear_align,
         linear_type = args.linear_type,
         logit_scale = args.logit_scale,
         logit_bias = args.logit_bias,
@@ -189,6 +186,21 @@ def main(args):
                 val = getattr(args, name)
                 logging.info(f"  {name}: {val}")
                 f.write(f"{name}: {val}\n")
+
+        # Save model configuration as YAML file
+        model_config = {
+            'target_dimension': args.target_dimension,
+            'use_gmp': args.use_gmp,
+            'gmp_groups': args.gmp_groups,
+            'linear_type': args.linear_type,
+        }
+        
+        config_file = os.path.join(args.logs, args.name, "model_config.yaml")
+        with open(config_file, "w") as f:
+            yaml.dump(model_config, f, default_flow_style=False)
+        
+        logging.info(f"Model configuration saved to {config_file}")
+    
 
     if args.distributed:
         ddp_args = {}
@@ -220,7 +232,7 @@ def main(args):
         #     eps=args.eps,
         # )
         optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.wd)
-        scaler = GradScaler() if args.precision == "amp" else None
+        scaler = torch.amp.GradScaler() if args.precision == "amp" else None
 
     # optionally resume from a checkpoint
     

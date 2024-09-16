@@ -62,12 +62,6 @@ def parse_args(args):
         help="Path to head weight",
     )
     parser.add_argument(
-        "--linear-align",
-        default=False,
-        action="store_true",
-        help="Use linear projection head.",
-    )
-    parser.add_argument(
         "--vision-dimesion",
         type=int,
         default=1536,

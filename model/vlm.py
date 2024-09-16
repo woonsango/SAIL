@@ -10,6 +10,7 @@ import torch.nn.functional as F
 import torch
 from transformers.activations import ACT2FN
 from .linear import StarMLP, SiglipMLP, SwiGLU
+from torch.cuda.amp import autocast
 
 def grouped_mean_pooling(tensor, m):
     """
@@ -44,7 +45,6 @@ class VLContrastHead(nn.Module):
         vision_dimesion: int,
         text_dimension: int,
         target_dimension: int,
-        linear_align: bool = False,
         linear_type: str = "linear",
         cast_dtype: Optional[torch.dtype] = None,
         logit_scale: float = 10.0,
@@ -54,7 +54,6 @@ class VLContrastHead(nn.Module):
     ):
         super(VLContrastHead, self).__init__()
         self.cast_dtype = cast_dtype
-        self.linear_align = linear_align
         self.linear_type = linear_type
         self.use_gmp = use_gmp
         self.gmp_groups = gmp_groups
@@ -73,10 +72,6 @@ class VLContrastHead(nn.Module):
         self.text_mapping_network = LinearLayer(
             text_dimension, target_dimension, activation=activation_fn
         )
-
-        if not self.linear_align:
-            self.shared_layer_norm = nn.LayerNorm(target_dimension)
-            self.sigmoid = LinearLayer(target_dimension, 1)
 
         self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
         self.text_layer_norm = nn.LayerNorm(text_dimension)
@@ -124,17 +119,6 @@ class VLContrastHead(nn.Module):
             if text_features is not None:
                 text_features = grouped_mean_pooling(text_features, self.gmp_groups)
 
-        if not self.linear_align:
-            image_features = self.shared_layer_norm(image_features)  # n,d
-            text_features = self.shared_layer_norm(text_features)  # n,d
-            B, _ = image_features.shape
-            logits_per_text = self.sigmoid(
-                image_features.unsqueeze(1).expand(-1, B, -1)
-                * text_features.unsqueeze(1).expand(-1, B, -1)
-            ).squeeze(
-                -1
-            )  # n,n
-
         if image_features is not None and text_features is not None and compute_logits:
             logits_per_text = (
                 torch.matmul(
@@ -163,7 +147,6 @@ class VLContrastModel(nn.Module):
         text_model_name: str,
         target_dimension: int,
         vlhead_weights_path: str = None,
-        linear_align: bool = False,
         linear_type: str = "linear",
         cast_dtype: Optional[torch.dtype] = None,
         use_gmp: bool = False,
@@ -172,17 +155,16 @@ class VLContrastModel(nn.Module):
         super(VLContrastModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
         self.vision_model = ImageEmbedding(vision_model_name)
+        vision_dimesion = self.vision_model.model.config.hidden_size if 'mae' in vision_model_name else self.vision_model.model.config.hidden_size * 2 # dino model concat cls and avg pooling patch features in dimension space
         self.vlhead = VLContrastHead(
-            vision_dimesion = self.vision_model.model.config.hidden_size * 2,
+            vision_dimesion = vision_dimesion,
             text_dimension = self.text_model.model.config.hidden_size,
             target_dimension = target_dimension,
-            linear_align = linear_align,
             linear_type = linear_type,
             cast_dtype = cast_dtype,
             use_gmp = use_gmp,
             gmp_groups = gmp_groups,
-        )
-
+        )  
         if vlhead_weights_path is not None:
             self.load_vlhead_weights(vlhead_weights_path)
 
@@ -206,6 +188,7 @@ class VLContrastModel(nn.Module):
         self.vlhead.load_state_dict(weights, strict=False)
         print(f"Loaded VL head weights from {vlhead_weights_path}")
 
+    
     def encode_image(
         self,
         image,

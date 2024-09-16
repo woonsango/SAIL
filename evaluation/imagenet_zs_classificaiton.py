@@ -11,7 +11,7 @@ from tqdm import tqdm
 import os
 from typing import Union, Optional
 import torch.nn as nn
-from .utils import get_model_device, save_features, load_features, grouped_mean_pooling
+from .utils import get_model_device, save_features, load_features
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -36,6 +36,7 @@ def accuracy(output, target, topk=(1,)):
 
 def zeroshot_classifier(
     model,
+    batch_size,
     save_backbone_classifier_features_path,
     device,
     classnames,
@@ -48,39 +49,40 @@ def zeroshot_classifier(
     backbone_path = save_backbone_classifier_features_path
 
     # 使用 no_grad 模式避免计算图的创建
-    with torch.no_grad():
-        if os.path.exists(backbone_path):
-            print(f"Loading backbone features {backbone_path} for classifier")
-            pre_encode_model_features = torch.load(backbone_path)
-            for classname in tqdm(classnames):
-                class_features = pre_encode_model_features[classname].to(device)
-                class_embeddings = model.encode_text(
-                    class_features, is_pre_encoded=True
-                )
-                class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
-                class_embedding = class_embeddings.mean(dim=0)
-                class_embedding /= class_embedding.norm()
-                zeroshot_weights.append(class_embedding)
-        else:
-            print("Extracting backbone features for classifier")
-            pre_encode_model_features = {}
-            for classname in tqdm(classnames):
-                texts = [template.format(classname) for template in templates]
-                tokens = tokenizer(
-                    texts, padding=True, truncation=True, return_tensors="pt"
-                ).to(device)
-                class_embeddings, class_features = model.encode_text(
-                    tokens, return_encoded=True
-                )
-                pre_encode_model_features[classname] = class_features.cpu()
-                class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
-                class_embedding = class_embeddings.mean(dim=0)
-                class_embedding /= class_embedding.norm()
-                zeroshot_weights.append(class_embedding)
-            os.makedirs(os.path.dirname(backbone_path), exist_ok=True)
-            torch.save(pre_encode_model_features, backbone_path)
+    with torch.amp.autocast(device_type='cuda'):
+        with torch.no_grad():
+            if os.path.exists(backbone_path):
+                print(f"Loading backbone features {backbone_path} for classifier")
+                pre_encode_model_features = torch.load(backbone_path, weights_only=True)
+                for classname in tqdm(classnames):
+                    class_features = pre_encode_model_features[classname].to(device)
+                    class_embeddings = model.encode_text(
+                        class_features, is_pre_encoded=True
+                    )
+                    class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
+                    class_embedding = class_embeddings.mean(dim=0)
+                    class_embedding /= class_embedding.norm()
+                    zeroshot_weights.append(class_embedding)
+            else:
+                print("Extracting backbone features for classifier")
+                pre_encode_model_features = {}
+                for classname in tqdm(classnames):
+                    texts = [template.format(classname) for template in templates]
+                    tokens = tokenizer(
+                        texts, padding=True, truncation=True, return_tensors="pt"
+                    ).to(device)
+                    class_embeddings, class_features = model.encode_text(
+                            tokens, return_encoded=True
+                        )
+                    pre_encode_model_features[classname] = class_features.cpu()
+                    class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
+                    class_embedding = class_embeddings.mean(dim=0)
+                    class_embedding /= class_embedding.norm()
+                    zeroshot_weights.append(class_embedding)
+                os.makedirs(os.path.dirname(backbone_path), exist_ok=True)
+                torch.save(pre_encode_model_features, backbone_path)
 
-        zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to(device)
+            zeroshot_weights = torch.stack(zeroshot_weights, dim=1).to(device)
 
     return zeroshot_weights
 
@@ -91,27 +93,28 @@ def extract_and_save_backbone_features(
     top1, top5, n = 0.0, 0.0, 0.0
     pre_encode_image_features = {}
 
-    with torch.no_grad():
-        for images, target, image_name in tqdm(dataloader):
-            images, target = images.to(device), target.to(device)
-            image_features, encoded_features = model.encode_image(
-                {"pixel_values": images}, return_encoded=True
-            )
+    with torch.amp.autocast(device_type='cuda'):
+        with torch.no_grad():
+            for images, target, image_name in tqdm(dataloader):
+                images, target = images.to(device), target.to(device)
+                image_features, encoded_features = model.encode_image(
+                    {"pixel_values": images}, return_encoded=True
+                )
 
-            for j, name in enumerate(image_name):
-                pre_encode_image_features[name] = {
-                    "features": encoded_features[j].cpu(),
-                    "target": target[j].cpu(),
-                }
-            image_features /= image_features.norm(dim=-1, keepdim=True)
-            logits = 100.0 * image_features @ zeroshot_weights
+                for j, name in enumerate(image_name):
+                    pre_encode_image_features[name] = {
+                        "features": encoded_features[j].cpu(),
+                        "target": target[j].cpu(),
+                    }
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                logits = 100.0 * image_features @ zeroshot_weights
 
-            acc1, acc5 = accuracy(logits, target, topk=(1, 5))
-            top1 += acc1
-            top5 += acc5
-            n += images.size(0)
+                acc1, acc5 = accuracy(logits, target, topk=(1, 5))
+                top1 += acc1
+                top5 += acc5
+                n += images.size(0)
 
-    save_features(pre_encode_image_features, save_path)
+        save_features(pre_encode_image_features, save_path)
 
     return top1, top5, n
 
@@ -126,25 +129,25 @@ def evaluate_from_saved_features(
         if i % batch_size == 0:
             batched_pre_encode_image_features[i // batch_size] = {}
         batched_pre_encode_image_features[i // batch_size][key] = value
+    with torch.amp.autocast(device_type='cuda'):
+        with torch.no_grad():
+            for batch in tqdm(batched_pre_encode_image_features.values()):
+                encoded_features, targets = [], []
+                for value in batch.values():
+                    encoded_features.append(value["features"])
+                    targets.append(value["target"])
 
-    with torch.no_grad():
-        for batch in tqdm(batched_pre_encode_image_features.values()):
-            encoded_features, targets = [], []
-            for value in batch.values():
-                encoded_features.append(value["features"])
-                targets.append(value["target"])
+                encoded_features = torch.stack(encoded_features).to(device)
+                targets = torch.stack(targets).to(device)
 
-            encoded_features = torch.stack(encoded_features).to(device)
-            targets = torch.stack(targets).to(device)
+                image_features = model.encode_image(encoded_features, is_pre_encoded=True)
+                image_features /= image_features.norm(dim=-1, keepdim=True)
+                logits = 100.0 * image_features @ zeroshot_weights
 
-            image_features = model.encode_image(encoded_features, is_pre_encoded=True)
-            image_features /= image_features.norm(dim=-1, keepdim=True)
-            logits = 100.0 * image_features @ zeroshot_weights
-
-            acc1, acc5 = accuracy(logits, targets, topk=(1, 5))
-            top1 += acc1
-            top5 += acc5
-            n += encoded_features.size(0)
+                acc1, acc5 = accuracy(logits, targets, topk=(1, 5))
+                top1 += acc1
+                top5 += acc5
+                n += encoded_features.size(0)
 
     return top1, top5, n
 
@@ -179,6 +182,7 @@ def imagenet_eval(
 
     zeroshot_weights = zeroshot_classifier(
         model,
+        bs,
         save_backbone_classifier_features_path,
         device,
         IMAGENET_CLASSES,

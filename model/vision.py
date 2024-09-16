@@ -7,12 +7,21 @@ from typing import List, Tuple, Dict, Any, Union, Optional
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None
+
 class ImageEmbedding(nn.Module):
     def __init__(self, model_name="facebook/dinov2-base", device=None):
         super(ImageEmbedding, self).__init__()
         self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
-        self.image_processor = AutoImageProcessor.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name).to(self.device)
+        
+        if 'mae' in model_name.lower():
+            print("Using MAE model with SDPA")
+            self.SDPA = True
+            self.model = AutoModel.from_pretrained(model_name, attn_implementation="sdpa", torch_dtype=torch.float16).to(self.device)
+            self.image_processor = AutoImageProcessor.from_pretrained(model_name, use_fast=True)
+        else:
+            self.SDPA = False
+            self.model = AutoModel.from_pretrained(model_name, torch_dtype=torch.float16).to(self.device)
+            self.image_processor = AutoImageProcessor.from_pretrained(model_name)
 
 
     def load_images_from_directory(self, images_path: List[str]) -> List[Image.Image]:
@@ -25,16 +34,19 @@ class ImageEmbedding(nn.Module):
     
     def get_visual_embeddings_from_directory(self, images_path: List[str]):
         images = self.load_images_from_directory(images_path)
-        inputs = self.image_processor(images, return_tensors="pt").to(self.device)
+        inputs = self.image_processor(images, return_tensors="pt").to(self.model.device, dtype=self.model.dtype)
         with torch.no_grad():
             return self.forward(inputs)
 
     def forward(self, inputs):
         outputs = self.model(**inputs)
         sequence_output = outputs[0]  # batch_size, sequence_length, hidden_size
-        cls_token = sequence_output[:, 0]
-        patch_tokens = sequence_output[:, 1:]
-        linear_input = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
+        if 'mae' in self.model.config._name_or_path.lower():
+            linear_input = sequence_output.mean(dim=1)
+        else:
+            cls_token = sequence_output[:, 0]
+            patch_tokens = sequence_output[:, 1:]
+            linear_input = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
         return linear_input
 
 if __name__ == "__main__":

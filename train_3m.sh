@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=train
-#SBATCH --partition=short-unkillable        # Ask for unkillable job
+#SBATCH --job-name=cc3mrandfrom12mraw1
+#SBATCH --partition=short-unkillable          # Ask for unkillable job
 #SBATCH --cpus-per-task=24                             # Ask for 2 CPUs
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a100l:1
@@ -16,17 +16,19 @@ conda activate openflamingo
 
 # ----------------------TRAIN SETTING------------------------
 
-epoch_num=300
+epoch_num=60
 lr=1e-5
 bs=32768
+# bs=60000
 d=1024
 
 text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption"
-image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-base/dreamclipcc12mhf"
+image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc12mhf"
+# output_name="cc3mraw_Qwen1.5bdinoG_bs_${bs}_lion_mean_lr_${lr}_star7_d${d}_scale10_negbias10_gmp512"
 
 # text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-Qwen2-7B-instruct/dreamclipcc3m_raw_caption"
 # image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/dreamclipcc3m"
-output_name="cc12mraw_gtendinoB_bs_${bs}_lion_mean_lr_${lr}_star7_d${d}_scale10_negbias10"
+output_name="cc3mfrom12mraw_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7_d${d}_scale10_negbias10"
 # ------------------------------------------------------------
 
 
@@ -74,15 +76,16 @@ else
     python main.py \
         --text-embedding-list $text_embedding_list \
         --image-embedding-list $image_embedding_list \
+        --train-num-samples 2000000 \
         --dataset-type embedding \
         --siglip \
         --seed 42 \
         --resume latest \
-        --save-frequency 1 \
+        --save-frequency 5 \
         --report-to wandb \
         --batch-size $bs \
         --lr $lr \
-        --epochs 40 \
+        --epochs $epoch_num \
         --workers 0 \
         --wd 1e-07 \
         --target-dimension $d \
@@ -92,9 +95,9 @@ else
         --wandb-project-name clip_training \
         --name $output_name \
         --logit_scale 10 \
-        --logit_bias -10
-        # --gmp_groups 512 \
-        # --use_gmp
+        --logit_bias -10 \
+        --gmp_groups 512 \
+        --use_gmp
 
 fi
 

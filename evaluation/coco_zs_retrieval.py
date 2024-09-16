@@ -6,7 +6,7 @@ import os
 from tqdm import tqdm
 import torch.nn as nn
 from .utils import get_model_device, save_features, load_features
-
+from torch.cuda.amp import autocast
 
 def coco_collate_fn(batch):
     text_list = []
@@ -271,16 +271,18 @@ def coco_eval(
         transform=processor,
         # Note: almost all images have 5 captions, but 12/5000 have 6, and 1/5000 has 7 - I ignore these few extra captions.
     )
-    t2i, i2t = recall_at_k(
-        model,
-        dataset,
-        device,
-        k_vals=k_vals,
-        batch_size=bs,
-        text_model_name=text_model_name,
-        vision_model_name=vision_model_name,
-        save_dir=save_dir,
-    )
+    with autocast():
+        with torch.no_grad():
+            t2i, i2t = recall_at_k(
+                model,
+                dataset,
+                device,
+                k_vals=k_vals,
+                batch_size=bs,
+                text_model_name=text_model_name,
+                vision_model_name=vision_model_name,
+                save_dir=save_dir,
+            )
     result_dict = {}
     print("Text-to-image Recall@K")
     for k, x in zip(k_vals, t2i):
@@ -293,51 +295,4 @@ def coco_eval(
         result_dict[f"I2T R@{k}"] = x
 
     return result_dict
-
-
-if __name__ == "__main__":
-    # Change these to path of local COCO dataset:
-    linear = True
-    coco_root = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/val2017"
-    coco_ann_file = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json"
-
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    if linear:
-        model = VLContrastModel(
-            text_model_name="sentence-transformers/all-mpnet-base-v2",
-            vision_model_name="facebook/dinov2-base",
-            device=device,
-            linear=True,
-        )
-        weights_path = "/home/mila/l/le.zhang/scratch/light_align/output/raw_data_only_linear_head/checkpoint_52.pth"
-    else:
-        model = VLContrastModel(
-            text_model_name="sentence-transformers/all-mpnet-base-v2",
-            vision_model_name="facebook/dinov2-base",
-            device=device,
-            linear=False,
-        )
-        weights_path = "/home/mila/l/le.zhang/scratch/light_align/output/raw_data_linear_shared_head/checkpoint_72.pth"
-    checkpoint = torch.load(weights_path)
-    model.vlhead.load_state_dict(checkpoint["model_state_dict"])
-    model = model.to(device)
-    model.eval()
-    processor = Processor(model.vision_model.image_processor)
-    dataset = CocoCaptions(
-        root=coco_root,
-        annFile=coco_ann_file,
-        transform=processor,
-        # Note: almost all images have 5 captions, but 12/5000 have 6, and 1/5000 has 7 - I ignore these few extra captions.
-    )
-
-    k_vals = [1, 5, 10, 50]
-
-    t2i, i2t = recall_at_k(model, dataset, k_vals=k_vals, batch_size=512)
-
-    print("Text-to-image Recall@K")
-    for k, x in zip(k_vals, t2i):
-        print(f" R@{k}: {100*x:.2f}%")
-
-    print("Image-to-text Recall@K")
-    for k, x in zip(k_vals, i2t):
-        print(f" R@{k}: {100*x:.2f}%")
+    
