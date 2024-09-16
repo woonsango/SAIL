@@ -30,14 +30,14 @@ def process_example(model, example, device):
     text = model.text_model.tokenizer(
         text, padding=True, truncation=True, return_tensors="pt"
     ).to(device)
-    image0 = example["image_0"].convert("RGB")
+    image0 = example["image_0"].convert("RGB")  
     image1 = example["image_1"].convert("RGB")
     images = model.vision_model.image_processor(
         [image0, image1], return_tensors="pt"
     ).to(device)
-
-    with torch.no_grad():
-        outputs = model.forward(images, text, return_encoded=True)
+    with torch.amp.autocast(device_type='cuda'):
+        with torch.no_grad():
+            outputs = model.forward(images, text, return_encoded=True)
     encoded_image_features = outputs["encoded_image_features"]
     encoded_text_features = outputs["encoded_text_features"]
     logits_per_text = outputs["logits_per_text"]
@@ -54,9 +54,9 @@ def evaluate_clip_scores(
     for key, encode_image_features in pre_encode_image_features.items():
         encode_image_features = encode_image_features.to(device)
         encode_text_features = pre_encode_text_features[key].to(device)
-
-        with torch.no_grad():
-            outputs = model.forward(
+        with torch.amp.autocast(device_type='cuda'):
+            with torch.no_grad():
+                outputs = model.forward(
                 encode_image_features, encode_text_features, is_pre_encoded=True
             )
         logits_per_text = outputs["logits_per_text"]

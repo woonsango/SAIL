@@ -298,7 +298,6 @@ class SigLipLoss(nn.Module):
             world_size=1,
             bidir=True,
             use_horovod=False,
-            binary_classification=False,
             diagonal_weight:float = 0.0,
     ):
         super().__init__()
@@ -309,7 +308,6 @@ class SigLipLoss(nn.Module):
         self.use_horovod = use_horovod
         self.bidir = bidir
         self.diagonal_weight = diagonal_weight
-        self.binary_classification = binary_classification
 
         # cache state FIXME cache not currently used, worthwhile?
         self.prev_num_logits = 0
@@ -387,7 +385,7 @@ class SigLipLoss(nn.Module):
         image_features = F.normalize(image_features, p=2, dim=-1)
         text_features = F.normalize(text_features, p=2, dim=-1)
         # image_features, text_features = self.random_mask(image_features, text_features, 0.7)
-        if self.binary_classification and logits_per_text is not None:
+        if logits_per_text is not None:
             logits = logits_per_text
         else:
             logits = self.get_logits(image_features, text_features, logit_scale, logit_bias)

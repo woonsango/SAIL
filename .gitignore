@@ -4,10 +4,10 @@ output/
 *.pt
 *.json
 *.zip
-data/image/
-data/image_embedding/
-data/text_embedding/
+data/tensor_data/
 slurm_logs/
+evaluation/backbone_features/
+data/image/
 <<<<<<< HEAD
 logs/
 *.pyc

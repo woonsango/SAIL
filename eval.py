@@ -10,6 +10,7 @@ from evaluation import (
 import argparse
 from model import create_model
 import os
+import yaml
 
 
 def parse_args():
@@ -41,15 +42,9 @@ def parse_args():
         help="Path to head weight",
     )
     parser.add_argument(
-        "--linear-align",
-        default=False,
-        action="store_true",
-        help="Use linear projection head.",
-    )
-    parser.add_argument(
         "--linear-type",
         type=str,
-        default="linear",
+        default="star",
         help="Type of linear layer to use.",
     )
     parser.add_argument("--device", type=str, default="cuda", help="Device")
@@ -61,7 +56,7 @@ def parse_args():
         help="Path to results file",
     )
     parser.add_argument(
-        "--images_dir",
+        "--dataset_root_dir",
         type=str,
         default="/home/mila/l/le.zhang/scratch/datasets",
         help="Path to images",
@@ -96,11 +91,38 @@ def parse_args():
         action="store_true",
         help="Overwrite existing results.",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Overide args with model_config.yaml
+    config_file = os.path.join(os.path.dirname(os.path.dirname(args.head_weights_path)), "model_config.yaml")
+    if os.path.exists(config_file):
+        print(f"Loading model config from {config_file}")
+        with open(config_file, "r") as f:
+            config = yaml.safe_load(f)
+        for key, value in config.items():
+            if hasattr(args, key):
+                setattr(args, key, value)
+    return args
+
+
+def get_output_path_and_check_epoch(args, epoch_num, training_info_str, model_prefix):
+    output_path = os.path.join(
+        args.results_dir, 
+        args.task, 
+        model_prefix,  
+        f"{training_info_str}.json"
+    )
+    
+    if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
+        print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
+        return None
+    elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
+        print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
+    
+    return output_path
 
 
 def main():
-    # load model, get device, decide eval dataset
     args = parse_args()
     # for debug
     # epoch_num = 1
@@ -110,22 +132,15 @@ def main():
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
         args.head_weights_path
     )
-    output_path = os.path.join(
-        args.results_dir, args.task, model_prefix, f"{training_info_str}.json"
-    )
-    output_path = os.path.join(
-        args.results_dir, args.task, model_prefix,  f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json"
-    )
-    if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
-        print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
+    
+    output_path = get_output_path_and_check_epoch(args, epoch_num, training_info_str, model_prefix)
+    if output_path is None:
         return
-    elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
-        print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
+
     model = create_model(
         text_model_name=args.text_model,
         vision_model_name=args.vision_model,
         head_weights_path=args.head_weights_path,
-        linear_align=args.linear_align,
         linear_type=args.linear_type,
         target_dimension=args.target_dimension,
         device=args.device,
@@ -139,12 +154,35 @@ def main():
 
     # eval
     if args.task.lower() == "imagenetv1":
+        # Check if the ImageNet folders exist, if not create them and download the data
+        imagenet_dir = os.path.join(args.dataset_root_dir, "imagenet")
+        if not os.path.exists(imagenet_dir):
+            os.makedirs(imagenet_dir)
+            print(f"Created directory: {imagenet_dir}")
+
+            # Download ImageNet validation images
+            val_url = "https://image-net.org/data/ILSVRC/2012/ILSVRC2012_img_val.tar"
+            val_file = os.path.join(imagenet_dir, "ILSVRC2012_img_val.tar")
+            if not os.path.exists(val_file):
+                print(f"Downloading ImageNet validation images to {val_file}")
+                os.system(f"wget {val_url} -O {val_file}")
+            else:
+                print(f"ImageNet validation images already exist at {val_file}")
+
+            # Download ImageNet devkit
+            devkit_url = "https://image-net.org/data/ILSVRC/2012/ILSVRC2012_devkit_t12.tar.gz"
+            devkit_file = os.path.join(imagenet_dir, "ILSVRC2012_devkit_t12.tar.gz")
+            if not os.path.exists(devkit_file):
+                print(f"Downloading ImageNet devkit to {devkit_file}")
+                os.system(f"wget {devkit_url} -O {devkit_file}")
+            else:
+                print(f"ImageNet devkit already exists at {devkit_file}")
         results = imagenet_eval(
             model,
             bs=args.batch_size,
             text_model_name=text_model_name,
             vision_model_name=vision_model_name,
-            images_dir=args.images_dir,
+            images_dir=imagenet_dir,
             save_dir=args.save_dir,
             version="v1",
         )
@@ -154,14 +192,14 @@ def main():
             bs=args.batch_size,
             text_model_name=text_model_name,
             vision_model_name=vision_model_name,
-            images_dir=args.images_dir,
+            images_dir=args.dataset_root_dir,
             save_dir=args.save_dir,
             version="v2",
         )
     elif args.task.lower() == "coco":
 
-        coco_root = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/val2017"
-        coco_ann_file = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json"
+        coco_root = os.path.join(args.dataset_root_dir, "coco", "2017", "val2017")
+        coco_ann_file = os.path.join(args.dataset_root_dir, "coco", "2017", "annotations", "captions_val2017.json")
         results = coco_eval(
             model,
             bs=args.batch_size,
@@ -180,11 +218,12 @@ def main():
             save_dir=args.save_dir,
         )
     elif args.task.lower() == "sugar_crepe":
+        coco_root = os.path.join(args.dataset_root_dir, "coco", "2017", "val2017")
         results = SugarCrepe_eval(
             model,
             text_model_name=text_model_name,
             vision_model_name=vision_model_name,
-            images_dir=args.images_dir,
+            images_dir=coco_root,
             save_dir=args.save_dir,
             bs=args.batch_size,
         )

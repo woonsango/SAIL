@@ -11,6 +11,7 @@ import json
 from threading import Lock
 from torch.nn.utils.rnn import pad_sequence
 import h5py
+import numpy as np
 
 def custom_collate_fn(batch):
     text_vectors, image_vectors = zip(*batch)
@@ -32,7 +33,7 @@ def custom_collate_fn(batch):
     return text_vectors, image_vectors
 
 class VLEmbeddingDataset(Dataset):
-    def __init__(self, text_embedding_list, image_embedding_list):
+    def __init__(self, text_embedding_list, image_embedding_list, train_num_samples=None):
         self.text_embedding_dir = text_embedding_list
         self.image_embedding_dir = image_embedding_list
         
@@ -50,20 +51,34 @@ class VLEmbeddingDataset(Dataset):
             self.image_files.extend(sorted_files)
         
         
-        self.text_vectors = [vector for file in self.text_files for vector in torch.load(file, weights_only=True)]
-        self.image_vectors = [vector for file in self.image_files for vector in torch.load(file, weights_only=True)]
+        self.text_vectors = [vector for file in self.text_files for vector in torch.load(file, weights_only=True).to(torch.float16)]
+        self.image_vectors = [vector for file in self.image_files for vector in torch.load(file, weights_only=True).to(torch.float16)]
         
-        assert len(self.text_vectors) == len(self.image_vectors), f"text and image vectors have different lengths, {len(self.text_vectors)} vs {len(self.image_vectors)}"
-        
-        self.total_length = len(self.text_vectors)
-        self.visual_dim = self.image_vectors[0].shape[0]
-        self.text_dim = self.text_vectors[0].shape[0]
+        assert len(self.text_vectors) % len(self.image_vectors) == 0, f"text vectors length ({len(self.text_vectors)}) is not a multiple of image vectors length ({len(self.image_vectors)})"
+
+        if train_num_samples is not None:
+            num_samples = len(self.text_vectors)
+            random_indices = np.random.choice(num_samples, train_num_samples, replace=False)
+            self.text_vectors = [self.text_vectors[i] for i in random_indices]
+            self.image_vectors = [self.image_vectors[i] for i in random_indices]
+            print(f"Random Selecting {train_num_samples} samples as training data")
+
+        self.image_num = len(self.image_vectors)
+        self.text_num = len(self.text_vectors)
+
+        self.visual_dim = self.image_vectors[0].shape[-1]
+        self.text_dim = self.text_vectors[0].shape[-1]
     
     def __len__(self):
-        return self.total_length
+        return self.text_num
     
     def __getitem__(self, idx):
-        return self.text_vectors[idx], self.image_vectors[idx]
+        # multiple text for one image
+        if idx >= self.image_num:
+            img_idx = idx % self.image_num
+        else:
+            img_idx = idx
+        return self.text_vectors[idx], self.image_vectors[img_idx]
 
 
 # class VLEmbeddingDataset(Dataset):
