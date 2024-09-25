@@ -125,9 +125,9 @@ def get_output_path_and_check_epoch(args, epoch_num, training_info_str, model_pr
 def main():
     args = parse_args()
     # for debug
-    # epoch_num = 1
-    # training_info_str = "test"
-    # model_prefix = "test"
+    epoch_num = 1
+    training_info_str = "test"
+    model_prefix = "test"
 
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
         args.head_weights_path
