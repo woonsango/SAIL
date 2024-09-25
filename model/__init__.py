@@ -1,7 +1,7 @@
 from .language import SentenceEmbedding
 from .vision import ImageEmbedding
 from .vlm import VLContrastHead, VLContrastModel
-from .loss import ClipLoss, SigLipLoss
+from .loss import ClipLoss, SigLipLoss, BarlowTwinsLoss
 
 from typing import Union, Optional
 import torch
@@ -55,12 +55,21 @@ def create_model(
 
 def create_loss(args):
     if args.siglip:
+        print("Using SigLip loss")
         return SigLipLoss(
             rank=args.rank,
             world_size=args.world_size,
             diagonal_weight=args.diagonal_weight
         )
+    elif args.barlowtwins:
+        print("Using Barlow Twins loss")
+        return BarlowTwinsLoss(
+            rank=args.rank,
+            world_size=args.world_size,
+            lambda_param=args.lambda_param
+        )
     else:
+        print("Using Clip (infoNCE) loss")
         return ClipLoss(
             local_loss=args.local_loss,
             gather_with_grad=args.gather_with_grad,

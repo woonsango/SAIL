@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=train
-#SBATCH --partition=short-unkillable        # Ask for unkillable job
-#SBATCH --cpus-per-task=24                             # Ask for 2 CPUs
+#SBATCH --partition=long       # Ask for unkillable job
+#SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100l:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-#SBATCH --mem=128G           
-#SBATCH --time=3:00:00                                    
+#SBATCH --mem=196G           
+#SBATCH --time=6:00:00                                    
 #SBATCH --output=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.out
 #SBATCH --error=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.err 
 
@@ -16,17 +16,18 @@ conda activate openflamingo
 
 # ----------------------TRAIN SETTING------------------------
 
-epoch_num=300
+epoch_num=50
 lr=1e-5
 bs=32768
 d=1024
 
-text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption"
-image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-base/dreamclipcc12mhf"
+text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/laion30m_caption /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw" 
+image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/laion30m /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
 
-# text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-Qwen2-7B-instruct/dreamclipcc3m_raw_caption"
-# image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/dreamclipcc3m"
-output_name="cc12mraw_gtendinoB_bs_${bs}_lion_mean_lr_${lr}_star7_d${d}_scale10_negbias10"
+# text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
+# image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
+output_name="33mraw_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale10_negbias10"
+# output_name="lai z_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale10_negbias10"
 # ------------------------------------------------------------
 
 
@@ -74,25 +75,26 @@ else
     python main.py \
         --text-embedding-list $text_embedding_list \
         --image-embedding-list $image_embedding_list \
+        --val-frequency 1 \
         --dataset-type embedding \
         --siglip \
         --seed 42 \
         --resume latest \
-        --save-frequency 1 \
+        --save-frequency 2 \
         --report-to wandb \
         --batch-size $bs \
         --lr $lr \
-        --epochs 40 \
+        --epochs $epoch_num \
         --workers 0 \
         --wd 1e-07 \
         --target-dimension $d \
         --linear-type star \
         --diagonal-weight 0 \
-        --log-every-n-steps 10 \
+        --log-every-n-steps 5 \
         --wandb-project-name clip_training \
         --name $output_name \
         --logit_scale 10 \
-        --logit_bias -10
+        --logit_bias -10 
         # --gmp_groups 512 \
         # --use_gmp
 

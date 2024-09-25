@@ -36,5 +36,9 @@ DATADIR = {
         'annotation':'/home/mila/l/le.zhang/scratch/datasets/DownloadCC3M/cc12m_3long_3short_1raw_captions_url_path_hf_filtered.csv',
         'imagedir':'/home/mila/l/le.zhang/scratch/datasets/DownloadCC3M'
         },
+    'laion30m': {
+        'annotation':'/home/mila/l/le.zhang/scratch/datasets/LAION/30M_laion_synthetic_filtered_large_with_path_filtered.csv',
+        'imagedir':'/home/mila/l/le.zhang/scratch/datasets/LAION'
+        },
     
 }

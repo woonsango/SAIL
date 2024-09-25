@@ -23,7 +23,7 @@ from train.logger import setup_logging, format_num_params
 from train.scheduler import cosine_lr, const_lr, const_lr_cooldown
 from train.distributed import is_master, init_distributed_device, broadcast_object
 from train.file_utils import pt_load, check_exists
-from train.train import train_one_epoch
+from train.train import train_one_epoch, evaluate
 from train.optimizer import Lion
 
 from model import create_model, create_loss, create_loss
@@ -318,6 +318,8 @@ def main(args):
         train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args)
         completed_epoch = epoch + 1
 
+        if 'val' in data and (args.val_frequency and ((epoch % args.val_frequency) == 0 or epoch == args.epochs)):
+            evaluate(model, data, loss, epoch, args)
         # Saving checkpoints.
         if args.save_logs:
             checkpoint_dict = {

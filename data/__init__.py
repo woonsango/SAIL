@@ -27,23 +27,22 @@ class DataInfo:
         if self.sampler is not None and isinstance(self.sampler, DistributedSampler):
             self.sampler.set_epoch(epoch)
 
-def get_embedding_dataset(args, is_train, epoch=0):
-    input_filename = args.text_embedding_list and args.image_embedding_list
-    assert input_filename, "Please provide text_embedding_list and image_embedding_list"
+def get_embedding_dataset(text_embedding_list, image_embedding_list, train_num_samples, is_train, workers, batch_size, distributed=False):
+    assert text_embedding_list and image_embedding_list, "Please provide text_embedding_list and image_embedding_list"
     dataset = VLEmbeddingDataset(
-        args.text_embedding_list,
-        args.image_embedding_list,
-        args.train_num_samples
+        text_embedding_list,
+        image_embedding_list,
+        train_num_samples
     )
     num_samples = len(dataset)
-    sampler = DistributedSampler(dataset) if args.distributed and is_train else None
+    sampler = DistributedSampler(dataset) if distributed and is_train else None
     shuffle = is_train and sampler is None
     dataloader = DataLoader(
         dataset,
-        batch_size=args.batch_size,
+        batch_size=batch_size,
         collate_fn=custom_collate_fn,
         shuffle=shuffle,
-        num_workers=args.workers,
+        num_workers=workers,
         pin_memory=True,
         sampler=sampler,
         drop_last=is_train,
@@ -57,9 +56,13 @@ def get_embedding_dataset(args, is_train, epoch=0):
 def get_data(args, epoch=0):
     data = {}
     if args.text_embedding_list and args.image_embedding_list:
-        data['train'] = get_embedding_dataset(args, is_train=True, epoch=epoch)
+        data['train'] = get_embedding_dataset(args.text_embedding_list, args.image_embedding_list, args.train_num_samples, is_train=True, workers=args.workers, batch_size=args.batch_size, distributed=args.distributed)
     else:
         raise ValueError(f"Unknown dataset type: {args.dataset_type}")
+    
+    if args.val_text_embedding_list and args.val_image_embedding_list:
+        data['val'] = get_embedding_dataset(args.val_text_embedding_list, args.val_image_embedding_list, args.val_num_samples, is_train=False, workers=args.workers, batch_size=args.batch_size, distributed=args.distributed)
+
     return data
 
 

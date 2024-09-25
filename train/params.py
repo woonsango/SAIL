@@ -56,6 +56,18 @@ def parse_args(args):
         help="Path to file(s) with image embedding training data.",
     )
     parser.add_argument(
+        "--val-text-embedding-list",
+        nargs='+',
+        default=None,
+        help="Path to file(s) with text emebdding training data. ",
+    )
+    parser.add_argument(
+        "--val-image-embedding-list",
+        nargs='+',
+        default=None,
+        help="Path to file(s) with image embedding training data.",
+    )
+    parser.add_argument(
         "--head-weights-path",
         type=str,
         default=None,
@@ -537,6 +549,18 @@ def parse_args(args):
         default=False,
         action="store_true",
         help='Use SigLip (sigmoid) loss.'
+    )
+    parser.add_argument(
+        "--barlowtwins",
+        default=False,  
+        action="store_true",
+        help='Use Barlow Twins loss.'
+    )
+    parser.add_argument(
+        "--lambda-param",
+        type=float,
+        default=0.0051,
+        help='Lambda parameter for Barlow Twins loss.'
     )
 
     args = parser.parse_args(args)
