@@ -3,7 +3,7 @@
 #SBATCH --partition=unkillable                           # Ask for unkillable job
 #SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
 #SBATCH --mem=32G           
 #SBATCH --time=1:00:00                                    
@@ -20,21 +20,21 @@ export HF_AUTH_TOKEN="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"
 
 # -----------------------MODEL SETTING------------------------
 # vision_model="facebook/dinov2-base"
-# vision_model="facebook/dinov2-base"
-vision_model="facebook/dinov2-giant"
+vision_model="facebook/dinov2-large"
+# vision_model="facebook/dinov2-giant"
 # vision_model="facebook/vit-mae-large"
 
 # text_model="sentence-transformers/all-mpnet-base-v2"
-# text_model="Alibaba-NLP/gte-large-en-v1.5" 
-text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
+text_model="Alibaba-NLP/gte-large-en-v1.5" 
+# text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
 # ------------------------------------------------------------ 
  
-for train in cc3mraw_Qwen1.5bdinoG_bs_32768_lion_mean_lr_1e-5_star7_d1024_scale10_negbias10 cc3mraw_Qwen1.5bdinoG_bs_32768_lion_mean_lr_1e-5_star7_d1024_scale10_negbias10_gmp512
+for train in 30mraw_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7L_d1024_scale10_negbias10_gmp512
 do
-    for epoch in {10..80..5};
+    for epoch in {2..120..2};
     do
         # imagenetv1 imagenetv2 COCO winoground sugar_crepe 
-        for task in imagenetv1 imagenetv2 COCO
+        for task in imagenetv1 COCO
         do
             checkpoint_path="./logs/${train}/checkpoints/epoch_${epoch}.pt"
             # check if the checkpoint exists

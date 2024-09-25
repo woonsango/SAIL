@@ -13,11 +13,11 @@ class ImageEmbedding(nn.Module):
         super(ImageEmbedding, self).__init__()
         self.device = device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
         
-        if 'mae' in model_name.lower():
-            print("Using MAE model with SDPA")
+        if any(x in model_name.lower() for x in ['mae', 'dinov2']):
+            print("Using model with SDPA")
             self.SDPA = True
             self.model = AutoModel.from_pretrained(model_name, attn_implementation="sdpa", torch_dtype=torch.float16).to(self.device)
-            self.image_processor = AutoImageProcessor.from_pretrained(model_name, use_fast=True)
+            self.image_processor = AutoImageProcessor.from_pretrained(model_name)
         else:
             self.SDPA = False
             self.model = AutoModel.from_pretrained(model_name, torch_dtype=torch.float16).to(self.device)
@@ -29,7 +29,7 @@ class ImageEmbedding(nn.Module):
         for image_path in images_path:
             with Image.open(image_path) as img:
                 img = img.convert("RGB")
-                images.append(img.copy())
+                images.append(img)
         return images
     
     def get_visual_embeddings_from_directory(self, images_path: List[str]):

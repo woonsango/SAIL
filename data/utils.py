@@ -52,7 +52,6 @@ def read_csv_column(file_path, column_name, chunksize=None):
     
     # Output results and runtime
     print(f"Time taken to read '{column_name}' column: {elapsed_time:.2f} seconds")
-    print(f"First 5 items of column data: {column_data[:5]}")  # Print first 5 items for confirmation
     return column_data
 
 def load_csv_data(data_file, image_dir, source_caption, domain):
