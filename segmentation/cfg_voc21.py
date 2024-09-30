@@ -20,7 +20,7 @@ model = dict(
     device='cuda',
     gmp_groups=512,
     head_weights_path=
-    '/network/scratch/l/le.zhang/light_align/logs/cc5mfrom12mraw_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7L_d1024_scale10_negbias10/checkpoints/epoch_35.pt',
+    '/network/scratch/l/le.zhang/light_align/logs/12mhfraw_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7L_d1024_scale20_bias-10/checkpoints/epoch_20.pt',
     linear_type='star',
     name_path=
     '/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cls_voc21.txt',

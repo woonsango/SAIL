@@ -14,3 +14,5 @@ logs/
 # 忽略所有__pychache__文件夹
 __pycache__/
 data/__pycache__/
+segmentation/
+mmdetection/
