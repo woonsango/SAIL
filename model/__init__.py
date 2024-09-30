@@ -23,6 +23,8 @@ def get_cast_dtype(precision: str):
         cast_dtype = torch.bfloat16
     elif precision == "fp16":
         cast_dtype = torch.float16
+    elif precision == "fp32":
+        cast_dtype = torch.float32
     return cast_dtype
 
 
@@ -40,13 +42,14 @@ def create_model(
         logit_bias: float = -10.0,
         use_gmp: bool = False,
         gmp_groups: int = 512,
+        test: bool = False,
 ):  
     if isinstance(device, str):
         device = torch.device(device)
 
     cast_dtype = get_cast_dtype(precision)
     if vision_model_name is not None and text_model_name is not None:
-        model = VLContrastModel(text_model_name=text_model_name, vision_model_name=vision_model_name, target_dimension=target_dimension, vlhead_weights_path=head_weights_path,  linear_type=linear_type, cast_dtype=cast_dtype, use_gmp=use_gmp, gmp_groups=gmp_groups)
+        model = VLContrastModel(text_model_name=text_model_name, vision_model_name=vision_model_name, target_dimension=target_dimension, vlhead_weights_path=head_weights_path,  linear_type=linear_type, cast_dtype=cast_dtype, use_gmp=use_gmp, gmp_groups=gmp_groups, test=test)
     else:
        model = VLContrastHead(vision_dimesion, text_dimension, target_dimension, linear_type=linear_type, cast_dtype=cast_dtype, logit_scale=logit_scale, logit_bias=logit_bias, use_gmp=use_gmp, gmp_groups=gmp_groups)
     model.to(device=device)

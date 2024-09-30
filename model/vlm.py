@@ -139,7 +139,6 @@ class VLContrastHead(nn.Module):
             "logit_bias": self.logit_bias,
         }
 
-
 class VLContrastModel(nn.Module):
     def __init__(
         self,
@@ -151,10 +150,11 @@ class VLContrastModel(nn.Module):
         cast_dtype: Optional[torch.dtype] = None,
         use_gmp: bool = False,
         gmp_groups: int = 512,
+        test: bool = False,
     ):
         super(VLContrastModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
-        self.vision_model = ImageEmbedding(vision_model_name)
+        self.vision_model = ImageEmbedding(vision_model_name, test=test)
         vision_dimesion = self.vision_model.model.config.hidden_size if 'mae' in vision_model_name else self.vision_model.model.config.hidden_size * 2 # dino model concat cls and avg pooling patch features in dimension space
         self.vlhead = VLContrastHead(
             vision_dimesion = vision_dimesion,
@@ -189,6 +189,25 @@ class VLContrastModel(nn.Module):
         print(f"Loaded VL head weights from {vlhead_weights_path}")
 
     
+    def encode_image_patch(
+        self,
+        image,
+        normalize: bool = False,
+        is_pre_encoded: bool = False,
+        return_encoded: bool = False,
+    ):
+        if is_pre_encoded:
+            features = image
+        else:
+            features = self.vision_model.patch_embeddings(image,skip_res=False)
+        outputs = self.vlhead(image_features=features)
+        image_features = outputs["image_features"]
+        if return_encoded:
+            return (
+                F.normalize(image_features, dim=-1) if normalize else image_features
+            ), features
+        else:
+            return F.normalize(image_features, dim=-1) if normalize else image_features
     def encode_image(
         self,
         image,

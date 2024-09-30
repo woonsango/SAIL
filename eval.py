@@ -6,6 +6,7 @@ from evaluation import (
     update_results_json,
     extract_info_from_path,
     check_epoch_exists,
+    segmentation_eval,
 )
 import argparse
 from model import create_model
@@ -18,7 +19,14 @@ def parse_args():
     parser.add_argument(
         "--task",
         type=str,
-        choices=["imagenetv2", "COCO", "winoground", "imagenetv1", "sugar_crepe"],
+        choices=[
+            "imagenetv2",
+            "COCO",
+            "winoground",
+            "imagenetv1",
+            "sugar_crepe",
+            "segmentation",
+        ],
         default="imagenetv1",
         help="Task",
     )
@@ -91,10 +99,25 @@ def parse_args():
         action="store_true",
         help="Overwrite existing results.",
     )
+    parser.add_argument(
+        "--seg_task_config",
+        type=str,
+        default="/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_ade20k.py",
+        help="Task for segmentation evaluation",
+    )
+
+    parser.add_argument(
+        "--visualize_segmentation",
+        default=False,
+        action="store_true",
+        help="Visualize segmentation results.",
+    )
     args = parser.parse_args()
 
     # Overide args with model_config.yaml
-    config_file = os.path.join(os.path.dirname(os.path.dirname(args.head_weights_path)), "model_config.yaml")
+    config_file = os.path.join(
+        os.path.dirname(os.path.dirname(args.head_weights_path)), "model_config.yaml"
+    )
     if os.path.exists(config_file):
         print(f"Loading model config from {config_file}")
         with open(config_file, "r") as f:
@@ -107,34 +130,41 @@ def parse_args():
 
 def get_output_path_and_check_epoch(args, epoch_num, training_info_str, model_prefix):
     output_path = os.path.join(
-        args.results_dir, 
-        args.task, 
-        model_prefix,  
-        f"{training_info_str}.json"
+        args.results_dir, args.task, model_prefix, f"{training_info_str}.json"
     )
-    
+
     if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
         print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
         return None
     elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
         print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
-    
+
     return output_path
 
 
 def main():
     args = parse_args()
     # for debug
-    epoch_num = 1
-    training_info_str = "test"
-    model_prefix = "test"
+    # epoch_num = 1
+    # training_info_str = "test"
+    # model_prefix = "test"
 
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
         args.head_weights_path
     )
-    
-    output_path = get_output_path_and_check_epoch(args, epoch_num, training_info_str, model_prefix)
-    if output_path is None:
+    try:
+        output_path = get_output_path_and_check_epoch(
+            args, epoch_num, training_info_str, model_prefix
+        )
+    except:
+        output_path = os.path.join(
+            args.results_dir,
+            args.task,
+            model_prefix,
+            f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json",
+        )
+    if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
+        print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
         return
 
     model = create_model(
@@ -145,8 +175,8 @@ def main():
         target_dimension=args.target_dimension,
         device=args.device,
         use_gmp=args.use_gmp,
-        gmp_groups=args.gmp_groups
-
+        gmp_groups=args.gmp_groups,
+        test=True,
     )
     text_model_name = args.text_model.split("/")[-1]
     vision_model_name = args.vision_model.split("/")[-1]
@@ -170,7 +200,9 @@ def main():
                 print(f"ImageNet validation images already exist at {val_file}")
 
             # Download ImageNet devkit
-            devkit_url = "https://image-net.org/data/ILSVRC/2012/ILSVRC2012_devkit_t12.tar.gz"
+            devkit_url = (
+                "https://image-net.org/data/ILSVRC/2012/ILSVRC2012_devkit_t12.tar.gz"
+            )
             devkit_file = os.path.join(imagenet_dir, "ILSVRC2012_devkit_t12.tar.gz")
             if not os.path.exists(devkit_file):
                 print(f"Downloading ImageNet devkit to {devkit_file}")
@@ -199,7 +231,13 @@ def main():
     elif args.task.lower() == "coco":
 
         coco_root = os.path.join(args.dataset_root_dir, "coco", "2017", "val2017")
-        coco_ann_file = os.path.join(args.dataset_root_dir, "coco", "2017", "annotations", "captions_val2017.json")
+        coco_ann_file = os.path.join(
+            args.dataset_root_dir,
+            "coco",
+            "2017",
+            "annotations",
+            "captions_val2017.json",
+        )
         results = coco_eval(
             model,
             bs=args.batch_size,
@@ -227,7 +265,21 @@ def main():
             save_dir=args.save_dir,
             bs=args.batch_size,
         )
-
+    elif args.task.lower() == "segmentation":
+        results = segmentation_eval(
+            text_model_name=args.text_model,
+            vision_model_name=args.vision_model,
+            head_weights_path=args.head_weights_path,
+            linear_type=args.linear_type,
+            target_dimension=args.target_dimension,
+            device=args.device,
+            use_gmp=args.use_gmp,
+            gmp_groups=args.gmp_groups,
+            task_config=args.seg_task_config,
+            save_dir=args.save_dir,
+            visualize=args.visualize_segmentation,
+            # precision='fp16',
+        )
     update_results_json(output_path, epoch_num, results)
 
 
