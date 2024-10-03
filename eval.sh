@@ -28,10 +28,10 @@ vision_model="facebook/dinov2-large"
 text_model="Alibaba-NLP/gte-large-en-v1.5" 
 # text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
 # ------------------------------------------------------------ 
- 
-for train in 30mraw_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7L_d1024_scale10_negbias10_gmp512
+  
+for train in cc12rawSVm_gtendinoL_bs_32768_lion_org_lr_1e-5_star7L_d1024_scale20_bias-10_multi_postext_s2_gmp512
 do
-    for epoch in {2..120..2};
+    for epoch in {10..120..5};
     do
         # imagenetv1 imagenetv2 COCO winoground sugar_crepe 
         for task in imagenetv1 COCO

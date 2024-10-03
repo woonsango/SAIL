@@ -86,14 +86,21 @@ def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args
         if not args.skip_scheduler:
             scheduler(step)
 
-        texts, images = batch
+        if len(batch) == 3:
+            texts, images, extra_texts = batch
+        else:
+            texts, images = batch
+            extra_texts = None
         images = images.to(device=device, dtype=input_dtype, non_blocking=True)
         texts = texts.to(device=device, non_blocking=True)
+        
+        if extra_texts is not None:
+            extra_texts = extra_texts.to(device=device, dtype=input_dtype, non_blocking=True)
     
         data_time_m.update(time.time() - end)
         optimizer.zero_grad()
         with autocast():
-            model_out = model(images, texts)
+            model_out = model(images, texts, extra_texts)
             logit_scale = model_out["logit_scale"]
             losses = loss(**model_out, output_dict=True)
             total_loss = losses['contrastive_loss']
@@ -137,19 +144,21 @@ def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args
                     for loss_name, loss_m in losses_m.items()
                 ]
             )
-            samples_per_second = args.accum_freq * args.batch_size * args.world_size / batch_time_m.val
-            samples_per_second_per_gpu = args.accum_freq * args.batch_size / batch_time_m.val
             logging.info(
                 f"Train Epoch: {epoch} [{num_samples:>{sample_digits}}/{samples_per_epoch} ({percent_complete:.0f}%)] "
                 f"LR: {optimizer.param_groups[0]['lr']:5f} "
-                f"Logit Scale: {logit_scale_scalar:.3f} " + loss_log
+                f"Logit Scale: {logit_scale_scalar:.3f} "
+                f"Logit Bias: {model_out['logit_bias'].item():.3f} "
+                + loss_log
+
             )
 
             # Save train loss / etc. Using non avg meter values as loggers have their own smoothing
             log_data = {
                 "data_time": data_time_m.val,
                 "scale": logit_scale_scalar,
-                "lr": optimizer.param_groups[0]["lr"]
+                "logit_bias": model_out['logit_bias'].item(),
+                "lr": optimizer.param_groups[0]["lr"],
             }            
             log_data.update({name:val.val for name,val in losses_m.items()})
 
@@ -252,7 +261,7 @@ def get_siglip_metrics(image_features, text_features, logit_scale, logit_bias):
     image_features = F.normalize(image_features, p=2, dim=-1)
     text_features = F.normalize(text_features, p=2, dim=-1)
     metrics = {}
-    logits_per_image = (logit_scale * image_features @ text_features.t() + logit_bias).detach().cpu()
+    logits_per_image = (image_features @ text_features.t()).detach().cpu()
     logits_per_text = logits_per_image.t().detach().cpu()
 
     logits = {"image_to_text": logits_per_image, "text_to_image": logits_per_text}
