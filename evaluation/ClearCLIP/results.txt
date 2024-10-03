@@ -1,0 +1,8 @@
+cfg_ade20k_clearCLIP
+aAcc: 40.19
+mIoU: 16.65
+mAcc: 35.44
+VIT: ViT-B/16
+CLIP: CLIP
+MODEL: ClearCLIP
+Dataset: ADE20KDataset
