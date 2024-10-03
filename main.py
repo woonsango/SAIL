@@ -231,7 +231,7 @@ def main(args):
         #     betas=(args.beta1, args.beta2),
         #     eps=args.eps,
         # )
-        optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.wd)
+        optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.wd, betas=(args.beta1, args.beta2))
         scaler = torch.amp.GradScaler() if args.precision == "amp" else None
 
     # optionally resume from a checkpoint

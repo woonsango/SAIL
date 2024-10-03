@@ -77,7 +77,6 @@ class VLContrastHead(nn.Module):
         self.text_layer_norm = nn.LayerNorm(text_dimension)
         self.logit_scale = nn.Parameter(torch.randn(1))
         self.logit_bias = nn.Parameter(torch.randn(1))
-
         self._initialize_weights(logit_scale, logit_bias)
 
     def _initialize_weights(self, scale: float, bias: float):
@@ -95,8 +94,9 @@ class VLContrastHead(nn.Module):
         logit_scale_init = torch.log(torch.tensor(scale))
         self.logit_scale.data.fill_(logit_scale_init)
         self.logit_bias.data.fill_(torch.tensor(bias))
+    
 
-    def forward(self, image_features=None, text_features=None, compute_logits=False):
+    def forward(self, image_features=None, text_features=None, extra_text_features=None, compute_logits=False):
 
         if image_features is None and text_features is None:
             raise ValueError(
@@ -107,19 +107,32 @@ class VLContrastHead(nn.Module):
             image_features = image_features.to(self.cast_dtype)
             image_features = self.vision_layer_norm(image_features)
             image_features = self.vision_mapping_network(image_features)
+        else:
+            image_features = None
 
         if text_features is not None:
             text_features = text_features.to(self.cast_dtype)
             text_features = self.text_layer_norm(text_features)
             text_features = self.text_mapping_network(text_features)
-            
+        else:
+            text_features = None
+
+        if extra_text_features is not None:
+            extra_text_features = extra_text_features.to(self.cast_dtype)
+            extra_text_features = self.text_layer_norm(extra_text_features)
+            extra_text_features = self.text_mapping_network(extra_text_features)
+        else:
+            extra_text_features = None
+
         if self.use_gmp:
             if image_features is not None:
                 image_features = grouped_mean_pooling(image_features, self.gmp_groups)
             if text_features is not None:
                 text_features = grouped_mean_pooling(text_features, self.gmp_groups)
+            if extra_text_features is not None:
+                extra_text_features = grouped_mean_pooling(extra_text_features, self.gmp_groups)
 
-        if image_features is not None and text_features is not None and compute_logits:
+        if compute_logits and image_features is not None and text_features is not None and image_features.nelement() > 0 and text_features.nelement() > 0:
             logits_per_text = (
                 torch.matmul(
                     F.normalize(text_features, dim=-1),
@@ -134,9 +147,10 @@ class VLContrastHead(nn.Module):
         return {
             "image_features": image_features,
             "text_features": text_features,
+            "extra_text_features": extra_text_features,
             "logits_per_text": logits_per_text,
             "logit_scale": self.logit_scale.exp(),
-            "logit_bias": self.logit_bias,
+            "logit_bias": self.logit_bias
         }
 
 
@@ -230,7 +244,7 @@ class VLContrastModel(nn.Module):
             return F.normalize(text_features, dim=-1) if normalize else text_features
 
     def forward(
-        self, images=None, texts=None, is_pre_encoded=False, return_encoded=False
+        self, images, texts, is_pre_encoded=False, return_encoded=False
     ):
         if is_pre_encoded:
             # if its pre-encoded, we do not need to return encoded features
@@ -264,6 +278,7 @@ class VLContrastModel(nn.Module):
             # if we do not need to return encoded features and it is not pre-encoded, usuallu during training
             norm_image_features = self.encode_image(images, normalize=True)
             norm_text_features = self.encode_text(texts, normalize=True)
+
         # Log the sizes of embeddings
         logits_per_text = (
             torch.matmul(norm_text_features, norm_image_features.t())

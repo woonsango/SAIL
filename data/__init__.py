@@ -27,11 +27,21 @@ class DataInfo:
         if self.sampler is not None and isinstance(self.sampler, DistributedSampler):
             self.sampler.set_epoch(epoch)
 
-def get_embedding_dataset(text_embedding_list, image_embedding_list, train_num_samples, is_train, workers, batch_size, distributed=False):
+def get_embedding_dataset(
+        text_embedding_list,
+        image_embedding_list,
+        extra_text_embedding_list,
+        workers,
+        batch_size,
+        train_num_samples = None,
+        is_train = True,
+        distributed=False
+    ):
     assert text_embedding_list and image_embedding_list, "Please provide text_embedding_list and image_embedding_list"
     dataset = VLEmbeddingDataset(
         text_embedding_list,
         image_embedding_list,
+        extra_text_embedding_list,
         train_num_samples
     )
     num_samples = len(dataset)
@@ -56,12 +66,30 @@ def get_embedding_dataset(text_embedding_list, image_embedding_list, train_num_s
 def get_data(args, epoch=0):
     data = {}
     if args.text_embedding_list and args.image_embedding_list:
-        data['train'] = get_embedding_dataset(args.text_embedding_list, args.image_embedding_list, args.train_num_samples, is_train=True, workers=args.workers, batch_size=args.batch_size, distributed=args.distributed)
+        data['train'] = get_embedding_dataset(
+            args.text_embedding_list,
+            args.image_embedding_list,
+            args.extra_text_embedding_list,
+            workers=args.workers,
+            batch_size=args.batch_size,
+            train_num_samples=args.train_num_samples,
+            is_train=True,
+            distributed=args.distributed
+        )
     else:
         raise ValueError(f"Unknown dataset type: {args.dataset_type}")
     
     if args.val_text_embedding_list and args.val_image_embedding_list:
-        data['val'] = get_embedding_dataset(args.val_text_embedding_list, args.val_image_embedding_list, args.val_num_samples, is_train=False, workers=args.workers, batch_size=args.batch_size, distributed=args.distributed)
+        data['val'] = get_embedding_dataset(
+            args.val_text_embedding_list,
+            args.val_image_embedding_list,
+            extra_text_embedding_list = None,
+            workers=args.workers,
+            batch_size=args.batch_size,
+            train_num_samples = None,
+            is_train=False,
+            distributed=args.distributed
+        )
 
     return data
 

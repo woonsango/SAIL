@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=train
-#SBATCH --partition=long       # Ask for unkillable job
-#SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
+#SBATCH --partition=short-unkillable       # Ask for unkillable job
+#SBATCH --cpus-per-task=24                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:l40s:1
+#SBATCH --gres=gpu:h100:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-#SBATCH --mem=196G           
-#SBATCH --time=6:00:00                                    
+#SBATCH --mem=128G           
+#SBATCH --time=3:00:00                                    
 #SBATCH --output=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.out
 #SBATCH --error=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.err 
 
@@ -20,13 +20,15 @@ epoch_num=50
 lr=1e-5
 bs=32768
 d=1024
+logit_scale=20
+logit_bias=-10
 
-text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/laion30m_caption /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw" 
-image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/laion30m /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
+text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption" 
+image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc12mhf"
 
 # text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
 # image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
-output_name="33mraw_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale10_negbias10"
+output_name="12mhfraw_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale${logit_scale}_bias${logit_bias}_gmp512"
 # output_name="lai z_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale10_negbias10"
 # ------------------------------------------------------------
 
@@ -93,10 +95,10 @@ else
         --log-every-n-steps 5 \
         --wandb-project-name clip_training \
         --name $output_name \
-        --logit_scale 10 \
-        --logit_bias -10 
-        # --gmp_groups 512 \
-        # --use_gmp
+        --logit_scale $logit_scale \
+        --logit_bias $logit_bias \
+        --gmp_groups 512 \
+        --use_gmp
 
 fi
 
