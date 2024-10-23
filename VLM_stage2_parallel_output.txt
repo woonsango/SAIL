@@ -1,0 +1,691 @@
+[2024-10-22 20:14:17,177] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[2024-10-22 20:14:21,452] [WARNING] [runner.py:202:fetch_hostfile] Unable to find hostfile, will proceed with training with local resources only.
+Detected CUDA_VISIBLE_DEVICES=0,1,2,3 but ignoring it because one or several of --include/--exclude/--num_gpus/--num_nodes cl args were used. If you want to use CUDA_VISIBLE_DEVICES don't pass any of these arguments to deepspeed.
+[2024-10-22 20:14:21,452] [INFO] [runner.py:568:main] cmd = /home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python -u -m deepspeed.launcher.launch --world_info=eyJsb2NhbGhvc3QiOiBbMCwgMSwgMiwgM119 --master_addr=127.0.0.1 --master_port=29500 --enable_each_rank_log=None /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py --deepspeed /home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json --model_name_or_path /network/scratch/q/qian.yang/vicuna-7b-v1.5 --version v1 --data_path /home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json --image_folder /home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data --target_dimension 1024 --linear_type star --vlhead_weights_path /network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt --vision_tower facebook/dinov2-large --mm_projector_type mlp2x_gelu --mm_vision_select_layer -2 --mm_use_im_start_end False --mm_use_im_patch_token False --image_aspect_ratio pad --group_by_modality_length True --bf16 True --num_train_epochs 1 --per_device_train_batch_size 16 --per_device_eval_batch_size 4 --gradient_accumulation_steps 2 --evaluation_strategy no --save_strategy steps --save_steps 900 --save_total_limit 1 --learning_rate 2e-5 --weight_decay 0. --warmup_ratio 0.03 --lr_scheduler_type cosine --logging_steps 1 --tf32 True --model_max_length 2048 --gradient_checkpointing True --dataloader_num_workers 4 --lazy_preprocess True --report_to wandb --pretrain_mm_mlp_adapter /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin --parallel_enable --pretrain_mm_mlp_down_projector /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin --output_dir /network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel
+[2024-10-22 20:14:23,150] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[2024-10-22 20:14:25,271] [INFO] [launch.py:146:main] WORLD INFO DICT: {'localhost': [0, 1, 2, 3]}
+[2024-10-22 20:14:25,271] [INFO] [launch.py:152:main] nnodes=1, num_local_procs=4, node_rank=0
+[2024-10-22 20:14:25,271] [INFO] [launch.py:163:main] global_rank_mapping=defaultdict(<class 'list'>, {'localhost': [0, 1, 2, 3]})
+[2024-10-22 20:14:25,272] [INFO] [launch.py:164:main] dist_world_size=4
+[2024-10-22 20:14:25,272] [INFO] [launch.py:168:main] Setting CUDA_VISIBLE_DEVICES=0,1,2,3
+[2024-10-22 20:14:25,273] [INFO] [launch.py:256:main] process 3222589 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=0', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 20:14:25,274] [INFO] [launch.py:256:main] process 3222590 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=1', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 20:14:25,274] [INFO] [launch.py:256:main] process 3222591 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=2', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 20:14:25,275] [INFO] [launch.py:256:main] process 3222592 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=3', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 20:14:32,565] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-10-22 20:14:32,565] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-10-22 20:14:32,565] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-10-22 20:14:32,565] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[2024-10-22 20:14:33,457] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 20:14:33,480] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 20:14:33,481] [INFO] [comm.py:668:init_distributed] Initializing TorchBackend in DeepSpeed with backend nccl
+[2024-10-22 20:14:33,536] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 20:14:33,556] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 20:14:35,618] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 291, num_elems = 6.74B
+[2024-10-22 20:15:06,404] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 730, num_elems = 7.04B
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+down_projector requires_grad:  <generator object Module.parameters at 0x7f3e082fb840>
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+down_projector requires_grad:  <generator object Module.parameters at 0x7f7eda0d3840>
+down_projector requires_grad:  <generator object Module.parameters at 0x7f3b9c10b840>
+down_projector requires_grad:  <generator object Module.parameters at 0x7fb1fa203840>
+Formatting inputs...Skip in lazy mode
+Parameter Offload: Total persistent parameters: 705026 in 373 params
+{'loss': 0.9079, 'grad_norm': 1.005937310014467, 'learning_rate': 1.1711249566191179e-05, 'epoch': 0.46}
+{'loss': 0.8664, 'grad_norm': 0.8991435701114908, 'learning_rate': 1.17051102973404e-05, 'epoch': 0.46}
+{'loss': 0.887, 'grad_norm': 1.0762042717593268, 'learning_rate': 1.1698970366507096e-05, 'epoch': 0.46}
+{'loss': 0.916, 'grad_norm': 0.9364980867454119, 'learning_rate': 1.1692829776074999e-05, 'epoch': 0.46}
+{'loss': 0.8741, 'grad_norm': 0.9324656149758443, 'learning_rate': 1.1686688528428099e-05, 'epoch': 0.46}
+{'loss': 0.8808, 'grad_norm': 0.8764019442584798, 'learning_rate': 1.1680546625950635e-05, 'epoch': 0.46}
+{'loss': 0.9471, 'grad_norm': 0.9558824349037868, 'learning_rate': 1.167440407102711e-05, 'epoch': 0.46}
+{'loss': 0.857, 'grad_norm': 0.903447432505267, 'learning_rate': 1.1668260866042271e-05, 'epoch': 0.46}
+{'loss': 0.797, 'grad_norm': 0.9668840564260454, 'learning_rate': 1.1662117013381126e-05, 'epoch': 0.46}
+{'loss': 0.8752, 'grad_norm': 0.9313614613225271, 'learning_rate': 1.1655972515428928e-05, 'epoch': 0.46}
+{'loss': 0.9218, 'grad_norm': 1.0594318347460407, 'learning_rate': 1.1649827374571182e-05, 'epoch': 0.46}
+{'loss': 0.8716, 'grad_norm': 1.0385663310406401, 'learning_rate': 1.1643681593193642e-05, 'epoch': 0.46}
+{'loss': 0.8543, 'grad_norm': 0.944432473652055, 'learning_rate': 1.1637535173682318e-05, 'epoch': 0.46}
+{'loss': 0.894, 'grad_norm': 0.9156846597395342, 'learning_rate': 1.1631388118423457e-05, 'epoch': 0.46}
+{'loss': 0.3363, 'grad_norm': 0.675240747538411, 'learning_rate': 1.1625240429803553e-05, 'epoch': 0.46}
+{'loss': 0.366, 'grad_norm': 0.6540105607552186, 'learning_rate': 1.1619092110209361e-05, 'epoch': 0.46}
+{'loss': 0.9145, 'grad_norm': 0.9596467188110419, 'learning_rate': 1.1612943162027863e-05, 'epoch': 0.46}
+{'loss': 0.8612, 'grad_norm': 1.1716805486944506, 'learning_rate': 1.1606793587646295e-05, 'epoch': 0.47}
+{'loss': 0.9307, 'grad_norm': 1.1527021858888162, 'learning_rate': 1.160064338945213e-05, 'epoch': 0.47}
+{'loss': 0.9289, 'grad_norm': 1.0708939525997934, 'learning_rate': 1.1594492569833093e-05, 'epoch': 0.47}
+{'loss': 0.3581, 'grad_norm': 0.6053775513359461, 'learning_rate': 1.1588341131177137e-05, 'epoch': 0.47}
+{'loss': 0.9131, 'grad_norm': 1.01391930936373, 'learning_rate': 1.1582189075872467e-05, 'epoch': 0.47}
+{'loss': 0.8697, 'grad_norm': 0.9741895989916355, 'learning_rate': 1.1576036406307523e-05, 'epoch': 0.47}
+{'loss': 0.8758, 'grad_norm': 0.921667018689677, 'learning_rate': 1.156988312487098e-05, 'epoch': 0.47}
+{'loss': 0.9274, 'grad_norm': 0.9715076038012523, 'learning_rate': 1.1563729233951757e-05, 'epoch': 0.47}
+{'loss': 0.8884, 'grad_norm': 1.0067308566876272, 'learning_rate': 1.1557574735939003e-05, 'epoch': 0.47}
+{'loss': 0.854, 'grad_norm': 0.9085891408929264, 'learning_rate': 1.1551419633222107e-05, 'epoch': 0.47}
+{'loss': 0.8802, 'grad_norm': 0.9284520731543151, 'learning_rate': 1.1545263928190692e-05, 'epoch': 0.47}
+{'loss': 0.8923, 'grad_norm': 0.9525377369796509, 'learning_rate': 1.1539107623234618e-05, 'epoch': 0.47}
+{'loss': 0.8973, 'grad_norm': 0.9544373226090285, 'learning_rate': 1.153295072074397e-05, 'epoch': 0.47}
+{'loss': 0.8835, 'grad_norm': 0.9683544118025285, 'learning_rate': 1.1526793223109072e-05, 'epoch': 0.47}
+{'loss': 0.8608, 'grad_norm': 1.05574911609896, 'learning_rate': 1.1520635132720475e-05, 'epoch': 0.47}
+{'loss': 0.9134, 'grad_norm': 1.0023631140788147, 'learning_rate': 1.1514476451968961e-05, 'epoch': 0.47}
+{'loss': 0.8459, 'grad_norm': 0.9121017332811616, 'learning_rate': 1.1508317183245545e-05, 'epoch': 0.47}
+{'loss': 0.8886, 'grad_norm': 1.036029991588047, 'learning_rate': 1.1502157328941466e-05, 'epoch': 0.47}
+{'loss': 0.8987, 'grad_norm': 0.9844362008575608, 'learning_rate': 1.149599689144819e-05, 'epoch': 0.47}
+{'loss': 0.9161, 'grad_norm': 0.9401494438699863, 'learning_rate': 1.1489835873157414e-05, 'epoch': 0.47}
+{'loss': 0.8606, 'grad_norm': 0.9064705880610731, 'learning_rate': 1.1483674276461053e-05, 'epoch': 0.47}
+{'loss': 0.9148, 'grad_norm': 1.0147292815929496, 'learning_rate': 1.1477512103751254e-05, 'epoch': 0.47}
+{'loss': 0.9057, 'grad_norm': 1.0538617736188753, 'learning_rate': 1.1471349357420384e-05, 'epoch': 0.47}
+{'loss': 0.8793, 'grad_norm': 1.14596691837862, 'learning_rate': 1.1465186039861033e-05, 'epoch': 0.47}
+{'loss': 0.9128, 'grad_norm': 0.9792732384860856, 'learning_rate': 1.1459022153466016e-05, 'epoch': 0.47}
+{'loss': 0.9101, 'grad_norm': 1.1573408340342775, 'learning_rate': 1.1452857700628362e-05, 'epoch': 0.47}
+{'loss': 0.8743, 'grad_norm': 1.0080802113198628, 'learning_rate': 1.1446692683741326e-05, 'epoch': 0.47}
+{'loss': 0.9116, 'grad_norm': 1.202644447017618, 'learning_rate': 1.1440527105198377e-05, 'epoch': 0.47}
+{'loss': 0.8632, 'grad_norm': 1.0027842243204308, 'learning_rate': 1.143436096739321e-05, 'epoch': 0.47}
+{'loss': 0.8926, 'grad_norm': 1.031981138183414, 'learning_rate': 1.1428194272719729e-05, 'epoch': 0.47}
+{'loss': 0.9061, 'grad_norm': 0.971516453916735, 'learning_rate': 1.1422027023572052e-05, 'epoch': 0.47}
+{'loss': 0.8752, 'grad_norm': 0.9943890434741213, 'learning_rate': 1.1415859222344525e-05, 'epoch': 0.47}
+{'loss': 0.8784, 'grad_norm': 0.9902374369783421, 'learning_rate': 1.14096908714317e-05, 'epoch': 0.47}
+{'loss': 0.8688, 'grad_norm': 0.9829497210280755, 'learning_rate': 1.1403521973228342e-05, 'epoch': 0.47}
+{'loss': 0.9121, 'grad_norm': 0.9588055422822983, 'learning_rate': 1.1397352530129428e-05, 'epoch': 0.47}
+{'loss': 0.9281, 'grad_norm': 1.0386831205827558, 'learning_rate': 1.139118254453015e-05, 'epoch': 0.47}
+{'loss': 0.8621, 'grad_norm': 0.9531246373830363, 'learning_rate': 1.1385012018825907e-05, 'epoch': 0.47}
+[2024-10-22 20:26:45,944] [WARNING] [stage3.py:2069:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+{'loss': 0.3479, 'grad_norm': 0.7331999024029499, 'learning_rate': 1.1378840955412313e-05, 'epoch': 0.47}
+{'loss': 0.9149, 'grad_norm': 0.9467744973440546, 'learning_rate': 1.1372669356685185e-05, 'epoch': 0.47}
+WARNING: tokenization mismatch: 1 vs. 64. (ignored)
+{'loss': 0.8589, 'grad_norm': 0.9757424911497375, 'learning_rate': 1.1366497225040549e-05, 'epoch': 0.47}
+{'loss': 0.9006, 'grad_norm': 1.0901947783028625, 'learning_rate': 1.1360324562874643e-05, 'epoch': 0.47}
+{'loss': 0.9199, 'grad_norm': 0.9957958123217678, 'learning_rate': 1.1354151372583901e-05, 'epoch': 0.47}
+{'loss': 0.8695, 'grad_norm': 0.9606196341819543, 'learning_rate': 1.1347977656564974e-05, 'epoch': 0.47}
+{'loss': 0.8696, 'grad_norm': 1.0131262954101714, 'learning_rate': 1.1341803417214705e-05, 'epoch': 0.47}
+{'loss': 0.9068, 'grad_norm': 1.060189712818538, 'learning_rate': 1.1335628656930153e-05, 'epoch': 0.47}
+{'loss': 0.852, 'grad_norm': 1.0723814390976025, 'learning_rate': 1.132945337810857e-05, 'epoch': 0.47}
+{'loss': 0.8385, 'grad_norm': 0.9253375895126698, 'learning_rate': 1.132327758314741e-05, 'epoch': 0.47}
+{'loss': 0.9047, 'grad_norm': 1.088070749344899, 'learning_rate': 1.131710127444433e-05, 'epoch': 0.47}
+{'loss': 0.8763, 'grad_norm': 0.9454150753641143, 'learning_rate': 1.1310924454397187e-05, 'epoch': 0.47}
+{'loss': 0.8784, 'grad_norm': 0.9547353079501119, 'learning_rate': 1.1304747125404031e-05, 'epoch': 0.47}
+{'loss': 0.9635, 'grad_norm': 1.0695669095490419, 'learning_rate': 1.129856928986312e-05, 'epoch': 0.47}
+{'loss': 0.8684, 'grad_norm': 0.9870670422040827, 'learning_rate': 1.12923909501729e-05, 'epoch': 0.47}
+{'loss': 0.9044, 'grad_norm': 1.1209780504083968, 'learning_rate': 1.1286212108732015e-05, 'epoch': 0.48}
+{'loss': 0.8394, 'grad_norm': 0.9260709538161584, 'learning_rate': 1.1280032767939302e-05, 'epoch': 0.48}
+{'loss': 0.8488, 'grad_norm': 1.0067832055190764, 'learning_rate': 1.1273852930193798e-05, 'epoch': 0.48}
+{'loss': 0.9207, 'grad_norm': 1.0482401152163467, 'learning_rate': 1.1267672597894725e-05, 'epoch': 0.48}
+{'loss': 0.7635, 'grad_norm': 0.990498391070203, 'learning_rate': 1.12614917734415e-05, 'epoch': 0.48}
+{'loss': 0.8641, 'grad_norm': 0.9023489310898091, 'learning_rate': 1.1255310459233737e-05, 'epoch': 0.48}
+{'loss': 0.9382, 'grad_norm': 0.9588629244283786, 'learning_rate': 1.1249128657671233e-05, 'epoch': 0.48}
+{'loss': 0.8911, 'grad_norm': 0.8898701639656519, 'learning_rate': 1.1242946371153974e-05, 'epoch': 0.48}
+{'loss': 0.9182, 'grad_norm': 1.0832574638131642, 'learning_rate': 1.1236763602082136e-05, 'epoch': 0.48}
+{'loss': 0.8966, 'grad_norm': 1.0528140347006387, 'learning_rate': 1.1230580352856088e-05, 'epoch': 0.48}
+{'loss': 0.8811, 'grad_norm': 0.8664658251365904, 'learning_rate': 1.1224396625876375e-05, 'epoch': 0.48}
+{'loss': 0.8517, 'grad_norm': 0.9480552588484865, 'learning_rate': 1.1218212423543734e-05, 'epoch': 0.48}
+{'loss': 0.9454, 'grad_norm': 0.9717450874775155, 'learning_rate': 1.1212027748259086e-05, 'epoch': 0.48}
+{'loss': 0.8528, 'grad_norm': 0.9477725734376724, 'learning_rate': 1.1205842602423537e-05, 'epoch': 0.48}
+{'loss': 0.8515, 'grad_norm': 0.9615786700672107, 'learning_rate': 1.1199656988438373e-05, 'epoch': 0.48}
+{'loss': 0.9228, 'grad_norm': 1.0531496073512494, 'learning_rate': 1.1193470908705055e-05, 'epoch': 0.48}
+{'loss': 0.9132, 'grad_norm': 1.0608934194775528, 'learning_rate': 1.1187284365625241e-05, 'epoch': 0.48}
+{'loss': 0.8911, 'grad_norm': 1.1674143463002122, 'learning_rate': 1.1181097361600754e-05, 'epoch': 0.48}
+{'loss': 0.8001, 'grad_norm': 0.9706307143551238, 'learning_rate': 1.1174909899033608e-05, 'epoch': 0.48}
+{'loss': 0.9412, 'grad_norm': 1.1029637144414044, 'learning_rate': 1.1168721980325987e-05, 'epoch': 0.48}
+{'loss': 0.8698, 'grad_norm': 0.8530887698449797, 'learning_rate': 1.1162533607880251e-05, 'epoch': 0.48}
+{'loss': 0.926, 'grad_norm': 0.9462767508141433, 'learning_rate': 1.1156344784098942e-05, 'epoch': 0.48}
+{'loss': 0.882, 'grad_norm': 1.0035878329851264, 'learning_rate': 1.1150155511384772e-05, 'epoch': 0.48}
+{'loss': 0.8994, 'grad_norm': 0.9049365116908481, 'learning_rate': 1.1143965792140631e-05, 'epoch': 0.48}
+{'loss': 0.9504, 'grad_norm': 0.9969665984033173, 'learning_rate': 1.1137775628769584e-05, 'epoch': 0.48}
+{'loss': 0.9303, 'grad_norm': 0.991623112373297, 'learning_rate': 1.1131585023674863e-05, 'epoch': 0.48}
+{'loss': 0.8472, 'grad_norm': 0.9864428149124668, 'learning_rate': 1.1125393979259874e-05, 'epoch': 0.48}
+{'loss': 0.8574, 'grad_norm': 0.8959838852166273, 'learning_rate': 1.1119202497928192e-05, 'epoch': 0.48}
+{'loss': 0.8917, 'grad_norm': 0.9564594879621461, 'learning_rate': 1.1113010582083568e-05, 'epoch': 0.48}
+{'loss': 0.8836, 'grad_norm': 0.9387599151751542, 'learning_rate': 1.1106818234129913e-05, 'epoch': 0.48}
+{'loss': 0.8838, 'grad_norm': 1.0675471247520696, 'learning_rate': 1.1100625456471307e-05, 'epoch': 0.48}
+{'loss': 0.8794, 'grad_norm': 1.0662712061346717, 'learning_rate': 1.1094432251512006e-05, 'epoch': 0.48}
+{'loss': 0.8656, 'grad_norm': 0.9555007104876293, 'learning_rate': 1.1088238621656422e-05, 'epoch': 0.48}
+{'loss': 0.9241, 'grad_norm': 1.0097818526759368, 'learning_rate': 1.1082044569309138e-05, 'epoch': 0.48}
+{'loss': 0.894, 'grad_norm': 1.0055462000001836, 'learning_rate': 1.1075850096874894e-05, 'epoch': 0.48}
+{'loss': 0.341, 'grad_norm': 0.7401252719287092, 'learning_rate': 1.1069655206758603e-05, 'epoch': 0.48}
+{'loss': 0.9322, 'grad_norm': 0.9320371070020252, 'learning_rate': 1.1063459901365325e-05, 'epoch': 0.48}
+{'loss': 0.9193, 'grad_norm': 1.2513938017109907, 'learning_rate': 1.1057264183100303e-05, 'epoch': 0.48}
+{'loss': 0.8505, 'grad_norm': 0.9036249528755956, 'learning_rate': 1.1051068054368921e-05, 'epoch': 0.48}
+{'loss': 0.8586, 'grad_norm': 0.8609343055867958, 'learning_rate': 1.104487151757673e-05, 'epoch': 0.48}
+{'loss': 0.853, 'grad_norm': 1.0430281199085623, 'learning_rate': 1.1038674575129442e-05, 'epoch': 0.48}
+{'loss': 0.8726, 'grad_norm': 1.0266177459553925, 'learning_rate': 1.1032477229432921e-05, 'epoch': 0.48}
+{'loss': 0.3566, 'grad_norm': 0.6419094161480742, 'learning_rate': 1.1026279482893187e-05, 'epoch': 0.48}
+{'loss': 0.9129, 'grad_norm': 0.9397968453568211, 'learning_rate': 1.1020081337916425e-05, 'epoch': 0.48}
+{'loss': 0.3661, 'grad_norm': 0.6291743984874231, 'learning_rate': 1.1013882796908963e-05, 'epoch': 0.48}
+{'loss': 0.8717, 'grad_norm': 0.9850572377963629, 'learning_rate': 1.1007683862277292e-05, 'epoch': 0.48}
+{'loss': 0.8671, 'grad_norm': 0.9718168167994888, 'learning_rate': 1.1001484536428052e-05, 'epoch': 0.48}
+{'loss': 0.8755, 'grad_norm': 0.934394748584042, 'learning_rate': 1.0995284821768029e-05, 'epoch': 0.48}
+{'loss': 0.8844, 'grad_norm': 0.9348500748139394, 'learning_rate': 1.098908472070417e-05, 'epoch': 0.48}
+{'loss': 0.909, 'grad_norm': 1.035080758325035, 'learning_rate': 1.0982884235643567e-05, 'epoch': 0.48}
+{'loss': 0.9398, 'grad_norm': 1.047056956168864, 'learning_rate': 1.0976683368993464e-05, 'epoch': 0.48}
+{'loss': 0.955, 'grad_norm': 0.943667369613196, 'learning_rate': 1.0970482123161249e-05, 'epoch': 0.48}
+{'loss': 0.8989, 'grad_norm': 0.9363440961027861, 'learning_rate': 1.0964280500554459e-05, 'epoch': 0.49}
+{'loss': 0.9217, 'grad_norm': 0.9803250656034725, 'learning_rate': 1.0958078503580776e-05, 'epoch': 0.49}
+{'loss': 0.8871, 'grad_norm': 1.0465746274151284, 'learning_rate': 1.0951876134648032e-05, 'epoch': 0.49}
+{'loss': 0.8808, 'grad_norm': 1.0448639087748222, 'learning_rate': 1.0945673396164198e-05, 'epoch': 0.49}
+{'loss': 0.9036, 'grad_norm': 1.0357867501806612, 'learning_rate': 1.0939470290537389e-05, 'epoch': 0.49}
+{'loss': 0.8435, 'grad_norm': 0.978222247356187, 'learning_rate': 1.0933266820175868e-05, 'epoch': 0.49}
+{'loss': 0.3422, 'grad_norm': 0.6251138113912347, 'learning_rate': 1.0927062987488035e-05, 'epoch': 0.49}
+{'loss': 0.8888, 'grad_norm': 0.8877566469282211, 'learning_rate': 1.0920858794882429e-05, 'epoch': 0.49}
+{'loss': 0.9081, 'grad_norm': 0.9717594380943408, 'learning_rate': 1.0914654244767736e-05, 'epoch': 0.49}
+{'loss': 0.3172, 'grad_norm': 0.6240760433061956, 'learning_rate': 1.0908449339552769e-05, 'epoch': 0.49}
+{'loss': 0.827, 'grad_norm': 1.0165129708576182, 'learning_rate': 1.0902244081646489e-05, 'epoch': 0.49}
+{'loss': 0.8392, 'grad_norm': 0.9840692734481437, 'learning_rate': 1.0896038473457993e-05, 'epoch': 0.49}
+{'loss': 0.8745, 'grad_norm': 0.9342106320157699, 'learning_rate': 1.0889832517396511e-05, 'epoch': 0.49}
+{'loss': 0.8923, 'grad_norm': 0.9762998714696729, 'learning_rate': 1.0883626215871408e-05, 'epoch': 0.49}
+{'loss': 0.9019, 'grad_norm': 0.9836208087072018, 'learning_rate': 1.0877419571292183e-05, 'epoch': 0.49}
+{'loss': 0.9199, 'grad_norm': 1.0404462857989838, 'learning_rate': 1.0871212586068469e-05, 'epoch': 0.49}
+{'loss': 0.8707, 'grad_norm': 0.9980056346355243, 'learning_rate': 1.0865005262610033e-05, 'epoch': 0.49}
+{'loss': 0.8592, 'grad_norm': 0.8492354783739996, 'learning_rate': 1.085879760332677e-05, 'epoch': 0.49}
+{'loss': 0.8796, 'grad_norm': 1.081426366693199, 'learning_rate': 1.085258961062871e-05, 'epoch': 0.49}
+{'loss': 0.8375, 'grad_norm': 0.9008457795610435, 'learning_rate': 1.0846381286926007e-05, 'epoch': 0.49}
+{'loss': 0.8607, 'grad_norm': 0.9328826184308177, 'learning_rate': 1.0840172634628948e-05, 'epoch': 0.49}
+{'loss': 0.8583, 'grad_norm': 0.9874186956044517, 'learning_rate': 1.0833963656147944e-05, 'epoch': 0.49}
+{'loss': 0.3395, 'grad_norm': 0.6984667798517735, 'learning_rate': 1.082775435389353e-05, 'epoch': 0.49}
+{'loss': 0.888, 'grad_norm': 0.9898677734982595, 'learning_rate': 1.0821544730276379e-05, 'epoch': 0.49}
+{'loss': 0.8461, 'grad_norm': 0.8718888073396082, 'learning_rate': 1.0815334787707277e-05, 'epoch': 0.49}
+{'loss': 0.8752, 'grad_norm': 0.969443077040199, 'learning_rate': 1.0809124528597138e-05, 'epoch': 0.49}
+{'loss': 0.9165, 'grad_norm': 0.9420213277542193, 'learning_rate': 1.0802913955356998e-05, 'epoch': 0.49}
+{'loss': 0.8758, 'grad_norm': 1.0488313965769793, 'learning_rate': 1.0796703070398016e-05, 'epoch': 0.49}
+{'loss': 0.8898, 'grad_norm': 0.945356616493344, 'learning_rate': 1.079049187613147e-05, 'epoch': 0.49}
+{'loss': 0.905, 'grad_norm': 1.0701290748785353, 'learning_rate': 1.0784280374968761e-05, 'epoch': 0.49}
+{'loss': 0.9274, 'grad_norm': 0.9268050060552103, 'learning_rate': 1.0778068569321403e-05, 'epoch': 0.49}
+{'loss': 0.9087, 'grad_norm': 1.1069390429972006, 'learning_rate': 1.077185646160104e-05, 'epoch': 0.49}
+{'loss': 0.8964, 'grad_norm': 1.064535092257013, 'learning_rate': 1.0765644054219422e-05, 'epoch': 0.49}
+{'loss': 0.849, 'grad_norm': 0.9981742066396639, 'learning_rate': 1.0759431349588421e-05, 'epoch': 0.49}
+{'loss': 0.9184, 'grad_norm': 1.0449701382063312, 'learning_rate': 1.0753218350120023e-05, 'epoch': 0.49}
+{'loss': 0.8605, 'grad_norm': 0.9141994450788471, 'learning_rate': 1.0747005058226325e-05, 'epoch': 0.49}
+{'loss': 0.8318, 'grad_norm': 0.9388042131653237, 'learning_rate': 1.0740791476319543e-05, 'epoch': 0.49}
+{'loss': 0.8579, 'grad_norm': 1.0428081684269348, 'learning_rate': 1.0734577606812007e-05, 'epoch': 0.49}
+{'loss': 0.8816, 'grad_norm': 1.1185968806481617, 'learning_rate': 1.0728363452116149e-05, 'epoch': 0.49}
+{'loss': 0.852, 'grad_norm': 0.9885368299066685, 'learning_rate': 1.0722149014644523e-05, 'epoch': 0.49}
+{'loss': 0.8633, 'grad_norm': 1.1772577824577604, 'learning_rate': 1.0715934296809782e-05, 'epoch': 0.49}
+{'loss': 0.8949, 'grad_norm': 0.959010466863088, 'learning_rate': 1.0709719301024698e-05, 'epoch': 0.49}
+{'loss': 0.912, 'grad_norm': 1.0956045682367916, 'learning_rate': 1.0703504029702148e-05, 'epoch': 0.49}
+{'loss': 0.9035, 'grad_norm': 1.029299189929653, 'learning_rate': 1.0697288485255107e-05, 'epoch': 0.49}
+{'loss': 0.3422, 'grad_norm': 0.6514877908089105, 'learning_rate': 1.0691072670096669e-05, 'epoch': 0.49}
+{'loss': 0.836, 'grad_norm': 0.922360728563191, 'learning_rate': 1.0684856586640026e-05, 'epoch': 0.49}
+{'loss': 0.8789, 'grad_norm': 0.9959256575044103, 'learning_rate': 1.0678640237298476e-05, 'epoch': 0.49}
+{'loss': 0.8775, 'grad_norm': 0.9148159862569856, 'learning_rate': 1.0672423624485423e-05, 'epoch': 0.49}
+{'loss': 0.8717, 'grad_norm': 0.9642603428202836, 'learning_rate': 1.0666206750614363e-05, 'epoch': 0.49}
+{'loss': 0.8926, 'grad_norm': 0.9206976555104179, 'learning_rate': 1.0659989618098904e-05, 'epoch': 0.49}
+{'loss': 0.9228, 'grad_norm': 0.9533545740684443, 'learning_rate': 1.065377222935275e-05, 'epoch': 0.49}
+{'loss': 0.9305, 'grad_norm': 1.0056689892893023, 'learning_rate': 1.0647554586789708e-05, 'epoch': 0.49}
+{'loss': 0.8718, 'grad_norm': 0.9700152171674677, 'learning_rate': 1.064133669282368e-05, 'epoch': 0.5}
+{'loss': 0.8924, 'grad_norm': 0.9372312077280743, 'learning_rate': 1.0635118549868668e-05, 'epoch': 0.5}
+{'loss': 0.8481, 'grad_norm': 1.073249475893983, 'learning_rate': 1.0628900160338764e-05, 'epoch': 0.5}
+{'loss': 0.829, 'grad_norm': 0.9026413271363006, 'learning_rate': 1.0622681526648167e-05, 'epoch': 0.5}
+{'loss': 0.8594, 'grad_norm': 0.9410228429208574, 'learning_rate': 1.0616462651211156e-05, 'epoch': 0.5}
+{'loss': 0.7975, 'grad_norm': 0.8606965382256804, 'learning_rate': 1.0610243536442125e-05, 'epoch': 0.5}
+{'loss': 0.3495, 'grad_norm': 0.6456026591798066, 'learning_rate': 1.0604024184755539e-05, 'epoch': 0.5}
+{'loss': 0.9485, 'grad_norm': 1.040400756668743, 'learning_rate': 1.0597804598565969e-05, 'epoch': 0.5}
+{'loss': 0.8887, 'grad_norm': 0.9695332675050622, 'learning_rate': 1.0591584780288069e-05, 'epoch': 0.5}
+{'loss': 0.89, 'grad_norm': 0.9845136229997941, 'learning_rate': 1.0585364732336587e-05, 'epoch': 0.5}
+{'loss': 0.8651, 'grad_norm': 0.9334608950880269, 'learning_rate': 1.0579144457126365e-05, 'epoch': 0.5}
+{'loss': 0.8575, 'grad_norm': 0.9371123830397659, 'learning_rate': 1.057292395707232e-05, 'epoch': 0.5}
+{'loss': 0.8696, 'grad_norm': 0.8911880674892266, 'learning_rate': 1.0566703234589471e-05, 'epoch': 0.5}
+{'loss': 0.3713, 'grad_norm': 0.603393209225374, 'learning_rate': 1.0560482292092912e-05, 'epoch': 0.5}
+{'loss': 0.9166, 'grad_norm': 1.0039769217673917, 'learning_rate': 1.0554261131997833e-05, 'epoch': 0.5}
+{'loss': 0.8545, 'grad_norm': 0.9096218392279379, 'learning_rate': 1.0548039756719497e-05, 'epoch': 0.5}
+{'loss': 0.9411, 'grad_norm': 1.0541961109640645, 'learning_rate': 1.054181816867326e-05, 'epoch': 0.5}
+{'loss': 0.9166, 'grad_norm': 0.9645498752610714, 'learning_rate': 1.053559637027455e-05, 'epoch': 0.5}
+{'loss': 0.9449, 'grad_norm': 1.0495358589197203, 'learning_rate': 1.0529374363938888e-05, 'epoch': 0.5}
+{'loss': 0.8293, 'grad_norm': 1.0176344710137528, 'learning_rate': 1.0523152152081875e-05, 'epoch': 0.5}
+{'loss': 0.8963, 'grad_norm': 1.0524137329885026, 'learning_rate': 1.051692973711918e-05, 'epoch': 0.5}
+{'loss': 0.9113, 'grad_norm': 0.9821722636416373, 'learning_rate': 1.0510707121466568e-05, 'epoch': 0.5}
+{'loss': 0.317, 'grad_norm': 0.643413230569311, 'learning_rate': 1.0504484307539864e-05, 'epoch': 0.5}
+{'loss': 0.8829, 'grad_norm': 0.9097772517950149, 'learning_rate': 1.0498261297754984e-05, 'epoch': 0.5}
+{'loss': 0.8982, 'grad_norm': 1.103643588007737, 'learning_rate': 1.0492038094527907e-05, 'epoch': 0.5}
+{'loss': 0.8618, 'grad_norm': 0.9690173524737978, 'learning_rate': 1.0485814700274706e-05, 'epoch': 0.5}
+{'loss': 0.8262, 'grad_norm': 1.0221760129734134, 'learning_rate': 1.047959111741151e-05, 'epoch': 0.5}
+{'loss': 0.9194, 'grad_norm': 0.9428747720024051, 'learning_rate': 1.0473367348354529e-05, 'epoch': 0.5}
+{'loss': 0.898, 'grad_norm': 1.0470324008089182, 'learning_rate': 1.0467143395520044e-05, 'epoch': 0.5}
+{'loss': 0.8794, 'grad_norm': 0.9841197125890075, 'learning_rate': 1.046091926132441e-05, 'epoch': 0.5}
+{'loss': 0.8762, 'grad_norm': 1.0851805588648697, 'learning_rate': 1.0454694948184045e-05, 'epoch': 0.5}
+{'loss': 0.8757, 'grad_norm': 0.9104087222172116, 'learning_rate': 1.044847045851545e-05, 'epoch': 0.5}
+{'loss': 0.9008, 'grad_norm': 0.9179767299540263, 'learning_rate': 1.044224579473518e-05, 'epoch': 0.5}
+{'loss': 0.8602, 'grad_norm': 1.0138818441263893, 'learning_rate': 1.0436020959259862e-05, 'epoch': 0.5}
+{'loss': 0.8649, 'grad_norm': 0.9666955096916333, 'learning_rate': 1.0429795954506203e-05, 'epoch': 0.5}
+{'loss': 0.871, 'grad_norm': 0.9186207869025147, 'learning_rate': 1.0423570782890951e-05, 'epoch': 0.5}
+{'loss': 0.8409, 'grad_norm': 1.0205155650148128, 'learning_rate': 1.0417345446830938e-05, 'epoch': 0.5}
+{'loss': 0.8629, 'grad_norm': 0.9633662527382101, 'learning_rate': 1.0411119948743052e-05, 'epoch': 0.5}
+{'loss': 0.8605, 'grad_norm': 1.0077976626117788, 'learning_rate': 1.0404894291044247e-05, 'epoch': 0.5}
+{'loss': 0.8492, 'grad_norm': 0.9756334317612805, 'learning_rate': 1.0398668476151538e-05, 'epoch': 0.5}
+{'loss': 0.9491, 'grad_norm': 0.9264646172555311, 'learning_rate': 1.0392442506482e-05, 'epoch': 0.5}
+{'loss': 0.8637, 'grad_norm': 0.9483382714881866, 'learning_rate': 1.038621638445277e-05, 'epoch': 0.5}
+{'loss': 0.9292, 'grad_norm': 0.997895893236104, 'learning_rate': 1.037999011248104e-05, 'epoch': 0.5}
+{'loss': 0.8828, 'grad_norm': 0.9678429443254226, 'learning_rate': 1.0373763692984062e-05, 'epoch': 0.5}
+{'loss': 0.8798, 'grad_norm': 1.0054053362557038, 'learning_rate': 1.0367537128379154e-05, 'epoch': 0.5}
+{'loss': 0.8549, 'grad_norm': 0.9637780583448923, 'learning_rate': 1.0361310421083677e-05, 'epoch': 0.5}
+{'loss': 0.9037, 'grad_norm': 1.1363205174422448, 'learning_rate': 1.0355083573515052e-05, 'epoch': 0.5}
+{'loss': 0.8785, 'grad_norm': 0.9745386076733883, 'learning_rate': 1.0348856588090764e-05, 'epoch': 0.5}
+{'loss': 0.9028, 'grad_norm': 0.9758254923169307, 'learning_rate': 1.0342629467228331e-05, 'epoch': 0.5}
+{'loss': 0.8365, 'grad_norm': 1.032461474447814, 'learning_rate': 1.0336402213345345e-05, 'epoch': 0.5}
+{'loss': 0.8718, 'grad_norm': 0.97277297224993, 'learning_rate': 1.0330174828859434e-05, 'epoch': 0.5}
+{'loss': 0.8628, 'grad_norm': 0.9375009662590592, 'learning_rate': 1.0323947316188288e-05, 'epoch': 0.51}
+{'loss': 0.8467, 'grad_norm': 0.8865447404749632, 'learning_rate': 1.031771967774964e-05, 'epoch': 0.51}
+{'loss': 0.9014, 'grad_norm': 0.9941917018337593, 'learning_rate': 1.0311491915961271e-05, 'epoch': 0.51}
+{'loss': 0.9148, 'grad_norm': 0.9727614390474361, 'learning_rate': 1.030526403324102e-05, 'epoch': 0.51}
+{'loss': 0.8743, 'grad_norm': 0.9136740311594846, 'learning_rate': 1.0299036032006759e-05, 'epoch': 0.51}
+{'loss': 0.8578, 'grad_norm': 1.0306541851664395, 'learning_rate': 1.0292807914676412e-05, 'epoch': 0.51}
+{'loss': 0.8761, 'grad_norm': 1.0113115122770981, 'learning_rate': 1.0286579683667952e-05, 'epoch': 0.51}
+{'loss': 0.8798, 'grad_norm': 1.0832251425095145, 'learning_rate': 1.0280351341399392e-05, 'epoch': 0.51}
+{'loss': 0.8721, 'grad_norm': 0.9065035296783143, 'learning_rate': 1.027412289028879e-05, 'epoch': 0.51}
+{'loss': 0.9138, 'grad_norm': 0.982585597545813, 'learning_rate': 1.0267894332754243e-05, 'epoch': 0.51}
+{'loss': 0.359, 'grad_norm': 0.6208576012264497, 'learning_rate': 1.0261665671213891e-05, 'epoch': 0.51}
+{'loss': 0.8541, 'grad_norm': 0.9644248170214155, 'learning_rate': 1.0255436908085919e-05, 'epoch': 0.51}
+{'loss': 0.8769, 'grad_norm': 0.9618488003802285, 'learning_rate': 1.024920804578854e-05, 'epoch': 0.51}
+{'loss': 0.3596, 'grad_norm': 0.6339330857120377, 'learning_rate': 1.0242979086740019e-05, 'epoch': 0.51}
+{'loss': 0.8614, 'grad_norm': 0.912810099193774, 'learning_rate': 1.023675003335865e-05, 'epoch': 0.51}
+{'loss': 0.8627, 'grad_norm': 1.07296583079901, 'learning_rate': 1.0230520888062765e-05, 'epoch': 0.51}
+[2024-10-22 21:01:34,036] [WARNING] [stage3.py:2069:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+{'loss': 0.3451, 'grad_norm': 0.6332137037591519, 'learning_rate': 1.0224291653270739e-05, 'epoch': 0.51}
+{'loss': 0.937, 'grad_norm': 1.1492836088693443, 'learning_rate': 1.0218062331400969e-05, 'epoch': 0.51}
+{'loss': 0.8756, 'grad_norm': 1.0737454321421842, 'learning_rate': 1.0211832924871889e-05, 'epoch': 0.51}
+{'loss': 0.875, 'grad_norm': 0.9310566773826919, 'learning_rate': 1.0205603436101978e-05, 'epoch': 0.51}
+{'loss': 0.931, 'grad_norm': 1.009539015602602, 'learning_rate': 1.0199373867509734e-05, 'epoch': 0.51}
+{'loss': 0.8908, 'grad_norm': 1.0331396233775934, 'learning_rate': 1.019314422151369e-05, 'epoch': 0.51}
+{'loss': 0.8975, 'grad_norm': 0.9654066166925612, 'learning_rate': 1.0186914500532408e-05, 'epoch': 0.51}
+{'loss': 0.894, 'grad_norm': 1.1227126559793628, 'learning_rate': 1.0180684706984483e-05, 'epoch': 0.51}
+{'loss': 0.9033, 'grad_norm': 1.0886502983716186, 'learning_rate': 1.0174454843288533e-05, 'epoch': 0.51}
+{'loss': 0.9133, 'grad_norm': 0.9899958479902287, 'learning_rate': 1.0168224911863205e-05, 'epoch': 0.51}
+{'loss': 0.9024, 'grad_norm': 1.0715546425317535, 'learning_rate': 1.0161994915127173e-05, 'epoch': 0.51}
+{'loss': 0.8356, 'grad_norm': 1.043355988185733, 'learning_rate': 1.015576485549914e-05, 'epoch': 0.51}
+{'loss': 0.9223, 'grad_norm': 1.1138500359526011, 'learning_rate': 1.0149534735397823e-05, 'epoch': 0.51}
+{'loss': 0.8738, 'grad_norm': 0.9216621416121514, 'learning_rate': 1.0143304557241979e-05, 'epoch': 0.51}
+{'loss': 0.8816, 'grad_norm': 1.006300895922922, 'learning_rate': 1.0137074323450372e-05, 'epoch': 0.51}
+{'loss': 0.9304, 'grad_norm': 1.1696828165386026, 'learning_rate': 1.0130844036441787e-05, 'epoch': 0.51}
+{'loss': 0.8763, 'grad_norm': 1.008702727374166, 'learning_rate': 1.0124613698635043e-05, 'epoch': 0.51}
+{'loss': 0.8702, 'grad_norm': 0.9812431957575801, 'learning_rate': 1.0118383312448973e-05, 'epoch': 0.51}
+{'loss': 0.9195, 'grad_norm': 0.9161955569227407, 'learning_rate': 1.0112152880302426e-05, 'epoch': 0.51}
+{'loss': 0.3432, 'grad_norm': 0.6796569043934075, 'learning_rate': 1.0105922404614265e-05, 'epoch': 0.51}
+{'loss': 0.9108, 'grad_norm': 0.9206605123071245, 'learning_rate': 1.0099691887803385e-05, 'epoch': 0.51}
+{'loss': 0.918, 'grad_norm': 0.9421868455611746, 'learning_rate': 1.0093461332288678e-05, 'epoch': 0.51}
+{'loss': 0.9293, 'grad_norm': 0.9542136735340978, 'learning_rate': 1.0087230740489065e-05, 'epoch': 0.51}
+{'loss': 0.346, 'grad_norm': 0.6603099716409652, 'learning_rate': 1.0081000114823473e-05, 'epoch': 0.51}
+{'loss': 0.8728, 'grad_norm': 0.8568585084490498, 'learning_rate': 1.007476945771085e-05, 'epoch': 0.51}
+{'loss': 0.898, 'grad_norm': 0.9873408468117422, 'learning_rate': 1.006853877157015e-05, 'epoch': 0.51}
+{'loss': 0.8925, 'grad_norm': 1.0291407396989978, 'learning_rate': 1.0062308058820337e-05, 'epoch': 0.51}
+{'loss': 0.9201, 'grad_norm': 1.031105541684704, 'learning_rate': 1.0056077321880393e-05, 'epoch': 0.51}
+{'loss': 0.8849, 'grad_norm': 0.9441599750945279, 'learning_rate': 1.0049846563169297e-05, 'epoch': 0.51}
+{'loss': 0.8589, 'grad_norm': 0.9420741098982391, 'learning_rate': 1.0043615785106051e-05, 'epoch': 0.51}
+{'loss': 0.8838, 'grad_norm': 0.9292475006058729, 'learning_rate': 1.0037384990109658e-05, 'epoch': 0.51}
+{'loss': 0.8133, 'grad_norm': 0.8972295980288432, 'learning_rate': 1.0031154180599123e-05, 'epoch': 0.51}
+{'loss': 0.8803, 'grad_norm': 0.9237765426620642, 'learning_rate': 1.0024923358993458e-05, 'epoch': 0.51}
+{'loss': 0.8861, 'grad_norm': 0.9705729171573441, 'learning_rate': 1.0018692527711695e-05, 'epoch': 0.51}
+{'loss': 0.8612, 'grad_norm': 0.9176136565360972, 'learning_rate': 1.0012461689172846e-05, 'epoch': 0.51}
+{'loss': 0.8223, 'grad_norm': 0.9497802677731587, 'learning_rate': 1.0006230845795937e-05, 'epoch': 0.51}
+{'loss': 0.8968, 'grad_norm': 0.9181165155480138, 'learning_rate': 1e-05, 'epoch': 0.52}
+{'loss': 0.8458, 'grad_norm': 1.1086073112495367, 'learning_rate': 9.993769154204063e-06, 'epoch': 0.52}
+{'loss': 0.9043, 'grad_norm': 1.0067404789895842, 'learning_rate': 9.987538310827159e-06, 'epoch': 0.52}
+{'loss': 0.8453, 'grad_norm': 0.9743489917166885, 'learning_rate': 9.981307472288308e-06, 'epoch': 0.52}
+{'loss': 0.8992, 'grad_norm': 0.9861706542904861, 'learning_rate': 9.975076641006542e-06, 'epoch': 0.52}
+{'loss': 0.8718, 'grad_norm': 0.970490067875917, 'learning_rate': 9.968845819400883e-06, 'epoch': 0.52}
+{'loss': 0.8629, 'grad_norm': 0.9800178924075139, 'learning_rate': 9.962615009890346e-06, 'epoch': 0.52}
+{'loss': 0.9276, 'grad_norm': 1.0141736691999217, 'learning_rate': 9.956384214893949e-06, 'epoch': 0.52}
+{'loss': 0.8839, 'grad_norm': 1.000500777890687, 'learning_rate': 9.950153436830707e-06, 'epoch': 0.52}
+{'loss': 0.9399, 'grad_norm': 1.0136707965793652, 'learning_rate': 9.94392267811961e-06, 'epoch': 0.52}
+{'loss': 0.8886, 'grad_norm': 0.9571328862346552, 'learning_rate': 9.937691941179665e-06, 'epoch': 0.52}
+{'loss': 0.9171, 'grad_norm': 1.1196464177186383, 'learning_rate': 9.931461228429856e-06, 'epoch': 0.52}
+{'loss': 0.892, 'grad_norm': 1.0084547897483593, 'learning_rate': 9.925230542289151e-06, 'epoch': 0.52}
+{'loss': 0.888, 'grad_norm': 1.040627127509016, 'learning_rate': 9.91899988517653e-06, 'epoch': 0.52}
+{'loss': 0.3524, 'grad_norm': 0.6706856194372507, 'learning_rate': 9.912769259510938e-06, 'epoch': 0.52}
+{'loss': 0.9093, 'grad_norm': 0.9998354137347804, 'learning_rate': 9.906538667711324e-06, 'epoch': 0.52}
+{'loss': 0.8574, 'grad_norm': 0.9633505704507564, 'learning_rate': 9.90030811219662e-06, 'epoch': 0.52}
+{'loss': 0.884, 'grad_norm': 0.9460783281562898, 'learning_rate': 9.894077595385736e-06, 'epoch': 0.52}
+{'loss': 0.8491, 'grad_norm': 1.013107893441112, 'learning_rate': 9.887847119697577e-06, 'epoch': 0.52}
+{'loss': 0.9313, 'grad_norm': 0.9071757343474158, 'learning_rate': 9.881616687551032e-06, 'epoch': 0.52}
+{'loss': 0.866, 'grad_norm': 1.0116597188137444, 'learning_rate': 9.875386301364958e-06, 'epoch': 0.52}
+{'loss': 0.8058, 'grad_norm': 0.944126673866967, 'learning_rate': 9.869155963558215e-06, 'epoch': 0.52}
+{'loss': 0.8613, 'grad_norm': 0.9064150807836426, 'learning_rate': 9.862925676549635e-06, 'epoch': 0.52}
+{'loss': 0.8963, 'grad_norm': 1.0721603680759755, 'learning_rate': 9.856695442758023e-06, 'epoch': 0.52}
+{'loss': 0.8781, 'grad_norm': 0.9655565829883406, 'learning_rate': 9.850465264602175e-06, 'epoch': 0.52}
+{'loss': 0.8241, 'grad_norm': 0.8903227018512135, 'learning_rate': 9.844235144500865e-06, 'epoch': 0.52}
+{'loss': 0.8273, 'grad_norm': 0.9384175690967719, 'learning_rate': 9.83800508487283e-06, 'epoch': 0.52}
+{'loss': 0.8602, 'grad_norm': 0.956649112630178, 'learning_rate': 9.831775088136797e-06, 'epoch': 0.52}
+{'loss': 0.8407, 'grad_norm': 0.9509688463153742, 'learning_rate': 9.82554515671147e-06, 'epoch': 0.52}
+{'loss': 0.8687, 'grad_norm': 0.9648610652341066, 'learning_rate': 9.819315293015519e-06, 'epoch': 0.52}
+[2024-10-22 21:15:11,617] [WARNING] [stage3.py:2069:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+{'loss': 0.8773, 'grad_norm': 0.9177190789349822, 'learning_rate': 9.813085499467594e-06, 'epoch': 0.52}
+{'loss': 0.9004, 'grad_norm': 0.8944503833190582, 'learning_rate': 9.806855778486314e-06, 'epoch': 0.52}
+{'loss': 0.8983, 'grad_norm': 0.9475302180180007, 'learning_rate': 9.800626132490268e-06, 'epoch': 0.52}
+{'loss': 0.826, 'grad_norm': 0.9214300534487115, 'learning_rate': 9.794396563898022e-06, 'epoch': 0.52}
+{'loss': 0.8281, 'grad_norm': 0.9504598640117983, 'learning_rate': 9.788167075128113e-06, 'epoch': 0.52}
+{'loss': 0.8213, 'grad_norm': 0.8994737855000664, 'learning_rate': 9.781937668599035e-06, 'epoch': 0.52}
+{'loss': 0.8496, 'grad_norm': 0.9900749149432998, 'learning_rate': 9.775708346729263e-06, 'epoch': 0.52}
+{'loss': 0.8445, 'grad_norm': 0.9227107431256885, 'learning_rate': 9.769479111937238e-06, 'epoch': 0.52}
+{'loss': 0.3394, 'grad_norm': 0.7018608440006233, 'learning_rate': 9.763249966641352e-06, 'epoch': 0.52}
+{'loss': 0.9209, 'grad_norm': 0.8970257692295275, 'learning_rate': 9.757020913259986e-06, 'epoch': 0.52}
+{'loss': 0.9043, 'grad_norm': 0.9825679052147511, 'learning_rate': 9.750791954211464e-06, 'epoch': 0.52}
+{'loss': 0.8683, 'grad_norm': 0.9482402375190689, 'learning_rate': 9.744563091914085e-06, 'epoch': 0.52}
+{'loss': 0.8966, 'grad_norm': 0.9308964105105625, 'learning_rate': 9.738334328786114e-06, 'epoch': 0.52}
+{'loss': 0.8987, 'grad_norm': 0.8711109502889693, 'learning_rate': 9.732105667245759e-06, 'epoch': 0.52}
+{'loss': 0.9237, 'grad_norm': 0.9132899512701441, 'learning_rate': 9.725877109711212e-06, 'epoch': 0.52}
+{'loss': 0.9096, 'grad_norm': 0.9840150971963166, 'learning_rate': 9.719648658600611e-06, 'epoch': 0.52}
+{'loss': 0.8541, 'grad_norm': 0.9831218186551218, 'learning_rate': 9.71342031633205e-06, 'epoch': 0.52}
+{'loss': 0.9014, 'grad_norm': 0.9627804320056563, 'learning_rate': 9.70719208532359e-06, 'epoch': 0.52}
+{'loss': 0.8507, 'grad_norm': 0.8755235323338029, 'learning_rate': 9.700963967993246e-06, 'epoch': 0.52}
+{'loss': 0.9234, 'grad_norm': 1.0331618784798557, 'learning_rate': 9.694735966758982e-06, 'epoch': 0.52}
+{'loss': 0.8227, 'grad_norm': 0.9281751888775789, 'learning_rate': 9.688508084038729e-06, 'epoch': 0.52}
+{'loss': 0.8402, 'grad_norm': 1.0131468242168278, 'learning_rate': 9.682280322250365e-06, 'epoch': 0.52}
+{'loss': 0.8656, 'grad_norm': 0.8872809845292758, 'learning_rate': 9.676052683811715e-06, 'epoch': 0.53}
+{'loss': 0.8854, 'grad_norm': 0.9549465068908928, 'learning_rate': 9.669825171140568e-06, 'epoch': 0.53}
+{'loss': 0.8355, 'grad_norm': 0.8684546814326833, 'learning_rate': 9.66359778665466e-06, 'epoch': 0.53}
+{'loss': 0.8644, 'grad_norm': 0.9406524628882474, 'learning_rate': 9.657370532771672e-06, 'epoch': 0.53}
+WARNING: tokenization mismatch: 1 vs. 624. (ignored)
+{'loss': 0.8631, 'grad_norm': 0.9388098436222196, 'learning_rate': 9.651143411909241e-06, 'epoch': 0.53}
+{'loss': 0.9048, 'grad_norm': 0.992601921003676, 'learning_rate': 9.64491642648495e-06, 'epoch': 0.53}
+
+======== GPU REPORT ========
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Oct 22 21:20:15 2024
+Driver Version                            : 560.35.03
+CUDA Version                              : 12.6
+
+Attached GPUs                             : 4
+GPU 00000000:01:00.0
+    Accounting Mode                       : Enabled
+    Accounting Mode Buffer Size           : 4000
+    Accounted Processes
+        Process ID                        : 3222590
+            GPU Utilization               : 0 %
+            Memory Utilization            : 0 %
+            Max memory usage              : 1248 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+        Process ID                        : 3222589
+            GPU Utilization               : 93 %
+            Memory Utilization            : 35 %
+            Max memory usage              : 80004 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+        Process ID                        : 3222591
+            GPU Utilization               : 0 %
+            Memory Utilization            : 0 %
+            Max memory usage              : 1248 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+        Process ID                        : 3222592
+            GPU Utilization               : 0 %
+            Memory Utilization            : 0 %
+            Max memory usage              : 1248 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+
+GPU 00000000:41:00.0
+    Accounting Mode                       : Enabled
+    Accounting Mode Buffer Size           : 4000
+    Accounted Processes
+        Process ID                        : 3222590
+            GPU Utilization               : 95 %
+            Memory Utilization            : 33 %
+            Max memory usage              : 81172 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+
+GPU 00000000:81:00.0
+    Accounting Mode                       : Enabled
+    Accounting Mode Buffer Size           : 4000
+    Accounted Processes
+        Process ID                        : 3222591
+            GPU Utilization               : 95 %
+            Memory Utilization            : 32 %
+            Max memory usage              : 81098 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+
+GPU 00000000:C1:00.0
+    Accounting Mode                       : Enabled
+    Accounting Mode Buffer Size           : 4000
+    Accounted Processes
+        Process ID                        : 3222592
+            GPU Utilization               : 94 %
+            Memory Utilization            : 32 %
+            Max memory usage              : 80360 MiB
+            Time                          : 0 ms
+            Is Running                    : 1
+
+Tue Oct 22 21:20:15 2024       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 560.35.03              Driver Version: 560.35.03      CUDA Version: 12.6     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-SXM4-80GB          On  |   00000000:01:00.0 Off |                    0 |
+| N/A   72C    P0            498W /  500W |   80276MiB /  81920MiB |    100%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A100-SXM4-80GB          On  |   00000000:41:00.0 Off |                    0 |
+| N/A   56C    P0            328W /  500W |   64093MiB /  81920MiB |    100%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA A100-SXM4-80GB          On  |   00000000:81:00.0 Off |                    0 |
+| N/A   56C    P0            471W /  500W |   78345MiB /  81920MiB |    100%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA A100-SXM4-80GB          On  |   00000000:C1:00.0 Off |                    0 |
+| N/A   52C    P0            427W /  500W |   64491MiB /  81920MiB |    100%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A   3222589      C   ...yang/anaconda3/envs/FUYU/bin/python      79010MiB |
+|    0   N/A  N/A   3222590      C   ...yang/anaconda3/envs/FUYU/bin/python        414MiB |
+|    0   N/A  N/A   3222591      C   ...yang/anaconda3/envs/FUYU/bin/python        414MiB |
+|    0   N/A  N/A   3222592      C   ...yang/anaconda3/envs/FUYU/bin/python        414MiB |
+|    1   N/A  N/A   3222590      C   ...yang/anaconda3/envs/FUYU/bin/python      64084MiB |
+|    2   N/A  N/A   3222591      C   ...yang/anaconda3/envs/FUYU/bin/python      78336MiB |
+|    3   N/A  N/A   3222592      C   ...yang/anaconda3/envs/FUYU/bin/python      64482MiB |
++-----------------------------------------------------------------------------------------+
+[2024-10-22 21:20:21,439] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[2024-10-22 21:20:25,206] [WARNING] [runner.py:202:fetch_hostfile] Unable to find hostfile, will proceed with training with local resources only.
+Detected CUDA_VISIBLE_DEVICES=0,1,2,3 but ignoring it because one or several of --include/--exclude/--num_gpus/--num_nodes cl args were used. If you want to use CUDA_VISIBLE_DEVICES don't pass any of these arguments to deepspeed.
+[2024-10-22 21:20:25,206] [INFO] [runner.py:568:main] cmd = /home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python -u -m deepspeed.launcher.launch --world_info=eyJsb2NhbGhvc3QiOiBbMCwgMSwgMiwgM119 --master_addr=127.0.0.1 --master_port=29500 --enable_each_rank_log=None /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py --deepspeed /home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json --model_name_or_path /network/scratch/q/qian.yang/vicuna-7b-v1.5 --version v1 --data_path /home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json --image_folder /home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data --target_dimension 1024 --linear_type star --vlhead_weights_path /network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt --vision_tower facebook/dinov2-large --mm_projector_type mlp2x_gelu --mm_vision_select_layer -2 --mm_use_im_start_end False --mm_use_im_patch_token False --image_aspect_ratio pad --group_by_modality_length True --bf16 True --num_train_epochs 1 --per_device_train_batch_size 16 --per_device_eval_batch_size 4 --gradient_accumulation_steps 2 --evaluation_strategy no --save_strategy steps --save_steps 900 --save_total_limit 1 --learning_rate 2e-5 --weight_decay 0. --warmup_ratio 0.03 --lr_scheduler_type cosine --logging_steps 1 --tf32 True --model_max_length 2048 --gradient_checkpointing True --dataloader_num_workers 4 --lazy_preprocess True --report_to wandb --pretrain_mm_mlp_adapter /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin --parallel_enable --pretrain_mm_mlp_down_projector /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin --output_dir /network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel
+[2024-10-22 21:20:26,942] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[2024-10-22 21:20:29,084] [INFO] [launch.py:146:main] WORLD INFO DICT: {'localhost': [0, 1, 2, 3]}
+[2024-10-22 21:20:29,084] [INFO] [launch.py:152:main] nnodes=1, num_local_procs=4, node_rank=0
+[2024-10-22 21:20:29,085] [INFO] [launch.py:163:main] global_rank_mapping=defaultdict(<class 'list'>, {'localhost': [0, 1, 2, 3]})
+[2024-10-22 21:20:29,085] [INFO] [launch.py:164:main] dist_world_size=4
+[2024-10-22 21:20:29,085] [INFO] [launch.py:168:main] Setting CUDA_VISIBLE_DEVICES=0,1,2,3
+[2024-10-22 21:20:29,086] [INFO] [launch.py:256:main] process 3248879 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=0', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 21:20:29,087] [INFO] [launch.py:256:main] process 3248880 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=1', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 21:20:29,087] [INFO] [launch.py:256:main] process 3248881 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=2', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 21:20:29,088] [INFO] [launch.py:256:main] process 3248882 spawned with command: ['/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python', '-u', '/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py', '--local_rank=3', '--deepspeed', '/home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero3.json', '--model_name_or_path', '/network/scratch/q/qian.yang/vicuna-7b-v1.5', '--version', 'v1', '--data_path', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/llava_v1_5_mix665k.json', '--image_folder', '/home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data', '--target_dimension', '1024', '--linear_type', 'star', '--vlhead_weights_path', '/network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt', '--vision_tower', 'facebook/dinov2-large', '--mm_projector_type', 'mlp2x_gelu', '--mm_vision_select_layer', '-2', '--mm_use_im_start_end', 'False', '--mm_use_im_patch_token', 'False', '--image_aspect_ratio', 'pad', '--group_by_modality_length', 'True', '--bf16', 'True', '--num_train_epochs', '1', '--per_device_train_batch_size', '16', '--per_device_eval_batch_size', '4', '--gradient_accumulation_steps', '2', '--evaluation_strategy', 'no', '--save_strategy', 'steps', '--save_steps', '900', '--save_total_limit', '1', '--learning_rate', '2e-5', '--weight_decay', '0.', '--warmup_ratio', '0.03', '--lr_scheduler_type', 'cosine', '--logging_steps', '1', '--tf32', 'True', '--model_max_length', '2048', '--gradient_checkpointing', 'True', '--dataloader_num_workers', '4', '--lazy_preprocess', 'True', '--report_to', 'wandb', '--pretrain_mm_mlp_adapter', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin', '--parallel_enable', '--pretrain_mm_mlp_down_projector', '/network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin', '--output_dir', '/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_parallel']
+[2024-10-22 21:20:37,344] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-10-22 21:20:37,344] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-10-22 21:20:37,345] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-10-22 21:20:37,347] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.4
+[93m [WARNING] [0m using untested triton version (3.0.0), only 1.0.0 is known to be compatible
+[2024-10-22 21:20:38,215] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 21:20:38,215] [INFO] [comm.py:668:init_distributed] Initializing TorchBackend in DeepSpeed with backend nccl
+[2024-10-22 21:20:38,280] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 21:20:38,293] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 21:20:38,294] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-10-22 21:20:39,503] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 291, num_elems = 6.74B
+[2024-10-22 21:21:11,132] [INFO] [partition_parameters.py:345:__exit__] finished initializing model - num_params = 730, num_elems = 7.04B
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+down_projector requires_grad:  <generator object Module.parameters at 0x7f866614b840>
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+down_projector requires_grad:  <generator object Module.parameters at 0x7fd392a0b840>
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+load mm projector and down projector successfully from: /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/mm_projector.bin and /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20_parallel/down_projector.bin
+down_projector requires_grad:  <generator object Module.parameters at 0x7fb15c13f840>
+down_projector requires_grad:  <generator object Module.parameters at 0x7f299216b840>
+Formatting inputs...Skip in lazy mode
+Parameter Offload: Total persistent parameters: 705026 in 373 params
+{'loss': 0.8781, 'grad_norm': 0.9655826360767121, 'learning_rate': 9.850465264602175e-06, 'epoch': 0.52}
+{'loss': 0.8237, 'grad_norm': 0.8893129199661474, 'learning_rate': 9.844235144500865e-06, 'epoch': 0.52}
+{'loss': 0.8274, 'grad_norm': 0.9417921275089519, 'learning_rate': 9.83800508487283e-06, 'epoch': 0.52}
+{'loss': 0.8603, 'grad_norm': 0.9566289756617662, 'learning_rate': 9.831775088136797e-06, 'epoch': 0.52}
+{'loss': 0.8405, 'grad_norm': 0.9508158641991897, 'learning_rate': 9.82554515671147e-06, 'epoch': 0.52}
+{'loss': 0.8686, 'grad_norm': 0.9643019007830197, 'learning_rate': 9.819315293015519e-06, 'epoch': 0.52}
+[2024-10-22 21:23:53,700] [WARNING] [stage3.py:2069:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+{'loss': 0.8772, 'grad_norm': 0.9180318023975715, 'learning_rate': 9.813085499467594e-06, 'epoch': 0.52}
+{'loss': 0.9002, 'grad_norm': 0.8942491282334606, 'learning_rate': 9.806855778486314e-06, 'epoch': 0.52}
+{'loss': 0.8985, 'grad_norm': 0.9488169251601294, 'learning_rate': 9.800626132490268e-06, 'epoch': 0.52}
+{'loss': 0.8261, 'grad_norm': 0.9239883203417438, 'learning_rate': 9.794396563898022e-06, 'epoch': 0.52}
+{'loss': 0.8283, 'grad_norm': 0.9530404492739565, 'learning_rate': 9.788167075128113e-06, 'epoch': 0.52}
+{'loss': 0.8214, 'grad_norm': 0.8997971407432098, 'learning_rate': 9.781937668599035e-06, 'epoch': 0.52}
+{'loss': 0.8496, 'grad_norm': 0.9894064680231622, 'learning_rate': 9.775708346729263e-06, 'epoch': 0.52}
+{'loss': 0.8444, 'grad_norm': 0.9227618858100477, 'learning_rate': 9.769479111937238e-06, 'epoch': 0.52}
+[2024-10-22 21:25:28,960] [WARNING] [stage3.py:2069:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+{'loss': 0.3392, 'grad_norm': 0.7025055844215675, 'learning_rate': 9.763249966641352e-06, 'epoch': 0.52}
+{'loss': 0.9208, 'grad_norm': 0.8969626247812639, 'learning_rate': 9.757020913259986e-06, 'epoch': 0.52}
+{'loss': 0.9041, 'grad_norm': 0.983030237625661, 'learning_rate': 9.750791954211464e-06, 'epoch': 0.52}
+{'loss': 0.8683, 'grad_norm': 0.947595895464509, 'learning_rate': 9.744563091914085e-06, 'epoch': 0.52}
+{'loss': 0.8965, 'grad_norm': 0.9278347770480182, 'learning_rate': 9.738334328786114e-06, 'epoch': 0.52}
+{'loss': 0.8984, 'grad_norm': 0.8703418917542548, 'learning_rate': 9.732105667245759e-06, 'epoch': 0.52}
+{'loss': 0.924, 'grad_norm': 0.9135591528584883, 'learning_rate': 9.725877109711212e-06, 'epoch': 0.52}
+{'loss': 0.9097, 'grad_norm': 0.9843497036213982, 'learning_rate': 9.719648658600611e-06, 'epoch': 0.52}
+{'loss': 0.854, 'grad_norm': 0.9806585809684372, 'learning_rate': 9.71342031633205e-06, 'epoch': 0.52}
+{'loss': 0.9014, 'grad_norm': 1.0064525655208514, 'learning_rate': 9.70719208532359e-06, 'epoch': 0.52}
+{'loss': 0.8503, 'grad_norm': 0.8752345091282132, 'learning_rate': 9.700963967993246e-06, 'epoch': 0.52}
+{'loss': 0.9232, 'grad_norm': 1.0312496174529162, 'learning_rate': 9.694735966758982e-06, 'epoch': 0.52}
+{'loss': 0.8227, 'grad_norm': 0.9289282993758444, 'learning_rate': 9.688508084038729e-06, 'epoch': 0.52}
+{'loss': 0.8403, 'grad_norm': 1.0135332464414426, 'learning_rate': 9.682280322250365e-06, 'epoch': 0.52}
+{'loss': 0.8658, 'grad_norm': 0.8872979410165056, 'learning_rate': 9.676052683811715e-06, 'epoch': 0.53}
+{'loss': 0.8854, 'grad_norm': 0.9532722856437813, 'learning_rate': 9.669825171140568e-06, 'epoch': 0.53}
+{'loss': 0.8356, 'grad_norm': 0.8597179493344822, 'learning_rate': 9.66359778665466e-06, 'epoch': 0.53}
+{'loss': 0.8644, 'grad_norm': 0.9413731018268583, 'learning_rate': 9.657370532771672e-06, 'epoch': 0.53}
+WARNING: tokenization mismatch: 1 vs. 624. (ignored)
+{'loss': 0.8626, 'grad_norm': 0.9394719448919281, 'learning_rate': 9.651143411909241e-06, 'epoch': 0.53}
+{'loss': 0.9048, 'grad_norm': 0.9920814963345254, 'learning_rate': 9.64491642648495e-06, 'epoch': 0.53}
+{'loss': 0.8874, 'grad_norm': 0.8607879825420011, 'learning_rate': 9.638689578916326e-06, 'epoch': 0.53}
+{'loss': 0.9146, 'grad_norm': 0.9499458842614055, 'learning_rate': 9.632462871620847e-06, 'epoch': 0.53}
+{'loss': 0.9082, 'grad_norm': 1.1012640384795565, 'learning_rate': 9.62623630701594e-06, 'epoch': 0.53}
+{'loss': 0.3318, 'grad_norm': 0.6743463167999519, 'learning_rate': 9.620009887518963e-06, 'epoch': 0.53}
+{'loss': 0.8784, 'grad_norm': 0.9262205764541555, 'learning_rate': 9.613783615547233e-06, 'epoch': 0.53}
+{'loss': 0.8435, 'grad_norm': 0.9669439978352024, 'learning_rate': 9.607557493518006e-06, 'epoch': 0.53}
+{'loss': 0.8432, 'grad_norm': 0.9568114348099016, 'learning_rate': 9.601331523848464e-06, 'epoch': 0.53}
+{'loss': 0.8411, 'grad_norm': 0.986191739690465, 'learning_rate': 9.595105708955758e-06, 'epoch': 0.53}
+{'loss': 0.9146, 'grad_norm': 0.952836538499456, 'learning_rate': 9.588880051256951e-06, 'epoch': 0.53}
+{'loss': 0.8341, 'grad_norm': 0.9459668597454334, 'learning_rate': 9.582654553169064e-06, 'epoch': 0.53}
+{'loss': 0.8684, 'grad_norm': 1.040297531767876, 'learning_rate': 9.576429217109054e-06, 'epoch': 0.53}
+{'loss': 0.3277, 'grad_norm': 0.6155649866565723, 'learning_rate': 9.5702040454938e-06, 'epoch': 0.53}
+{'loss': 0.8438, 'grad_norm': 1.0399148558053823, 'learning_rate': 9.563979040740138e-06, 'epoch': 0.53}
+{'loss': 0.3444, 'grad_norm': 0.6936378882239754, 'learning_rate': 9.557754205264826e-06, 'epoch': 0.53}
+{'loss': 0.8794, 'grad_norm': 0.9556787021067253, 'learning_rate': 9.551529541484554e-06, 'epoch': 0.53}
+{'loss': 0.9476, 'grad_norm': 1.092102664007294, 'learning_rate': 9.545305051815957e-06, 'epoch': 0.53}
+{'loss': 0.9417, 'grad_norm': 1.0647594576741222, 'learning_rate': 9.539080738675597e-06, 'epoch': 0.53}
+{'loss': 0.9054, 'grad_norm': 0.9871198621276527, 'learning_rate': 9.53285660447996e-06, 'epoch': 0.53}
+{'loss': 0.841, 'grad_norm': 0.9599698854808744, 'learning_rate': 9.526632651645476e-06, 'epoch': 0.53}
+{'loss': 0.914, 'grad_norm': 1.0013247969274064, 'learning_rate': 9.520408882588497e-06, 'epoch': 0.53}
+{'loss': 0.9067, 'grad_norm': 1.1668710584414441, 'learning_rate': 9.514185299725299e-06, 'epoch': 0.53}
+{'loss': 0.8431, 'grad_norm': 0.8783621731464237, 'learning_rate': 9.507961905472093e-06, 'epoch': 0.53}
+{'loss': 0.8639, 'grad_norm': 0.9050757310053337, 'learning_rate': 9.501738702245023e-06, 'epoch': 0.53}
+{'loss': 0.8628, 'grad_norm': 0.9291759999755608, 'learning_rate': 9.495515692460138e-06, 'epoch': 0.53}
+{'loss': 0.8535, 'grad_norm': 0.9716864957164414, 'learning_rate': 9.489292878533436e-06, 'epoch': 0.53}
+{'loss': 0.9567, 'grad_norm': 0.9486020219438372, 'learning_rate': 9.483070262880823e-06, 'epoch': 0.53}
+{'loss': 0.9181, 'grad_norm': 1.064224162496316, 'learning_rate': 9.476847847918126e-06, 'epoch': 0.53}
+{'loss': 0.9249, 'grad_norm': 0.9563676805356378, 'learning_rate': 9.47062563606111e-06, 'epoch': 0.53}
+{'loss': 0.8315, 'grad_norm': 0.9121404232571159, 'learning_rate': 9.464403629725454e-06, 'epoch': 0.53}
+{'loss': 0.8607, 'grad_norm': 0.9451670340368395, 'learning_rate': 9.458181831326744e-06, 'epoch': 0.53}
+{'loss': 0.8765, 'grad_norm': 1.1065511673649793, 'learning_rate': 9.451960243280506e-06, 'epoch': 0.53}
+{'loss': 0.8873, 'grad_norm': 1.0027052159340202, 'learning_rate': 9.44573886800217e-06, 'epoch': 0.53}
+{'loss': 0.9015, 'grad_norm': 1.0221978801904612, 'learning_rate': 9.43951770790709e-06, 'epoch': 0.53}
+{'loss': 0.9202, 'grad_norm': 1.1509721811080282, 'learning_rate': 9.433296765410534e-06, 'epoch': 0.53}
+{'loss': 0.3344, 'grad_norm': 0.61843562669161, 'learning_rate': 9.427076042927683e-06, 'epoch': 0.53}
+{'loss': 0.8781, 'grad_norm': 0.9783120076864888, 'learning_rate': 9.420855542873638e-06, 'epoch': 0.53}
+{'loss': 0.8607, 'grad_norm': 0.9980840508912928, 'learning_rate': 9.414635267663416e-06, 'epoch': 0.53}
+{'loss': 0.8686, 'grad_norm': 0.9674462641602926, 'learning_rate': 9.408415219711934e-06, 'epoch': 0.53}
+{'loss': 0.8201, 'grad_norm': 1.0357331786660933, 'learning_rate': 9.402195401434036e-06, 'epoch': 0.53}
+{'loss': 0.848, 'grad_norm': 0.9805701153458485, 'learning_rate': 9.395975815244468e-06, 'epoch': 0.53}
+{'loss': 0.874, 'grad_norm': 0.964022242272387, 'learning_rate': 9.389756463557878e-06, 'epoch': 0.53}
+{'loss': 0.8824, 'grad_norm': 0.9290469238012982, 'learning_rate': 9.383537348788844e-06, 'epoch': 0.53}
+{'loss': 0.3592, 'grad_norm': 0.7051075952743516, 'learning_rate': 9.377318473351838e-06, 'epoch': 0.53}
+{'loss': 0.3784, 'grad_norm': 0.6222018616300434, 'learning_rate': 9.371099839661238e-06, 'epoch': 0.53}
+{'loss': 0.853, 'grad_norm': 0.9436964280320582, 'learning_rate': 9.364881450131335e-06, 'epoch': 0.53}
+{'loss': 0.8564, 'grad_norm': 0.9394538554791098, 'learning_rate': 9.358663307176323e-06, 'epoch': 0.53}
+{'loss': 0.8873, 'grad_norm': 0.9767454395682129, 'learning_rate': 9.352445413210294e-06, 'epoch': 0.54}
+{'loss': 0.8923, 'grad_norm': 0.9406389263141449, 'learning_rate': 9.346227770647251e-06, 'epoch': 0.54}
+{'loss': 0.8333, 'grad_norm': 0.9983606626664907, 'learning_rate': 9.3400103819011e-06, 'epoch': 0.54}
+{'loss': 0.8971, 'grad_norm': 0.9987618969349619, 'learning_rate': 9.33379324938564e-06, 'epoch': 0.54}
+{'loss': 0.9056, 'grad_norm': 1.0141550059536542, 'learning_rate': 9.327576375514582e-06, 'epoch': 0.54}
+{'loss': 0.8636, 'grad_norm': 1.0342579218871715, 'learning_rate': 9.321359762701527e-06, 'epoch': 0.54}
+{'loss': 0.3679, 'grad_norm': 0.6619612548536643, 'learning_rate': 9.315143413359975e-06, 'epoch': 0.54}
+{'loss': 0.8189, 'grad_norm': 0.8965231937762471, 'learning_rate': 9.308927329903333e-06, 'epoch': 0.54}
+{'loss': 0.8602, 'grad_norm': 0.9519657428150035, 'learning_rate': 9.302711514744897e-06, 'epoch': 0.54}
+{'loss': 0.9016, 'grad_norm': 0.9716395630872325, 'learning_rate': 9.296495970297855e-06, 'epoch': 0.54}
+{'loss': 0.8262, 'grad_norm': 1.0012085867181082, 'learning_rate': 9.290280698975307e-06, 'epoch': 0.54}
+{'loss': 0.8958, 'grad_norm': 0.9316140210323584, 'learning_rate': 9.284065703190221e-06, 'epoch': 0.54}
+{'loss': 0.8996, 'grad_norm': 0.9639186096571328, 'learning_rate': 9.27785098535548e-06, 'epoch': 0.54}
+{'loss': 0.8248, 'grad_norm': 0.9299544825787874, 'learning_rate': 9.271636547883856e-06, 'epoch': 0.54}
+{'loss': 0.8867, 'grad_norm': 0.9923824431356665, 'learning_rate': 9.265422393187998e-06, 'epoch': 0.54}
+{'loss': 0.8807, 'grad_norm': 0.9943039631927165, 'learning_rate': 9.259208523680457e-06, 'epoch': 0.54}
+{'loss': 0.8142, 'grad_norm': 0.9045119989656638, 'learning_rate': 9.252994941773679e-06, 'epoch': 0.54}
+{'loss': 0.8649, 'grad_norm': 0.9944213737822822, 'learning_rate': 9.24678164987998e-06, 'epoch': 0.54}
+{'loss': 0.8184, 'grad_norm': 0.9047237800988677, 'learning_rate': 9.24056865041158e-06, 'epoch': 0.54}
+{'loss': 0.8637, 'grad_norm': 1.0006150156148241, 'learning_rate': 9.234355945780581e-06, 'epoch': 0.54}
+{'loss': 0.9436, 'grad_norm': 1.2310687135411968, 'learning_rate': 9.228143538398963e-06, 'epoch': 0.54}
+{'loss': 0.8829, 'grad_norm': 0.9473055480033681, 'learning_rate': 9.221931430678598e-06, 'epoch': 0.54}
+{'loss': 0.9307, 'grad_norm': 1.0431229623156484, 'learning_rate': 9.215719625031245e-06, 'epoch': 0.54}
+{'loss': 0.9199, 'grad_norm': 1.0739234048392492, 'learning_rate': 9.209508123868534e-06, 'epoch': 0.54}
+{'loss': 0.827, 'grad_norm': 0.8680815468616888, 'learning_rate': 9.203296929601986e-06, 'epoch': 0.54}
+{'loss': 0.8326, 'grad_norm': 0.9238574595889193, 'learning_rate': 9.197086044643004e-06, 'epoch': 0.54}
+{'loss': 0.8492, 'grad_norm': 0.9812239760444313, 'learning_rate': 9.190875471402865e-06, 'epoch': 0.54}
+{'loss': 0.8712, 'grad_norm': 1.11330935520287, 'learning_rate': 9.184665212292723e-06, 'epoch': 0.54}
+{'loss': 0.8492, 'grad_norm': 0.8882185644395217, 'learning_rate': 9.178455269723623e-06, 'epoch': 0.54}
+{'loss': 0.3465, 'grad_norm': 0.6161252589371556, 'learning_rate': 9.172245646106471e-06, 'epoch': 0.54}
+{'loss': 0.8445, 'grad_norm': 0.9482598594752003, 'learning_rate': 9.166036343852061e-06, 'epoch': 0.54}
+{'loss': 0.3657, 'grad_norm': 0.6367420308538756, 'learning_rate': 9.159827365371055e-06, 'epoch': 0.54}
+{'loss': 0.9188, 'grad_norm': 1.0435502071985983, 'learning_rate': 9.153618713073995e-06, 'epoch': 0.54}
+{'loss': 0.8795, 'grad_norm': 0.9967387061493514, 'learning_rate': 9.14741038937129e-06, 'epoch': 0.54}
+{'loss': 0.8934, 'grad_norm': 1.0015067473812123, 'learning_rate': 9.141202396673232e-06, 'epoch': 0.54}
+{'loss': 0.897, 'grad_norm': 1.1173140415433391, 'learning_rate': 9.13499473738997e-06, 'epoch': 0.54}
+{'loss': 0.8957, 'grad_norm': 0.9571820280175899, 'learning_rate': 9.128787413931536e-06, 'epoch': 0.54}
+{'loss': 0.8695, 'grad_norm': 1.0106990302770666, 'learning_rate': 9.122580428707822e-06, 'epoch': 0.54}
+{'loss': 0.849, 'grad_norm': 0.9627610517621299, 'learning_rate': 9.116373784128597e-06, 'epoch': 0.54}
+{'loss': 0.838, 'grad_norm': 0.9908875997917287, 'learning_rate': 9.110167482603494e-06, 'epoch': 0.54}
+{'loss': 0.8816, 'grad_norm': 0.9397030828373265, 'learning_rate': 9.10396152654201e-06, 'epoch': 0.54}
+{'loss': 0.9042, 'grad_norm': 0.9788795150804145, 'learning_rate': 9.097755918353513e-06, 'epoch': 0.54}
+{'loss': 0.8937, 'grad_norm': 1.009117571917873, 'learning_rate': 9.091550660447236e-06, 'epoch': 0.54}
+{'loss': 0.8762, 'grad_norm': 0.9337424131586435, 'learning_rate': 9.08534575523227e-06, 'epoch': 0.54}
+{'loss': 0.865, 'grad_norm': 0.9894147309992458, 'learning_rate': 9.079141205117573e-06, 'epoch': 0.54}
+{'loss': 0.8495, 'grad_norm': 1.0252998915380993, 'learning_rate': 9.072937012511968e-06, 'epoch': 0.54}
+{'loss': 0.9305, 'grad_norm': 0.9425085848591607, 'learning_rate': 9.066733179824134e-06, 'epoch': 0.54}
+{'loss': 0.7811, 'grad_norm': 0.9212792537487294, 'learning_rate': 9.060529709462613e-06, 'epoch': 0.54}
+{'loss': 0.9079, 'grad_norm': 0.9809935432099776, 'learning_rate': 9.054326603835807e-06, 'epoch': 0.54}
+{'loss': 0.9168, 'grad_norm': 0.9913430952470232, 'learning_rate': 9.048123865351971e-06, 'epoch': 0.54}
+{'loss': 0.9262, 'grad_norm': 1.0866639586773563, 'learning_rate': 9.041921496419225e-06, 'epoch': 0.54}
+{'loss': 0.8634, 'grad_norm': 1.0034881042936705, 'learning_rate': 9.035719499445545e-06, 'epoch': 0.54}
+{'loss': 0.8363, 'grad_norm': 0.9685838911732615, 'learning_rate': 9.029517876838755e-06, 'epoch': 0.55}

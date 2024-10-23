@@ -12,6 +12,7 @@ from transformers.activations import ACT2FN
 from .linear import StarMLP, SiglipMLP, SwiGLU
 from torch.cuda.amp import autocast
 
+
 def grouped_mean_pooling(tensor, m):
     """
     在d维度上将张量分成m组，并对每组进行平均池化。
@@ -39,12 +40,13 @@ def grouped_mean_pooling(tensor, m):
 
     return pooled_result
 
+
 class VLContrastHead(nn.Module):
     def __init__(
         self,
         vision_dimesion: int,
-        text_dimension: int,
-        target_dimension: int,
+        text_dimension: int = 768,
+        target_dimension: int = 1024,
         linear_type: str = "linear",
         cast_dtype: Optional[torch.dtype] = None,
         logit_scale: float = 10.0,
@@ -72,12 +74,13 @@ class VLContrastHead(nn.Module):
         self.text_mapping_network = LinearLayer(
             text_dimension, target_dimension, activation=activation_fn
         )
-
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
         self.text_layer_norm = nn.LayerNorm(text_dimension)
         self.logit_scale = nn.Parameter(torch.randn(1))
         self.logit_bias = nn.Parameter(torch.randn(1))
-
+        # Use to_empty() for initial device placement
+        self.to_empty(device=device)
         self._initialize_weights(logit_scale, logit_bias)
 
     def _initialize_weights(self, scale: float, bias: float):
@@ -112,7 +115,7 @@ class VLContrastHead(nn.Module):
             text_features = text_features.to(self.cast_dtype)
             text_features = self.text_layer_norm(text_features)
             text_features = self.text_mapping_network(text_features)
-            
+
         if self.use_gmp:
             if image_features is not None:
                 image_features = grouped_mean_pooling(image_features, self.gmp_groups)
@@ -139,6 +142,7 @@ class VLContrastHead(nn.Module):
             "logit_bias": self.logit_bias,
         }
 
+
 class VLContrastModel(nn.Module):
     def __init__(
         self,
@@ -155,16 +159,20 @@ class VLContrastModel(nn.Module):
         super(VLContrastModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
         self.vision_model = ImageEmbedding(vision_model_name, test=test)
-        vision_dimesion = self.vision_model.model.config.hidden_size if 'mae' in vision_model_name else self.vision_model.model.config.hidden_size * 2 # dino model concat cls and avg pooling patch features in dimension space
+        vision_dimesion = (
+            self.vision_model.model.config.hidden_size
+            if "mae" in vision_model_name
+            else self.vision_model.model.config.hidden_size * 2
+        )  # dino model concat cls and avg pooling patch features in dimension space
         self.vlhead = VLContrastHead(
-            vision_dimesion = vision_dimesion,
-            text_dimension = self.text_model.model.config.hidden_size,
-            target_dimension = target_dimension,
-            linear_type = linear_type,
-            cast_dtype = cast_dtype,
-            use_gmp = use_gmp,
-            gmp_groups = gmp_groups,
-        )  
+            vision_dimesion=vision_dimesion,
+            text_dimension=self.text_model.model.config.hidden_size,
+            target_dimension=target_dimension,
+            linear_type=linear_type,
+            cast_dtype=cast_dtype,
+            use_gmp=use_gmp,
+            gmp_groups=gmp_groups,
+        )
         if vlhead_weights_path is not None:
             self.load_vlhead_weights(vlhead_weights_path)
 
@@ -188,7 +196,6 @@ class VLContrastModel(nn.Module):
         self.vlhead.load_state_dict(weights, strict=False)
         print(f"Loaded VL head weights from {vlhead_weights_path}")
 
-    
     def encode_image_patch(
         self,
         image,
@@ -199,7 +206,7 @@ class VLContrastModel(nn.Module):
         if is_pre_encoded:
             features = image
         else:
-            features = self.vision_model.patch_embeddings(image,skip_res=False)
+            features = self.vision_model.patch_embeddings(image, skip_res=False)
         outputs = self.vlhead(image_features=features)
         image_features = outputs["image_features"]
         if return_encoded:
@@ -208,6 +215,7 @@ class VLContrastModel(nn.Module):
             ), features
         else:
             return F.normalize(image_features, dim=-1) if normalize else image_features
+
     def encode_image(
         self,
         image,

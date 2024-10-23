@@ -1,0 +1,72 @@
+Category: popular, # samples: 3000
+TP	FP	TN	FN	
+1163	59	1441	337
+Accuracy: 0.868
+Precision: 0.9517184942716858
+Recall: 0.7753333333333333
+F1 score: 0.8545187362233653
+Yes ratio: 0.4073333333333333
+0.855, 0.868, 0.952, 0.775, 0.407
+====================================
+Category: random, # samples: 2910
+TP	FP	TN	FN	
+1163	34	1376	337
+Accuracy: 0.8725085910652921
+Precision: 0.9715956558061821
+Recall: 0.7753333333333333
+F1 score: 0.8624397478680015
+Yes ratio: 0.411340206185567
+0.862, 0.873, 0.972, 0.775, 0.411
+====================================
+Category: adversarial, # samples: 3000
+TP	FP	TN	FN	
+1163	115	1385	337
+Accuracy: 0.8493333333333334
+Precision: 0.9100156494522692
+Recall: 0.7753333333333333
+F1 score: 0.8372930165586754
+Yes ratio: 0.426
+0.837, 0.849, 0.910, 0.775, 0.426
+====================================
+Total accuracy: 0.8631874298540965
+
+======== GPU REPORT ========
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Oct 22 21:42:36 2024
+Driver Version                            : 535.161.08
+CUDA Version                              : 12.2
+
+Attached GPUs                             : 1
+GPU 00000000:0F:00.0
+    Accounting Mode                       : Enabled
+    Accounting Mode Buffer Size           : 4000
+    Accounted Processes
+        Process ID                        : 341809
+            GPU Utilization               : 61 %
+            Memory Utilization            : 28 %
+            Max memory usage              : 14966 MiB
+            Time                          : 835508 ms
+            Is Running                    : 0
+
+Tue Oct 22 21:42:36 2024       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.161.08             Driver Version: 535.161.08   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA A100-SXM4-40GB          On  | 00000000:0F:00.0 Off |                    0 |
+| N/A   43C    P0              96W / 400W |      0MiB / 40960MiB |     98%      Default |
+|                                         |                      |             Disabled |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+

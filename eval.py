@@ -106,12 +106,12 @@ def parse_args():
         help="Task for segmentation evaluation",
     )
 
-    parser.add_argument(
-        "--visualize_segmentation",
-        default=False,
-        action="store_true",
-        help="Visualize segmentation results.",
-    )
+    # parser.add_argument(
+    #     "--visualize_segmentation",
+    #     default=False,
+    #     action="store_true",
+    #     help="Visualize segmentation results.",
+    # )
     args = parser.parse_args()
 
     # Overide args with model_config.yaml
@@ -277,7 +277,7 @@ def main():
             gmp_groups=args.gmp_groups,
             task_config=args.seg_task_config,
             save_dir=args.save_dir,
-            visualize=args.visualize_segmentation,
+            # visualize=args.visualize_segmentation,
             # precision='fp16',
         )
     update_results_json(output_path, epoch_num, results)
