@@ -743,3 +743,7 @@ WARNING: tokenization mismatch: 1 vs. 624. (ignored)
 {'loss': 0.8507, 'grad_norm': 1.1451893601999283, 'learning_rate': 8.707609049827102e-06, 'epoch': 0.56}
 {'loss': 0.8599, 'grad_norm': 1.043771086042304, 'learning_rate': 8.70143071013688e-06, 'epoch': 0.56}
 {'loss': 0.8561, 'grad_norm': 1.1057504849708428, 'learning_rate': 8.695252874595972e-06, 'epoch': 0.56}
+[2024-10-22 21:59:32,154] [WARNING] [stage3.py:2069:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+{'loss': 0.8299, 'grad_norm': 1.004894223004055, 'learning_rate': 8.689075545602816e-06, 'epoch': 0.56}
+{'loss': 0.3641, 'grad_norm': 0.7243222072840311, 'learning_rate': 8.68289872555567e-06, 'epoch': 0.56}
+{'loss': 0.8724, 'grad_norm': 0.9327895363954211, 'learning_rate': 8.676722416852594e-06, 'epoch': 0.56}

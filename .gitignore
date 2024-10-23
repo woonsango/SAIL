@@ -8,7 +8,7 @@ data/tensor_data/
 slurm_logs/
 evaluation/backbone_features/
 data/image/
-<<<<<<< HEAD
+*.txt
 logs/
 *.pyc
 # 忽略所有__pychache__文件夹
