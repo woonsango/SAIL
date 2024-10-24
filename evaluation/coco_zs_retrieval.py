@@ -8,6 +8,18 @@ import torch.nn as nn
 from .utils import get_model_device, save_features, load_features
 from torch.cuda.amp import autocast
 
+
+class Processor:
+    def __init__(self, processor):
+        self.processor = processor
+
+    def __call__(self, images):
+        outputs = self.processor(images, return_tensors="pt")
+        if isinstance(outputs, torch.Tensor):
+            return outputs
+        else:
+            return outputs['pixel_values']
+
 def coco_collate_fn(batch):
     text_list = []
     image_list = []
@@ -95,7 +107,7 @@ def encode_dataset(
                 )
                 image_encodings.append(image_features)
                 text_features, encoded_text_features = model.encode_text(
-                    text_tokens, return_encoded=True
+                    text_tokens, text_list=text_list, return_encoded=True
                 )
                 text_encodings.append(text_features)
                 for i, index in enumerate(indexs):
@@ -243,13 +255,7 @@ def recall_at_k(
     return text_to_image_recall, image_to_text_recall
 
 
-class Processor:
-    def __init__(self, processor):
-        self.processor = processor
 
-    def __call__(self, images):
-        images = self.processor(images, return_tensors="pt")["pixel_values"]
-        return images
 
 
 def coco_eval(

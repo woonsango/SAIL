@@ -96,7 +96,6 @@ def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args
         
         if extra_texts is not None:
             extra_texts = extra_texts.to(device=device, dtype=input_dtype, non_blocking=True)
-    
         data_time_m.update(time.time() - end)
         optimizer.zero_grad()
         with autocast():

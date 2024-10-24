@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=12raw_qwen1.5
+#SBATCH --job-name=nv_12m
 #SBATCH --partition=long                       # Ask for unkillable job
 #SBATCH --cpus-per-task=4                         # Ask for 8 CPUs
 #SBATCH --nodes=1
@@ -16,21 +16,29 @@
 
 module load miniconda/3
 conda init
-conda activate openflamingo
+conda activate aro
 module load cudatoolkit/12.1.1
 
-vision_model="facebook/dinov2-large"
-# vision_model="facebook/vit-mae-large"
-# text_model="Alibaba-NLP/gte-large-en-v1.5"
-text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
+vision_model="facebook/dinov2-giant"
+# vision_model="mae-base"
+# vision_model="convnextv2-huge"
+# vision_model="dinov1-vitb16"
+# vision_model="aim_1B"
+# vision_model="ibot-base"
+# vision_model="r152_2x_sk1"
+# vision_model="r101_2x_sk1"
+
+# text_model="Alibaba-NLP/gte-base-en-v1.5"
+text_model="nvidia/NV-Embed-v2"
+# text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
 # data="dreamclipcc12mhf"
-data="dreamclipcc3m"
-# data="yfcc15m"
+# data="dreamclipcc3m"
+data="yfcc15m"
 domain="text"
-batch_size=1024
+batch_size=64
 # select one of the following source captions
 # raw_caption longIB_captions longSV_captions longLLA_captions | shortIB_captions shortSV_captions shortLLA_captions
-source_caption="longSV_captions"
+source_caption="raw_caption"
 # Program 
 gpu_count=$SLURM_GPUS_ON_NODE
 
@@ -61,5 +69,5 @@ else
     echo "Using domain: $domain"
     echo "Using batch size: $batch_size"
     echo "Using source caption: $source_caption"
-    CUDA_VISIBLE_DEVICES=0 python encode.py --domain $domain --vision_model_name $vision_model --text_model_name $text_model --batch_size $batch_size --data $data --resume --source_caption $source_caption 
+    CUDA_VISIBLE_DEVICES=0 python encode.py --domain $domain --vision_model_name $vision_model --text_model_name $text_model --batch_size $batch_size --data $data --resume --source_caption $source_caption
 fi

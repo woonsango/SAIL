@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --job-name=MultiPosText
+#SBATCH --job-name=12mdinobnv2
 #SBATCH --partition=long         # Ask for unkillable job
 #SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:a100l:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-#SBATCH --mem=128G           
-#SBATCH --time=2:00:00                                    
+#SBATCH --mem=256G           
+#SBATCH --time=6:00:00                                    
 #SBATCH --output=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.out
 #SBATCH --error=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.err 
 
@@ -16,7 +16,7 @@ conda activate openflamingo
 
 # ----------------------TRAIN SETTING------------------------
 
-epoch_num=60
+epoch_num=100
 logit_scale=20
 logit_bias=-10
 alpha=0.995
@@ -27,21 +27,27 @@ bs=32768
 # bs=60000
 d=1024
 
-text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption"
-image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc12mhf"
+
+text_embedding_list="data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc12mhf_raw_caption" 
+# image_embedding_list="data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m_cls"
+image_embedding_list="data/tensor_data/image_embedding/dinov2-base/dreamclipcc12mhf"
+
+# text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption"
+# image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-base/dreamclipcc12mhf"
 
 
 
-text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
-image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
+# text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
+# 
+# image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
 # output_name="cc3mraw_Qwen1.5bdinoG_bs_${bs}_lion_mean_lr_${lr}_star7_d${d}_scale10_negbias10_gmp512"
 
 # text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/text_embedding/gte-Qwen2-7B-instruct/dreamclipcc3m_raw_caption"
 # image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/image_embedding/dinov2-large/dreamclipcc3m"
 
-output_name="cc3mraw_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale${logit_scale}_bias${logit_bias}_TS_gmp512"
-# output_name="cc3mraw_gtendinoL_bs_${bs}_lion_org_lr_${lr}_star7L_d${d}_scale${logit_scale}_focal_alpha${alpha}_gamma${gamma}"
-# output_name="cc12rawSVm_gtendinoL_bs_${bs}_lion_org_lr_${lr}_star7L_d${d}_scale${logit_scale}_bias${logit_bias}_multi_postext_s2_gmp512"
+# output_name="cc12mrawSSV_gtendinoB_bs_${bs}_lion_lr_${lr}_star7L_d${d}_scale${logit_scale}_bias${logit_bias}_multi_postext_s2"
+# output_name="cc3mlongSV_NV2dinov2L_bs_${bs}_lion_lr_${lr}_star7XL_d${d}_scale${logit_scale}_bias${logit_bias}_multi_postext_s2"
+output_name="cc12mSSV_NV2dinov2B_bs_${bs}_lion_lr_${lr}_star7XL_d${d}_scale${logit_scale}_bias${logit_bias}_multi_postext_s2"
 # ------------------------------------------------------------
 
 
@@ -85,18 +91,20 @@ if [[ "$SLURM_GPUS_ON_NODE" -gt 1 ]]; then
 else
     echo "Running on a single GPU"
     # Be sure to name the output folder with the text and vision model name
-
+            # --val-text-embedding-list ./data/tensor_data/text_embedding/gte-large-en-v1.5/validation \
+        # --val-image-embedding-list ./data/tensor_data/image_embedding/dinov2-large/validation \
+        # --extra-text-embedding-list /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_shortSV_captions \
+        # --extra-text-embedding-list data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_longSV \
     python main.py \
         --text-embedding-list $text_embedding_list \
         --image-embedding-list $image_embedding_list \
-        --val-text-embedding-list ./data/tensor_data/text_embedding/gte-large-en-v1.5/validation \
-        --val-image-embedding-list ./data/tensor_data/image_embedding/dinov2-large/validation \
+        --extra-text-embedding-list data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc12mhf_shortSV_captions \
         --val-frequency 2 \
         --dataset-type embedding \
         --siglip \
         --seed 42 \
         --resume latest \
-        --save-frequency 5 \
+        --save-frequency 2 \
         --report-to wandb \
         --batch-size $bs \
         --lr $lr \
@@ -114,9 +122,9 @@ else
         --logit_scale $logit_scale \
         --logit_bias $logit_bias \
         --alpha $alpha \
-        --gamma $gamma \
-        --gmp_groups 512 \
-        --use_gmp
+        --gamma $gamma
+        # --gmp_groups 512 \
+        # --use_gmp
 
 fi
 

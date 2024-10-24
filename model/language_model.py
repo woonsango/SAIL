@@ -33,7 +33,7 @@ def bos_pooling(model_output: torch.Tensor, attention_mask):
 
 MODEL_EMBEDDING_TYPE={
     'mean': ['sentence-transformers/all-mpnet-base-v2'],
-    'BOS' : ['Alibaba-NLP/gte-large-en-v1.5'],
+    'BOS' : ['Alibaba-NLP/gte-large-en-v1.5','Alibaba-NLP/gte-base-en-v1.5'],
     "LastToken": ['Alibaba-NLP/gte-Qwen2-7B-instruct',"Alibaba-NLP/gte-Qwen2-1.5B-instruct"],
 }
 
@@ -47,10 +47,11 @@ class SentenceEmbedding(nn.Module):
     def __init__(self, model_name='sentence-transformers/all-mpnet-base-v2'):
         super(SentenceEmbedding, self).__init__()
         self.model_name = model_name
-        self.pooling = POOL_CLASSES[get_embedding_strategy(model_name)]
+        if 'NV' not in model_name:
+            self.pooling = POOL_CLASSES[get_embedding_strategy(model_name)]
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(self.device)
+        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True, device_map=self.device).half()
     
     def mean_pooling(self, model_output: torch.Tensor, attention_mask):
         token_embeddings = model_output[0]  # First element of model_output contains all token embeddings
@@ -59,12 +60,17 @@ class SentenceEmbedding(nn.Module):
     
     def get_sentence_embeddings(self, sentences: List[str]):
         # Tokenize sentences
-        encoded_input = self.tokenizer(sentences, padding=True, truncation=True, max_length=1024, return_tensors='pt').to(self.device)
-        return self.forward(encoded_input)
-    
+        if 'NV' in self.model_name: 
+            with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
+                embeddings = self.model.encode(sentences, max_length=1024).half()
+                return embeddings
+        else:
+            encoded_input = self.tokenizer(sentences, padding=True, truncation=True, max_length=1024, return_tensors='pt').to(self.device)
+            return self.forward(encoded_input)
+        
     def forward(self, inputs):
         # Compute token embeddings
-        with torch.autocast(device_type=self.device.type, dtype=torch.float16):  # or bfloat16
+        with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
             model_output = self.model(**inputs)
         sentence_embeddings = self.pooling(model_output, inputs['attention_mask'])
         return sentence_embeddings

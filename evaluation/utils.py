@@ -3,6 +3,17 @@ import re
 import os
 import torch
 
+class Processor:
+    def __init__(self, processor):
+        self.processor = processor
+
+    def __call__(self, images):
+        outputs = self.processor(images, return_tensors="pt")
+        if isinstance(outputs, torch.Tensor):
+            return outputs[0]
+        else:
+            return outputs['pixel_values'][0]
+
 def check_epoch_exists(json_file, epoch):
     """
     检查 JSON 文件中是否已存在指定 epoch 的结果。
@@ -13,7 +24,6 @@ def check_epoch_exists(json_file, epoch):
     """
     if not os.path.exists(json_file):
         return False
-    
     try:
         with open(json_file, 'r') as file:
             data = json.load(file)

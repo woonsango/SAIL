@@ -2,13 +2,13 @@ _base_ = './dino_config.py'
 
 # model settings
 model = dict(
-    name_path='/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cls_voc21.txt',
+    name_path='evaluation/ClearCLIP/configs/cls_voc21.txt',
     prob_thd=0.5
 )
 
 # dataset settings
 dataset_type = 'PascalVOCDataset'
-data_root = '/home/mila/q/qian.yang/scratch/segmentation_datasets/pascalvoc20/VOCdevkit/VOC2012'
+data_root = '/network/scratch/q/qian.yang/segmentation_datasets/pascalvoc20/VOCdevkit/VOC2012'
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),

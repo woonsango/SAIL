@@ -7,6 +7,10 @@ import itertools
 import time
 import pandas as pd
 
+
+# instruction = "Summarize the following sentences: "
+instruction = ""
+
 def load_data(data_config, source_caption, domain):
     data_file = data_config['annotation']
     if data_file.endswith('.json'):
@@ -69,5 +73,6 @@ def load_csv_data(data_file, image_dir, source_caption, domain):
                 images.append(None)  # Append None for failed image paths
     elif domain == 'text':
         sentences = read_csv_column(data_file, source_caption)
+        sentences = [instruction + sentence for sentence in sentences]
     
     return sentences, images

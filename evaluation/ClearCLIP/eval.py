@@ -14,10 +14,10 @@ def parse_args():
     parser = argparse.ArgumentParser(description="ClearCLIP evaluation with MMSeg")
     parser.add_argument(
         "--config",
-        default="/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_ade20k.py",
+        default="/home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP/cfg_ade20k_clearCLIP.py",
     )
     parser.add_argument(
-        "--work-dir", default="/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP"
+        "--work-dir", default="/home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP"
     )
     parser.add_argument("--show", action="store_true", help="show prediction results")
     parser.add_argument(

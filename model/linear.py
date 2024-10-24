@@ -13,10 +13,10 @@ class StarMLP(nn.Module):
         activation: Optional[Callable] = None,
     ):
         super().__init__()
-        self.f1 = nn.Linear(input_dim, 4 * input_dim)
-        self.f2 = nn.Linear(input_dim, 4 * input_dim)
+        self.f1 = nn.Linear(input_dim, 8 * input_dim)
+        self.f2 = nn.Linear(input_dim, 8 * input_dim)
         self.act = activation  # 传入的激活函数
-        self.g = nn.Linear(4 * input_dim, output_dim)
+        self.g = nn.Linear(8 * input_dim, output_dim)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         x1, x2 = self.f1(hidden_states), self.f2(hidden_states)
@@ -55,7 +55,7 @@ class SiglipMLP(nn.Module):
         intermediate_dim: Optional[int] = None,
     ):
         super().__init__()
-        intermediate_dim = intermediate_dim if intermediate_dim is not None else output_dim
+        intermediate_dim = intermediate_dim if intermediate_dim is not None else 4*input_dim
         self.proj = nn.Sequential(
             nn.Linear(input_dim, intermediate_dim),
             nn.GELU(),

@@ -21,7 +21,7 @@ model = dict(
     ignore_residual=True,
     model_type='ClearCLIP',
     name_path=
-    '/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cls_voc20.txt',
+    'evaluation/ClearCLIP/configs/cls_voc20.txt',
     type='ClearCLIPSegmentation',
     vit_type='ViT-B/16')
 resume = False
