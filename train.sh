@@ -1,14 +1,14 @@
 #!/bin/bash
-#SBATCH --job-name=train
-#SBATCH --partition=short-unkillable       # Ask for unkillable job
+#SBATCH --job-name=30mnv2
+#SBATCH --partition=long       # Ask for unkillable job
 #SBATCH --cpus-per-task=24                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:h100:1
+#SBATCH --gres=gpu:a100l:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-#SBATCH --mem=128G           
-#SBATCH --time=3:00:00                                    
-#SBATCH --output=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.out
-#SBATCH --error=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.err 
+#SBATCH --mem=648G           
+#SBATCH --time=8:00:00                                    
+#SBATCH --output=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j.out
+#SBATCH --error=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j.err 
 
 module load miniconda/3
 conda init
@@ -16,19 +16,21 @@ conda activate openflamingo
 
 # ----------------------TRAIN SETTING------------------------
 
-epoch_num=50
+epoch_num=100
 lr=1e-5
 bs=32768
 d=1024
 logit_scale=20
 logit_bias=-10
 
-text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption" 
-image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc12mhf"
+text_embedding_list="data/tensor_data/text_embedding/NV-Embed-v2/yfcc15m_raw_caption data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc3m_raw_caption data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc12mhf_raw_caption" 
+# text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc12mhf_raw_caption" 
+image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/yfcc15m /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m /home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc12mhf"
+# image_embedding_list="data/tensor_data/image_embedding/dinov2-base/dreamclipcc12mhf"
 
 # text_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
 # image_embedding_list="/home/mila/l/le.zhang/scratch/light_align/data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
-output_name="12mhfraw_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale${logit_scale}_bias${logit_bias}_gmp512"
+output_name="dreamclip30m_NV2dinoL_bs_${bs}_lion_mean_lr_${lr}_star7XL_d${d}_scale${logit_scale}_bias${logit_bias}_multi_postext_s2"
 # output_name="lai z_gtendinoL_bs_${bs}_lion_mean_lr_${lr}_star7L_d${d}_scale10_negbias10"
 # ------------------------------------------------------------
 
@@ -77,6 +79,7 @@ else
     python main.py \
         --text-embedding-list $text_embedding_list \
         --image-embedding-list $image_embedding_list \
+        --extra-text-embedding-list data/tensor_data/text_embedding/NV-Embed-v2/yfcc15m_shortSV_captions data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc3m_longSV_captions data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc12mhf_shortSV_captions \
         --val-frequency 1 \
         --dataset-type embedding \
         --siglip \
@@ -96,9 +99,9 @@ else
         --wandb-project-name clip_training \
         --name $output_name \
         --logit_scale $logit_scale \
-        --logit_bias $logit_bias \
-        --gmp_groups 512 \
-        --use_gmp
+        --logit_bias $logit_bias
+        # --gmp_groups 512 \
+        # --use_gmp
 
 fi
 

@@ -3,4 +3,4 @@ from .coco_zs_retrieval import coco_eval
 from .utils import *
 from .winoground import winoground_eval
 from .sugar_crepe_eval import SugarCrepe_eval
-from .seg_eval import segmentation_eval
+from .mmvp import mmvp_eval

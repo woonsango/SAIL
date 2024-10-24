@@ -4,13 +4,7 @@ import os
 from tqdm import tqdm
 import glob
 from natsort import natsorted
-import os
-import torch
-from torch.utils.data import Dataset, DataLoader
-import json
-from threading import Lock
 from torch.nn.utils.rnn import pad_sequence
-import h5py
 import numpy as np
 
 def custom_collate_fn(batch):
@@ -33,7 +27,9 @@ def load_vectors(embedding_list: list[str]) -> list[torch.Tensor]:
     files = []
     for dir_path in embedding_list:
         files.extend(natsorted(glob.glob(os.path.join(dir_path, "*.pt"))))
-    vectors = [vector for file in files for vector in torch.load(file, weights_only=True).to(torch.float16)]
+    vectors = []
+    for file in tqdm(files, desc="Loading vectors", unit="file"):
+        vectors.extend(torch.load(file, weights_only=True).to(torch.float16))
     return vectors
 
 class VLEmbeddingDataset(Dataset):
@@ -45,7 +41,7 @@ class VLEmbeddingDataset(Dataset):
         if extra_text_embedding_list:
             print(f"Loading extra text vectors from {extra_text_embedding_list}")
             self.extra_text_vectors, _ = self._load_image_text_vectors(text_embedding_list = extra_text_embedding_list)
-            assert len(self.extra_text_vectors) == len(self.text_vectors), f"extra text vectors length ({len(self.extra_text_vectors)}) is not equal to text vectors length ({len(self.text_vectors)})"
+            assert len(self.extra_text_vectors) == len(self.text_vectors), f"extra text vectors length {len(self.extra_text_vectors)} is not equal to text vectors length {len(self.text_vectors)}"
     
         if train_num_samples is not None:
             num_samples = len(self.text_vectors)

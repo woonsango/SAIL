@@ -6,7 +6,6 @@ from evaluation import (
     update_results_json,
     extract_info_from_path,
     check_epoch_exists,
-    segmentation_eval,
 )
 import argparse
 from model import create_model
@@ -26,6 +25,7 @@ def parse_args():
             "imagenetv1",
             "sugar_crepe",
             "segmentation",
+            "MMVP",
         ],
         default="imagenetv1",
         help="Task",
@@ -102,7 +102,7 @@ def parse_args():
     parser.add_argument(
         "--seg_task_config",
         type=str,
-        default="/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_ade20k.py",
+        default="/home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP/configs/cfg_ade20k.py",
         help="Task for segmentation evaluation",
     )
 
@@ -128,22 +128,8 @@ def parse_args():
     return args
 
 
-def get_output_path_and_check_epoch(args, epoch_num, training_info_str, model_prefix):
-    output_path = os.path.join(
-        args.results_dir, args.task, model_prefix, f"{training_info_str}.json"
-    )
-
-    if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
-        print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
-        return None
-    elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
-        print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
-
-    return output_path
-
-
-def main():
-    args = parse_args()
+def main(args):
+    
     # for debug
     # epoch_num = 1
     # training_info_str = "test"
@@ -152,21 +138,18 @@ def main():
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
         args.head_weights_path
     )
-    try:
-        output_path = get_output_path_and_check_epoch(
-            args, epoch_num, training_info_str, model_prefix
-        )
-    except:
-        output_path = os.path.join(
-            args.results_dir,
-            args.task,
-            model_prefix,
-            f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json",
-        )
+  
+    output_path = os.path.join(
+        args.results_dir,
+        args.task,
+        model_prefix,
+        f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json",
+    )
     if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
         print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
-        return
-
+        return None
+    elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
+        print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
     model = create_model(
         text_model_name=args.text_model,
         vision_model_name=args.vision_model,
@@ -176,7 +159,6 @@ def main():
         device=args.device,
         use_gmp=args.use_gmp,
         gmp_groups=args.gmp_groups,
-        test=True,
     )
     text_model_name = args.text_model.split("/")[-1]
     vision_model_name = args.vision_model.split("/")[-1]
@@ -280,8 +262,25 @@ def main():
             visualize=args.visualize_segmentation,
             # precision='fp16',
         )
+    elif args.task.lower() == "mmvp":
+        from evaluation import mmvp_eval
+        mmvp_dir = "/home/mila/l/le.zhang/scratch/light_align/evaluation/MMVP_VLM"
+        results = mmvp_eval(
+            model,
+            text_model_name=text_model_name,
+            vision_model_name=vision_model_name,
+            directory=mmvp_dir,
+        )
+
     update_results_json(output_path, epoch_num, results)
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    if args.task.lower() == "segmentation":
+        try:
+            from evaluation.seg_eval import segmentation_eval
+        except ImportError as e:
+            print(f"Segmentation evaluation not available: {e}")
+            exit()
+    main(args)

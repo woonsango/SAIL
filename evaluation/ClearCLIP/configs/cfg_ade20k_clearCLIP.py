@@ -2,12 +2,12 @@ _base_ = './base_config.py'
 
 # model settings
 model = dict(
-    name_path='/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cls_ade20k.txt'
+    name_path='./cls_ade20k.txt'
 )
 # dataset settings
 dataset_type = 'ADE20KDataset'
 #Change this to your local path
-data_root = '/home/mila/q/qian.yang/scratch/segmentation_datasets/ADEChallengeData2016'
+data_root = '/network/scratch/q/qian.yang/segmentation_datasets/ADEChallengeData2016'
 
 test_pipeline = [
     dict(type='LoadImageFromFile'),

@@ -5,24 +5,21 @@ import torch.nn as nn
 import sys
 import os
 import random
-
-sys.path.append("../")
-
-from evaluation.ClearCLIP.prompts.imagenet_template import *
-from evaluation.ClearCLIP.custom_datasets import *
-
 from mmseg.models.data_preprocessor import SegDataPreProcessor
 from mmengine.structures import PixelData
 from mmseg.registry import MODELS
 from mmseg.models.segmentors import BaseSegmentor
 
 # from open_clip import tokenizer
-from model.vlm import VLContrastModel
+from model.sail_model import SAILModel
 from model import get_cast_dtype
 
 
+from .imagenet_template import *
+from .custom_datasets import *
+
 @MODELS.register_module()
-class VLContrastModelSegmentation(BaseSegmentor):
+class SAILModelSegmentation(BaseSegmentor):
     def __init__(
         self,
         head_weights_path,
@@ -34,23 +31,30 @@ class VLContrastModelSegmentation(BaseSegmentor):
         gmp_groups,
         device,
         precision: str = "fp32",
-        logit_scale: float = 10.0,
-        logit_bias: float = -10.0,
         name_path="./cls_ade20k.txt",
-        ignore_residual=True,
         prob_thd=0.0,
         slide_stride=224,
         slide_crop=448,
         save_dir: str = "./evaluation/backbone_features",
+        agg_mode='concat' 
     ):
+        # USED for CLIP model, where scale is multipled by 255 to match the scale of 0-255
         data_preprocessor = SegDataPreProcessor(
             mean=[122.771, 116.746, 104.094],
             std=[68.501, 66.632, 70.323],
             bgr_to_rgb=True,
         )
+        
+        # below are used for DINO models
+        # data_preprocessor = SegDataPreProcessor(
+        #     mean=[123.675,116.28,103.53],
+        #     std=[58.395,57.12,57.375],
+        #     bgr_to_rgb=True,
+        # )
+
         super().__init__(data_preprocessor=data_preprocessor)
         cast_dtype = get_cast_dtype(precision)
-        self.net = VLContrastModel(
+        self.net = SAILModel(
             text_model_name=text_model_name,
             vision_model_name=vision_model_name,
             target_dimension=target_dimension,
@@ -59,7 +63,8 @@ class VLContrastModelSegmentation(BaseSegmentor):
             cast_dtype=cast_dtype,
             use_gmp=use_gmp,
             gmp_groups=gmp_groups,
-            test=True,
+            seg=True,
+            agg_mode=agg_mode
         )
 
         self.net.eval().to(device)
@@ -95,7 +100,7 @@ class VLContrastModelSegmentation(BaseSegmentor):
                         return_tensors="pt",
                     ).to(device)
                     feature, encode_features = self.net.encode_text(
-                        query, return_encoded=True
+                        query, text_list=[temp(qw) for temp in openai_imagenet_template], return_encoded=True
                     )
                     pre_encode_model_features[qw] = encode_features.cpu()
                     feature /= feature.norm(dim=-1, keepdim=True)
@@ -124,17 +129,17 @@ class VLContrastModelSegmentation(BaseSegmentor):
         else:
             self.img_encode_features = torch.load(self.save_backbone_features_path)
         self.dtype = self.query_features.dtype
-        self.ignore_residual = ignore_residual
-        self.logit_scale = logit_scale
+        self.logit_scale = self.net.vlhead.logit_scale
         self.prob_thd = prob_thd
         self.slide_stride = slide_stride
         self.slide_crop = slide_crop
 
-    def forward_feature(self, img, img_name, logit_size=None):
+    def forward_feature(self, img, logit_size=None, attetion_type='qk', ignore_residual=False):
         if type(img) == list:
             img = img[0]
-        image_features, encoded_features = self.net.encode_image_patch(
-            {"pixel_values": img}, return_encoded=True
+
+        patch_features, _ = self.net.encode_image(
+            {"pixel_values": img}, return_encoded=True, patch_mode=True, attetion_type=attetion_type, ignore_residual=ignore_residual,
         )
         # if img_name not in self.img_encode_features:
         #     image_features, encoded_features = self.net.encode_image_patch(
@@ -147,17 +152,16 @@ class VLContrastModelSegmentation(BaseSegmentor):
         #         encoded_features, is_pre_encoded=True
         #     )
         # torch.Size([1, 784, 512]), 512 is the dimension of the image features
-        image_features /= image_features.norm(dim=-1, keepdim=True)
+        patch_features /= patch_features.norm(dim=-1, keepdim=True)
         # torch.Size([1, 784, 150])
-        logits = image_features @ self.query_features.T
-
+        logits = patch_features @ self.query_features.T
+        
         w, h = (
             img[0].shape[-2] // self.patch_size[0],
             img[0].shape[-1] // self.patch_size[1],
         )
         out_dim = logits.shape[-1]
         logits = logits.permute(0, 2, 1).reshape(-1, out_dim, w, h)
-
         if logit_size == None:
             logits = nn.functional.interpolate(
                 logits, size=img.shape[-2:], mode="bilinear"
@@ -167,7 +171,7 @@ class VLContrastModelSegmentation(BaseSegmentor):
 
         return logits
 
-    def forward_slide(self, img, img_metas, stride=112, crop_size=224):
+    def forward_slide(self, img, img_metas, stride=112, crop_size=224, attetion_type='qk', ignore_residual=False):
         """Inference by sliding-window with overlap.
         If h_crop > h_img or w_crop > w_img, the small patch will be used to
         decode without padding.
@@ -204,7 +208,7 @@ class VLContrastModelSegmentation(BaseSegmentor):
                 if any(pad):
                     crop_img = nn.functional.pad(crop_img, pad)
 
-                crop_seg_logit = self.forward_feature(crop_img, img_name)
+                crop_seg_logit = self.forward_feature(crop_img, attetion_type=attetion_type, ignore_residual=ignore_residual)
 
                 # mask cutting for padded image
                 if any(pad):
@@ -230,7 +234,7 @@ class VLContrastModelSegmentation(BaseSegmentor):
         return logits
 
     @torch.no_grad()
-    def predict(self, inputs, data_samples):
+    def predict(self, inputs, data_samples, attetion_type='qk', ignore_residual=False):
         if data_samples is not None:
             batch_img_metas = [data_sample.metainfo for data_sample in data_samples]
         else:
@@ -246,10 +250,10 @@ class VLContrastModelSegmentation(BaseSegmentor):
         inputs = inputs.half()
         if self.slide_crop > 0:
             seg_logits = self.forward_slide(
-                inputs, batch_img_metas, self.slide_stride, self.slide_crop
+                inputs, batch_img_metas, self.slide_stride, self.slide_crop, attetion_type, ignore_residual
             )
         else:
-            seg_logits = self.forward_feature(inputs, batch_img_metas[0]["ori_shape"])
+            seg_logits = self.forward_feature(inputs, batch_img_metas[0]["ori_shape"], attetion_type=attetion_type, ignore_residual=ignore_residual)
 
         return self.postprocess_result(seg_logits, data_samples)
 
@@ -427,8 +431,10 @@ def segmentation_eval(
     # trigger_visualization_hook(cfg, args)
     runner = Runner.from_cfg(cfg)
     runner.model.to(device)
+    
     if visualize == True:
         random_index = random.randint(0, len(runner.test_dataloader.dataset))
+        random_index = 1
         img_tensor = runner.test_dataloader.dataset[random_index]["inputs"]
         img_tensor = torch.tensor(img_tensor).to("cuda").unsqueeze(0)
         seg_pred = runner.model.predict(
@@ -439,10 +445,10 @@ def segmentation_eval(
         visualize_segmentation(
             img_tensor.cpu().numpy().squeeze(0),
             seg_pred,
-            save_path="/home/mila/q/qian.yang/Light_Align/evaluation/visualization/seg_pred.png",
+            save_path="seg_pred_qq_res.png",
         )
     else:
         results = runner.test()
         # runner.model.save_backbone_features()
 
-    return results
+        return results

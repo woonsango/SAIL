@@ -1,6 +1,6 @@
 # base configurations
 model = dict(
-    type='VLContrastModelSegmentation',
+    type='SAILModelSegmentation',
 )
 
 test_evaluator = dict(type='IoUMetric', iou_metrics=['mIoU'])

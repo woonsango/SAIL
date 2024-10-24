@@ -4,14 +4,14 @@ from PIL import Image
 import os
 from typing import List, Tuple, Dict, Any, Union, Optional
 import torch.nn as nn
-from .language import SentenceEmbedding
-from .vision import ImageEmbedding
+from .language_model import SentenceEmbedding
+from .vision_model import ImageEmbedding
 import torch.nn.functional as F
 import torch
 from transformers.activations import ACT2FN
 from .linear import StarMLP, SiglipMLP, SwiGLU
 from torch.cuda.amp import autocast
-
+from functools import partial
 def grouped_mean_pooling(tensor, m):
     """
     在d维度上将张量分成m组，并对每组进行平均池化。
@@ -39,7 +39,7 @@ def grouped_mean_pooling(tensor, m):
 
     return pooled_result
 
-class VLContrastHead(nn.Module):
+class AlignmentLayer(nn.Module):
     def __init__(
         self,
         vision_dimesion: int,
@@ -52,27 +52,26 @@ class VLContrastHead(nn.Module):
         use_gmp: bool = False,
         gmp_groups: int = 512,
     ):
-        super(VLContrastHead, self).__init__()
+        super(AlignmentLayer, self).__init__()
         self.cast_dtype = cast_dtype
         self.linear_type = linear_type
         self.use_gmp = use_gmp
         self.gmp_groups = gmp_groups
         if linear_type == "star":
-            LinearLayer = StarMLP
+            LinearLayer = partial(StarMLP, activation=nn.ReLU6())
         elif linear_type == "mlp":
             LinearLayer = SiglipMLP
-        elif linear_type == "swiglu":
-            LinearLayer = SwiGLU
         else:
             LinearLayer = nn.Linear
-        activation_fn = nn.ReLU6()
+
         self.vision_mapping_network = LinearLayer(
-            vision_dimesion, target_dimension, activation=activation_fn
+            vision_dimesion, target_dimension
         )
         self.text_mapping_network = LinearLayer(
-            text_dimension, target_dimension, activation=activation_fn
+            text_dimension, target_dimension
         )
 
+        
         self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
         self.text_layer_norm = nn.LayerNorm(text_dimension)
         self.logit_scale = nn.Parameter(torch.randn(1))
@@ -91,18 +90,17 @@ class VLContrastHead(nn.Module):
                 torch.nn.init.zeros_(module.bias)
 
         # Initialize logit_scale and logit_bias
-        logit_scale_init = torch.log(torch.tensor(scale))
+        logit_scale_init = torch.log(torch.tensor(scale))                           
         self.logit_scale.data.fill_(logit_scale_init)
         self.logit_bias.data.fill_(torch.tensor(bias))
     
-
+     
     def forward(self, image_features=None, text_features=None, extra_text_features=None, compute_logits=False):
 
         if image_features is None and text_features is None:
             raise ValueError(
                 "At least one of image_features and text_features should be provided."
             )
-
         if image_features is not None:
             image_features = image_features.to(self.cast_dtype)
             image_features = self.vision_layer_norm(image_features)
@@ -118,10 +116,10 @@ class VLContrastHead(nn.Module):
             text_features = None
 
         if extra_text_features is not None:
-            extra_text_features = extra_text_features.to(self.cast_dtype)
+            extra_text_features = extra_text_features.to(self.cast_dtype) 
             extra_text_features = self.text_layer_norm(extra_text_features)
             extra_text_features = self.text_mapping_network(extra_text_features)
-        else:
+        else: 
             extra_text_features = None
 
         if self.use_gmp:
@@ -129,7 +127,7 @@ class VLContrastHead(nn.Module):
                 image_features = grouped_mean_pooling(image_features, self.gmp_groups)
             if text_features is not None:
                 text_features = grouped_mean_pooling(text_features, self.gmp_groups)
-            if extra_text_features is not None:
+            if extra_text_features is not None:  
                 extra_text_features = grouped_mean_pooling(extra_text_features, self.gmp_groups)
 
         if compute_logits and image_features is not None and text_features is not None and image_features.nelement() > 0 and text_features.nelement() > 0:
@@ -153,7 +151,7 @@ class VLContrastHead(nn.Module):
             "logit_bias": self.logit_bias
         }
 
-class VLContrastModel(nn.Module):
+class SAILModel(nn.Module):
     def __init__(
         self,
         vision_model_name: str,
@@ -164,13 +162,20 @@ class VLContrastModel(nn.Module):
         cast_dtype: Optional[torch.dtype] = None,
         use_gmp: bool = False,
         gmp_groups: int = 512,
-        test: bool = False,
+        seg: bool = False,
+        agg_mode: str = 'concat'
     ):
-        super(VLContrastModel, self).__init__()
+        super(SAILModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
-        self.vision_model = ImageEmbedding(vision_model_name, test=test)
-        vision_dimesion = self.vision_model.model.config.hidden_size if 'mae' in vision_model_name else self.vision_model.model.config.hidden_size * 2 # dino model concat cls and avg pooling patch features in dimension space
-        self.vlhead = VLContrastHead(
+        self.vision_model = ImageEmbedding(vision_model_name, seg=seg, agg_mode=agg_mode)
+        if any(x in vision_model_name for x in ['mae','r101','r152','ibot','convnextv2','dinov1','aim']) or 'patch' in agg_mode or 'cls' in agg_mode:
+            if hasattr(self.vision_model.model, 'config'):
+                vision_dimesion = self.vision_model.model.config.hidden_size
+            else:
+                vision_dimesion = self.vision_model.model.embed_dim
+        else:
+            vision_dimesion = self.vision_model.model.config.hidden_size * 2
+        self.vlhead = AlignmentLayer(
             vision_dimesion = vision_dimesion,
             text_dimension = self.text_model.model.config.hidden_size,
             target_dimension = target_dimension,
@@ -202,37 +207,21 @@ class VLContrastModel(nn.Module):
         self.vlhead.load_state_dict(weights, strict=False)
         print(f"Loaded VL head weights from {vlhead_weights_path}")
 
-    
-    def encode_image_patch(
-        self,
-        image,
-        normalize: bool = False,
-        is_pre_encoded: bool = False,
-        return_encoded: bool = False,
-    ):
-        if is_pre_encoded:
-            features = image
-        else:
-            features = self.vision_model.patch_embeddings(image,skip_res=False)
-        outputs = self.vlhead(image_features=features)
-        image_features = outputs["image_features"]
-        if return_encoded:
-            return (
-                F.normalize(image_features, dim=-1) if normalize else image_features
-            ), features
-        else:
-            return F.normalize(image_features, dim=-1) if normalize else image_features
+    @torch.no_grad()
     def encode_image(
         self,
         image,
         normalize: bool = False,
         is_pre_encoded: bool = False,
         return_encoded: bool = False,
+        patch_mode: bool = False,
+        attetion_type: str = 'qk',
+        ignore_residual: bool = False,
     ):
         if is_pre_encoded:
             features = image
         else:
-            features = self.vision_model(image)
+            features = self.vision_model(image, patch_mode=patch_mode, attetion_type=attetion_type, ignore_residual=ignore_residual)
         outputs = self.vlhead(image_features=features)
         image_features = outputs["image_features"]
         if return_encoded:
@@ -242,9 +231,11 @@ class VLContrastModel(nn.Module):
         else:
             return F.normalize(image_features, dim=-1) if normalize else image_features
 
+    @torch.no_grad()
     def encode_text(
         self,
         text,
+        text_list: List[str] = None,
         normalize: bool = False,
         is_pre_encoded: bool = False,
         return_encoded: bool = False,
@@ -252,7 +243,13 @@ class VLContrastModel(nn.Module):
         if is_pre_encoded:
             features = text
         else:
-            features = self.text_model(text)
+            if isinstance(text, str):
+                features = self.text_model.get_sentence_embeddings([text])
+            elif hasattr(self.text_model.model, 'config') and 'NV' in self.text_model.model.config.name_or_path:
+                features = self.text_model.model.encode(text_list, max_length=1024).half()
+            else:
+                features = self.text_model(text)
+                
         outputs = self.vlhead(text_features=features)
         text_features = outputs["text_features"]
         if return_encoded:
@@ -263,7 +260,12 @@ class VLContrastModel(nn.Module):
             return F.normalize(text_features, dim=-1) if normalize else text_features
 
     def forward(
-        self, images, texts, is_pre_encoded=False, return_encoded=False
+        self,
+        images, 
+        texts, 
+        text_list: List[str] = None,
+        is_pre_encoded: bool = False,
+        return_encoded: bool = False,
     ):
         if is_pre_encoded:
             # if its pre-encoded, we do not need to return encoded features
@@ -289,6 +291,7 @@ class VLContrastModel(nn.Module):
             )
             norm_text_features, encoded_text_features = self.encode_text(
                 texts,
+                text_list=text_list,
                 normalize=True,
                 is_pre_encoded=False,
                 return_encoded=True,
@@ -296,7 +299,7 @@ class VLContrastModel(nn.Module):
         else:
             # if we do not need to return encoded features and it is not pre-encoded, usuallu during training
             norm_image_features = self.encode_image(images, normalize=True)
-            norm_text_features = self.encode_text(texts, normalize=True)
+            norm_text_features = self.encode_text(texts, text_list=text_list, normalize=True)
 
         # Log the sizes of embeddings
         logits_per_text = (
@@ -322,3 +325,30 @@ class VLContrastModel(nn.Module):
                 "logit_scale": self.vlhead.logit_scale.exp(),
                 "logit_bias": self.vlhead.logit_bias,
             }
+
+if __name__ == "__main__":
+    import torch
+    from fvcore.nn import FlopCountAnalysis, parameter_count
+    from thop import profile
+    # 初始化模型
+    model = AlignmentLayer(
+        vision_dimesion=2048,  # 假设图像特征维度
+        text_dimension=1024,   # 假设文本特征维度
+        target_dimension=1024, # 输出目标维度
+        linear_type="raw"     # 使用 StarMLP
+    )
+    
+    print(model)
+    # 假设输入图像和文本特征
+    image_features = torch.randn(1, 2048)  # 1张图像，2048维特征
+    text_features = torch.randn(1, 1024)   # 1个文本，1024维特征
+
+    # 前向传播计算
+    # output = model(image_features=image_features, text_features=text_features)
+    # 计算 FLOPs 和参数量
+    flops, params = profile(model, inputs=(image_features,text_features))
+
+    # 输出 FLOPs 和参数量
+    print(f"FLOPs: {flops/1e6}")
+    print(f"Params: {params/1e6}")
+    
