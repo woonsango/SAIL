@@ -96,3 +96,4 @@ class ImageNetV2Dataset(Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img, label
+

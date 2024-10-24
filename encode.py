@@ -24,13 +24,9 @@ def parse_args():
     parser.add_argument('--end_index', type=int, default=None, help='End index for data processing')
     parser.add_argument('--domain', type=str, choices=['text', 'image'], required=True, help='Domain to encode')
     parser.add_argument('--source_caption', type=str, choices=['raw_caption', 'shortIB_captions', 'longIB_captions', 'shortSV_captions', 'longSV_captions', 'shortLLA_captions', 'longLLA_captions','caption'], required=True, help='Source caption')
-<<<<<<< HEAD
-    parser.add_argument('--batch_size', type=int, default=32, help='Save batch size')
-=======
     parser.add_argument('--save_name', type=str, default=None, help='Save name')
     parser.add_argument('--batch_size', type=int, default=32, help='Save batch size')
     parser.add_argument('--agg_mode', type=str, default='concat', help='Aggregation mode')
->>>>>>> main
     return parser.parse_args()
 
 def process_batch(data, start_index, batch_size, output_dir, encode_function, resume):
@@ -51,11 +47,6 @@ def process_batch(data, start_index, batch_size, output_dir, encode_function, re
         torch.save(batch_embeddings, output_path)
         idx += 1
 
-<<<<<<< HEAD
-def encode_text(args, sentences, start_index):
-    model_name = args.text_model_name.split('/')[-1]
-    output_dir = os.path.join('./data/tensor_data/text_embedding', model_name, args.data +'_'+ args.source_caption)
-=======
 @torch.no_grad()
 def encode_text(args, sentences, start_index):
     model_name = args.text_model_name.split('/')[-1]
@@ -64,7 +55,6 @@ def encode_text(args, sentences, start_index):
     else:
         output_dir = os.path.join('./data/tensor_data/text_embedding', model_name, args.data +'_'+ args.source_caption)
     print(f"Output directory: {output_dir}")
->>>>>>> main
     if not args.resume and os.path.exists(output_dir):
         exit()
     model = SentenceEmbedding(args.text_model_name)
@@ -72,15 +62,6 @@ def encode_text(args, sentences, start_index):
     model.eval()
     process_batch(sentences, start_index, args.batch_size, output_dir, model.get_sentence_embeddings, args.resume)
 
-<<<<<<< HEAD
-def encode_image(args, images, start_index):
-    model_name = args.vision_model_name.split('/')[-1]
-    output_dir = os.path.join('./data/tensor_data/image_embedding', model_name, args.data)
-    if not args.resume and os.path.exists(output_dir):
-        logging.info(f'{output_dir} already exists, skipping...')
-        exit()
-    model = ImageEmbedding(args.vision_model_name)
-=======
 @torch.no_grad()
 def encode_image(args, images, start_index):
     model_name = args.vision_model_name.split('/')[-1]
@@ -92,7 +73,6 @@ def encode_image(args, images, start_index):
         logging.info(f'{output_dir} already exists, skipping...')
         exit()
     model = ImageEmbedding(args.vision_model_name, agg_mode=args.agg_mode)
->>>>>>> main
     model = model.to('cuda')  # Move model to GPU
     model.eval()
     process_batch(images, start_index, args.batch_size, output_dir, model.get_visual_embeddings_from_directory, args.resume)

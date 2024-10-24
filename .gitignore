@@ -8,6 +8,10 @@ output/
 *.pdf
 *.png
 *.json
+*.zip
+*.ipynb
+*.pdf
+*.png
 data/tensor_data/
 data/slurm_logs/
 evaluation/backbone_features/

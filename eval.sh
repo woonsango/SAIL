@@ -1,21 +1,10 @@
 #!/bin/bash
 #SBATCH --job-name=eval
-<<<<<<< HEAD
-#SBATCH --partition=unkillable                           # Ask for unkillable job
-=======
 #SBATCH --partition=long                           # Ask for unkillable job
->>>>>>> main
 #SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:l40s:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-<<<<<<< HEAD
-#SBATCH --mem=32G           
-#SBATCH --time=1:00:00                                    
-#SBATCH --output=./slurm_logs/eval/output-%j.txt
-#SBATCH --error=./slurm_logs/eval/error-%j.txt 
-
-=======
 #SBATCH --mem=64G           
 #SBATCH --time=0:30:00                                    
 #SBATCH --output=./slurm_logs/eval/output-%j.txt
@@ -25,11 +14,7 @@
 module load miniconda/3
 conda init
 # conda activate openflamingo
->>>>>>> main
 
-module load miniconda/3
-conda init
-conda activate openflamingo
 export HF_AUTH_TOKEN="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"
 
 
@@ -38,21 +23,6 @@ export HF_AUTH_TOKEN="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"
 # vision_model="facebook/dinov2-base"
 vision_model="facebook/dinov2-large"
 # vision_model="facebook/dinov2-giant"
-<<<<<<< HEAD
-# vision_model="facebook/vit-mae-large"
-
-# text_model="sentence-transformers/all-mpnet-base-v2"
-text_model="Alibaba-NLP/gte-large-en-v1.5" 
-# text_model="Alibaba-NLP/gte-Qwen2-1.5B-instruct"
-# ------------------------------------------------------------ 
- 
-for train in 30mraw_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7L_d1024_scale10_negbias10_gmp512
-do
-    for epoch in {2..120..2};
-    do
-        # imagenetv1 imagenetv2 COCO winoground sugar_crepe 
-        for task in imagenetv1 COCO
-=======
 # vision_model="dinov1-vitb16"
 # vision_model="dinov1-resnet"
 # vision_model="facebook/dinov2-giant"
@@ -77,7 +47,6 @@ do
     do
         # imagenetv1 imagenetv2 COCO winoground sugar_crepe MMVP
         for task in segmentation
->>>>>>> main
         do
             checkpoint_path="./logs/${train}/checkpoints/epoch_${epoch}.pt"
             # check if the checkpoint exists
@@ -99,7 +68,6 @@ do
                 --batch_size 64 \
                 --seg_task_config /home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP/configs/cfg_coco_stuff164k_SAIL.py \
                 --overwrite
->>>>>>> main
         done
     done
 done
