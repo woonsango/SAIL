@@ -2,7 +2,7 @@
 wandb/
 output/
 *.pt
-*.json
+# *.json
 *.zip
 data/tensor_data/
 slurm_logs/

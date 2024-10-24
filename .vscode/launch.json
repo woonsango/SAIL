@@ -1,0 +1,70 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Evaluation",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "python": "/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python",
+            "program": "/home/mila/q/qian.yang/Light_Align/eval.py",
+            "justMyCode": false,
+            "args": [
+                "--task",
+                // "COCO",
+                "segmentation",
+                "--vision-model",
+                "facebook/dinov2-large",
+                "--text-model",
+                "Alibaba-NLP/gte-large-en-v1.5",
+                "--head-weights-path",
+                "/network/scratch/l/le.zhang/light_align/logs/cc12rawSVm_gtendinoL_bs_32768_lion_org_lr_1e-5_star7L_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_20.pt",
+                "--target-dimension",
+                "1024",
+                "--results_dir",
+                "/home/mila/q/qian.yang/scratch/tmp",
+                "--save_dir",
+                "/home/mila/q/qian.yang/scratch/tmp",
+                "--seg_task_config",
+                // "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_ade20k.py",
+                // "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_voc21.py",
+                "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_voc20.py",
+                "--overwrite",
+            ]
+        },
+        {
+            "name": "ClearCLIP",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "python": "/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python",
+            "program": "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/eval.py",
+            "justMyCode": false,
+            "args": [
+                "--config",
+                // "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_voc21_clearCLIP.py",
+                "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_voc20_clearCLIP.py",
+                // "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cfg_ade20k_clearCLIP.py",
+                "--work-dir",
+                "/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP",
+            ]
+        },
+        {
+            "name": "Convert COCO Stuff 164k",
+            "type": "python",
+            "request": "launch",
+            "console": "integratedTerminal",
+            "python": "/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin/python",
+            "program": "/home/mila/q/qian.yang/Light_Align/mmdetection/tools/dataset_converters/coco_stuff164k.py",
+            "justMyCode": false,
+            "args": [
+                "/home/mila/q/qian.yang/scratch/coco_stuff164k",
+                "--nproc",
+                "8"
+            ]
+        }
+    ]
+}

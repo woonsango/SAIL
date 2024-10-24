@@ -10,13 +10,13 @@ export PATH="/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin:$PATH"
 conda activate FUYU
 
 deepspeed --num_gpus=4 /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/train_mem.py \
-    --deepspeed /home/mila/q/qian.yang/LongVLM/LLaVA/scripts/zero2.json \
+    --deepspeed /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/zero2.json \
     --model_name_or_path /network/scratch/q/qian.yang/vicuna-7b-v1.5 \
     --version plain \
-    --data_path /home/mila/q/qian.yang/scratch/llava-v1.5-7b/pretrain_data/blip_laion_cc_sbu_558k.json \
+    --data_path /network/scratch/q/qian.yang/llava-v1.5-7b/pretrain_data/blip_laion_cc_sbu_558k.json \
     --target_dimension 1024 \
     --linear_type star \
-    --image_folder /home/mila/q/qian.yang/scratch/llava-v1.5-7b/pretrain_data \
+    --image_folder /network/scratch/q/qian.yang/llava-v1.5-7b/pretrain_data \
     --vision_tower facebook/dinov2-large \
     --mm_projector_type mlp2x_gelu \
     --tune_mm_mlp_adapter True \
