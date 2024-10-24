@@ -6,12 +6,12 @@ from .imagenetv2 import ImageNetV2Dataset
 from .imagenetv1 import ImageNetWithPaths
 from .imagenet_constant import IMAGENET_CLASSES, IMAGENET_TEMPLATES
 import torch
-from model import VLContrastModel
+
 from tqdm import tqdm
 import os
 from typing import Union, Optional
 import torch.nn as nn
-from .utils import get_model_device, save_features, load_features
+from .utils import get_model_device, save_features, load_features, Processor
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -21,8 +21,12 @@ class Processor:
         self.processor = processor
 
     def __call__(self, images):
-        images = self.processor(images, return_tensors="pt")["pixel_values"][0]
-        return images
+        outputs = self.processor(images, return_tensors="pt")
+        if isinstance(outputs, torch.Tensor):
+            return outputs[0]
+        else:
+            return outputs['pixel_values'][0]
+
 
 
 def accuracy(output, target, topk=(1,)):
@@ -48,7 +52,6 @@ def zeroshot_classifier(
     zeroshot_weights = []
     backbone_path = save_backbone_classifier_features_path
 
-    # 使用 no_grad 模式避免计算图的创建
     with torch.amp.autocast(device_type='cuda'):
         with torch.no_grad():
             if os.path.exists(backbone_path):
@@ -72,7 +75,7 @@ def zeroshot_classifier(
                         texts, padding=True, truncation=True, return_tensors="pt"
                     ).to(device)
                     class_embeddings, class_features = model.encode_text(
-                            tokens, return_encoded=True
+                            tokens, text_list = texts, return_encoded=True
                         )
                     pre_encode_model_features[classname] = class_features.cpu()
                     class_embeddings /= class_embeddings.norm(dim=-1, keepdim=True)
@@ -221,25 +224,3 @@ def imagenet_eval(
 
     return {"top1": top1, "top5": top5}
 
-
-if __name__ == "__main__":
-    # Load the model
-    linear_align = True
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    if linear_align:
-        model = VLContrastModel(
-            text_model_name="sentence-transformers/all-mpnet-base-v2",
-            vision_model_name="facebook/dinov2-base",
-            vlhead_weights_path="/home/mila/l/le.zhang/scratch/light_align/logs/single_node_test_20240710124601_bs_16384_lion_mean_0.1_warmup/checkpoints/epoch_100.pt",
-            linear_align=True,
-        )
-        # weights_path='/home/mila/l/le.zhang/scratch/light_align/output/raw_data_linear/model_14.pth'
-    else:
-        model = VLContrastModel(
-            text_model_name="sentence-transformers/all-mpnet-base-v2",
-            vision_model_name="facebook/dinov2-base",
-            vlhead_weights_path="/home/mila/l/le.zhang/scratch/light_align/output/raw_data_linear_shared_head/checkpoint_42.pth",
-            linear_align=False,
-        )
-    model = model.to(device)
-    imagenet_eval(model)

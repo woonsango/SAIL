@@ -68,6 +68,12 @@ def parse_args(args):
         help="Path to file(s) with image embedding training data.",
     )
     parser.add_argument(
+        "--extra-text-embedding-list",
+        nargs='+',
+        default=None,
+        help="Path to file(s) with extra text emebdding training data. ",
+    )
+    parser.add_argument(
         "--head-weights-path",
         type=str,
         default=None,
@@ -114,6 +120,18 @@ def parse_args(args):
         type=float,
         default=-10.0,
         help="Bias for linear layer.",
+    )
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.999,
+        help="Alpha for focal loss.",
+    )
+    parser.add_argument(
+        "--gamma",
+        type=float,
+        default=5,
+        help="Gamma for focal loss.",
     )
     parser.add_argument(
         "--use_gmp",
@@ -231,8 +249,8 @@ def parse_args(args):
         help="When scheduler w/ cooldown used, perform cooldown from total_epochs - cooldown_epochs onwards."
     )
     parser.add_argument("--lr", type=float, default=None, help="Learning rate.")
-    parser.add_argument("--beta1", type=float, default=None, help="Adam beta 1.")
-    parser.add_argument("--beta2", type=float, default=None, help="Adam beta 2.")
+    parser.add_argument("--beta1", type=float, default=0.9, help="Adam beta 1.")
+    parser.add_argument("--beta2", type=float, default=0.99, help="Adam beta 2.")
     parser.add_argument("--eps", type=float, default=None, help="Adam epsilon.")
     parser.add_argument("--wd", type=float, default=0.2, help="Weight decay.")
     parser.add_argument(

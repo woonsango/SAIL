@@ -3,8 +3,7 @@ from torch import nn
 from typing import Optional, Callable
 import torch.nn.functional as F
 
-
-# v7
+# v7  
 class StarMLP(nn.Module):
     def __init__(
         self,
@@ -13,12 +12,11 @@ class StarMLP(nn.Module):
         intermediate_dim: Optional[int] = None,
         activation: Optional[Callable] = None,
     ):
-        device = 'cuda' if torch.cuda.is_available() else 'cpu'
         super().__init__()
-        self.f1 = nn.Linear(input_dim, 8 * input_dim,device=device)
-        self.f2 = nn.Linear(input_dim, 8 * input_dim,device=device)
+        self.f1 = nn.Linear(input_dim, 8 * input_dim)
+        self.f2 = nn.Linear(input_dim, 8 * input_dim)
         self.act = activation  # 传入的激活函数
-        self.g = nn.Linear(8 * input_dim, output_dim,device=device)
+        self.g = nn.Linear(8 * input_dim, output_dim)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         x1, x2 = self.f1(hidden_states), self.f2(hidden_states)
@@ -36,6 +34,9 @@ class StarMLP(nn.Module):
         return x
 
 
+
+
+
 # v2
 class SwiGLU(nn.Module):
     def __init__(self, input_dim, output_dim):
@@ -46,7 +47,6 @@ class SwiGLU(nn.Module):
     def forward(self, x):
         return self.linear1(x) * F.silu(self.linear2(x))
 
-
 class SiglipMLP(nn.Module):
     def __init__(
         self,
@@ -55,9 +55,7 @@ class SiglipMLP(nn.Module):
         intermediate_dim: Optional[int] = None,
     ):
         super().__init__()
-        intermediate_dim = (
-            intermediate_dim if intermediate_dim is not None else output_dim
-        )
+        intermediate_dim = intermediate_dim if intermediate_dim is not None else 4*input_dim
         self.proj = nn.Sequential(
             nn.Linear(input_dim, intermediate_dim),
             nn.GELU(),
@@ -65,8 +63,7 @@ class SiglipMLP(nn.Module):
         )
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
-        return self.proj(hidden_states)
-
+        return  self.proj(hidden_states)
 
 # v6 fast weight programming
 # class StarMLP(nn.Module):

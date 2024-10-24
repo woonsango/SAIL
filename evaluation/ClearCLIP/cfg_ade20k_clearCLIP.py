@@ -1,4 +1,4 @@
-data_root = '/home/mila/q/qian.yang/scratch/segmentation_datasets/ADEChallengeData2016'
+data_root = '/network/scratch/q/qian.yang/segmentation_datasets/ADEChallengeData2016'
 dataset_type = 'ADE20KDataset'
 default_hooks = dict(
     checkpoint=dict(by_epoch=False, interval=2000, type='CheckpointHook'),
@@ -19,9 +19,9 @@ log_processor = dict(by_epoch=False)
 model = dict(
     clip_type='CLIP',
     ignore_residual=True,
-    model_type='vanilla',
+    model_type='ClearCLIP',
     name_path=
-    '/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP/configs/cls_ade20k.txt',
+    '/home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP/configs/cls_ade20k.txt',
     type='ClearCLIPSegmentation',
     vit_type='ViT-B/16')
 resume = False
@@ -33,7 +33,7 @@ test_dataloader = dict(
             img_path='images/validation',
             seg_map_path='annotations/validation'),
         data_root=
-        '/home/mila/q/qian.yang/scratch/segmentation_datasets/ADEChallengeData2016',
+        '/network/scratch/q/qian.yang/segmentation_datasets/ADEChallengeData2016',
         pipeline=[
             dict(type='LoadImageFromFile'),
             dict(keep_ratio=True, scale=(
@@ -70,4 +70,4 @@ visualizer = dict(
     vis_backends=[
         dict(type='LocalVisBackend'),
     ])
-work_dir = '/home/mila/q/qian.yang/Light_Align/evaluation/ClearCLIP'
+work_dir = '/home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP'

@@ -4,11 +4,22 @@ output/
 *.pt
 # *.json
 *.zip
+*.ipynb
+*.pdf
+*.png
+*.json
 data/tensor_data/
-slurm_logs/
+data/slurm_logs/
 evaluation/backbone_features/
+evaluation/MMVP/
+evaluation/ClearCLIP/
+evaluation/MMVP_VLM/
+evaluation/slurm_logs/
+model/backbone_checkpoints/
+model/__pycache__/
+
 data/image/
-*.txt
+<<<<<<< HEAD
 logs/
 *.pyc
 # 忽略所有__pychache__文件夹
@@ -16,4 +27,4 @@ __pycache__/
 data/__pycache__/
 segmentation/
 mmdetection/
-VLM_Training/eval/
+slurm_logs/

@@ -1,8 +1,6 @@
 # base configurations
 model = dict(
     type='ClearCLIPSegmentation',
-    clip_type='CLIP',     # 'CLIP', 'BLIP', 'OpenCLIP', 'MetaCLIP', 'ALIP'
-    vit_type='ViT-B/16',      # 'ViT-B/16', 'ViT-L-14'
     model_type='ClearCLIP',   # 'vanilla', 'MaskCLIP', 'GEM', 'SCLIP', 'ClearCLIP'
     ignore_residual=True,
 )

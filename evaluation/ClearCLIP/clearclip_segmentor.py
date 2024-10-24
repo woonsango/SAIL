@@ -83,7 +83,7 @@ class ClearCLIPSegmentation(BaseSegmentor):
         self.num_queries = len(query_words)
         self.num_classes = max(self.query_idx) + 1
         self.query_idx = torch.Tensor(self.query_idx).to(torch.int64).to(device)
-
+        print(query_words)
         query_features = []
         with torch.no_grad(): # sub_imagenet_template, openai_imagenet_template
             for qw in query_words:
@@ -109,7 +109,8 @@ class ClearCLIPSegmentation(BaseSegmentor):
         self.prob_thd = prob_thd
         self.slide_stride = slide_stride
         self.slide_crop = slide_crop
-
+        print(slide_crop)
+       
     def forward_feature(self, img, logit_size=None):
         if type(img) == list:
             img = img[0]
@@ -207,6 +208,9 @@ class ClearCLIPSegmentation(BaseSegmentor):
                               ] * inputs.shape[0]
         inputs = inputs.half()
         if self.slide_crop > 0:
+            print(f"slide crop forward")
+            print(batch_img_metas)
+            breakpoint()
             seg_logits = self.forward_slide(inputs, batch_img_metas, self.slide_stride, self.slide_crop)
         else:
             seg_logits = self.forward_feature(inputs, batch_img_metas[0]['ori_shape'])

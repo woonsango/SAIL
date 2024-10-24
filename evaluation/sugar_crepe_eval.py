@@ -118,7 +118,7 @@ def SugarCrepe_eval(
                             return_tensors="pt",
                         ).to(device)
                         class_embeddings, class_features = model.encode_text(
-                            batch_texts, return_encoded=True
+                            batch_texts, text_list=batch_texts_list, return_encoded=True
                         )
                         for j, idx in enumerate(ann_idx):
                             # each image has two captions

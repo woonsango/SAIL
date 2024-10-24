@@ -6,7 +6,7 @@
 
 - Without background class: VOC20, Context59 (i.e., PASCAL VOC and PASCAL Context without the background category), and COCO-Object. 
 
-3. I grant you the permission to /network/q/qian.yang/scratch/segmentation_datasets, you should be able to access this dir.
+3. I grant you the permission to /network/scratch/q/qian.yang/segmentation_datasets, you should be able to access this dir.
 
 - If you cannot access, please follow https://github.com/open-mmlab/mmsegmentation/blob/main/docs/en/user_guides/2_dataset_prepare.md to download PASCAL VOC and ADE20k
 
