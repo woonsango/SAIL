@@ -3,7 +3,7 @@
 #SBATCH --partition=long                           # Ask for unkillable job
 #SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100l:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
 #SBATCH --mem=64G           
 #SBATCH --time=0:30:00                                    
@@ -61,6 +61,9 @@ do
                 --head-weights-path $checkpoint_path \
                 --task $task \
                 --vision-model $vision_model \
+<<<<<<< HEAD
+                --text-model $text_model 
+=======
                 --text-model $text_model \
                 --batch_size 64 \
                 --seg_task_config /home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP/configs/cfg_coco_stuff164k_SAIL.py \

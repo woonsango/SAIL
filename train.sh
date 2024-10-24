@@ -3,7 +3,7 @@
 #SBATCH --partition=long       # Ask for unkillable job
 #SBATCH --cpus-per-task=24                             # Ask for 2 CPUs
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:a100l:1
+#SBATCH --gres=gpu:l40s:1
 #SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
 #SBATCH --mem=648G           
 #SBATCH --time=8:00:00                                    

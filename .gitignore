@@ -2,6 +2,11 @@
 wandb/
 output/
 *.pt
+# *.json
+*.zip
+*.ipynb
+*.pdf
+*.png
 *.json
 *.zip
 *.ipynb

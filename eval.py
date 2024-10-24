@@ -6,6 +6,7 @@ from evaluation import (
     update_results_json,
     extract_info_from_path,
     check_epoch_exists,
+    segmentation_eval,
 )
 import argparse
 from model import create_model
@@ -271,7 +272,6 @@ def main(args):
             vision_model_name=vision_model_name,
             directory=mmvp_dir,
         )
-
     update_results_json(output_path, epoch_num, results)
 
 
