@@ -2,16 +2,12 @@
 wandb/
 output/
 *.pt
-# *.json
 *.zip
 *.ipynb
 *.pdf
 *.png
 *.json
-*.zip
-*.ipynb
-*.pdf
-*.png
+
 data/tensor_data/
 data/slurm_logs/
 evaluation/backbone_features/
@@ -23,7 +19,6 @@ model/backbone_checkpoints/
 model/__pycache__/
 
 data/image/
-<<<<<<< HEAD
 logs/
 *.pyc
 # 忽略所有__pychache__文件夹
