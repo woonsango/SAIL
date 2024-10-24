@@ -9,8 +9,8 @@ export PATH="/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin:$PATH"
 conda activate FUYU
 
 
-model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20'
-answer_name='llava_stage2_star7XL_d1024_scale20'
+model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_sequence_align'
+answer_name='llava_stage2_star7XL_d1024_scale20_sequence_align'
 upload_name='vizwiz_answer_upload_'$answer_name
 
 

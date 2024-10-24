@@ -16,7 +16,4 @@ __pycache__/
 data/__pycache__/
 segmentation/
 mmdetection/
-VLM_Training/
-VLM_Training/eval/vqav2/llava_vqav2_mscoco_test2015.jsonl
-VLM_Training/eval/pycocoevalcap/meteor/data/paraphrase-en.gz
-VLM_Training/eval/pycocoevalcap/clipscore/mscoco_vitb_features/mscoco_image_features~ViT-B32.npy
+VLM_Training/eval/

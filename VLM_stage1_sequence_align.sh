@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=LLaVA_stage1_sequence_align  
+#SBATCH --job-name=Stage1_seq_align  
 #SBATCH --output=/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_stage1_sequence_align_output.txt
 #SBATCH --error=/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_stage1_sequence_align_error.txt
 #SBATCH --ntasks=1

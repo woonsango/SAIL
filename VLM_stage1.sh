@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=LLaVA_stage1
+#SBATCH --job-name=Stage1_Parallel
 #SBATCH --output=/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_stage1_output.txt
 #SBATCH --error=/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_stage1_error.txt
 #SBATCH --ntasks=1

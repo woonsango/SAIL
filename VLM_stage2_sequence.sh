@@ -17,7 +17,7 @@ deepspeed --num_gpus=4 /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/t
     --image_folder /home/mila/q/qian.yang/scratch/llava-v1.5-7b/instruct_tuning_data/data \
     --target_dimension 1024 \
     --linear_type star \
-    --vlhead_weights_path /network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt \
+    --vlhead_weights_path /network/scratch/l/le.zhang/light_align/logs/dreamclip30m_NV2dinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_14.pt \
     --vision_tower facebook/dinov2-large \
     --mm_projector_type mlp2x_gelu \
     --mm_vision_select_layer -2 \
@@ -45,5 +45,5 @@ deepspeed --num_gpus=4 /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/t
     --dataloader_num_workers 4 \
     --lazy_preprocess True \
     --report_to wandb \
-    --pretrain_mm_mlp_adapter /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20/mm_projector.bin \
-    --output_dir /network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20
+    --pretrain_mm_mlp_adapter /network/scratch/q/qian.yang/light_align/llava_stage1_dreamclip30m_NV2dinoL_bs_32768_sequence/mm_projector.bin \
+    --output_dir /network/scratch/q/qian.yang/light_align/llava_stage2_dreamclip30m_NV2dinoL_bs_32768_sequence

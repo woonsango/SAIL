@@ -12,8 +12,8 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20'
-CKPT='llava_stage2_star7XL_d1024_scale20'
+model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_sequence_align'
+CKPT='llava_stage2_star7XL_d1024_scale20_sequence_align'
 
 SPLIT="llava_vqav2_mscoco_test-dev2015"
 

@@ -9,8 +9,8 @@ export PATH="/home/mila/q/qian.yang/anaconda3/envs/FUYU/bin:$PATH"
 conda activate FUYU
 
 SPLIT="mmbench_dev_20230712"
-model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20'
-answer_name='llava_stage2_star7XL_d1024_scale20'
+model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_sequence_align'
+answer_name='llava_stage2_star7XL_d1024_scale20_sequence_align'
 
 python /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/eval/model_vqa_mmbench.py \
     --model-path $model_path \

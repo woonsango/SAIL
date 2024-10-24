@@ -14,7 +14,7 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 echo "GPU list: ${GPULIST[@]}"
 CHUNKS=${#GPULIST[@]}
 
-CKPT='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20'
+CKPT='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_sequence_align'
 SPLIT="llava_gqa_testdev_balanced"
 GQADIR="/home/mila/q/qian.yang/scratch/gqa"
 
@@ -42,7 +42,7 @@ for IDX in $(seq 0 $((CHUNKS-1))); do
     cat $CKPT/gqa/$SPLIT/${CHUNKS}_${IDX}.jsonl >> "$output_file"
 done
 
-python /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/eva/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
+python /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/eval/convert_gqa_for_eval.py --src $output_file --dst $GQADIR/testdev_balanced_predictions.json
 
 cd $GQADIR
 python eval.py --tier testdev_balanced

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=LLaVA_stage1_sequence
+#SBATCH --job-name=Stage1_seq
 #SBATCH --output=/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_stage1_sequence_output.txt
 #SBATCH --error=/home/mila/q/qian.yang/LongVLM/Light_Align/VLM_stage1_sequence_error.txt
 #SBATCH --ntasks=1
@@ -44,5 +44,5 @@ deepspeed --num_gpus=4 /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/t
     --dataloader_num_workers 4  \
     --lazy_preprocess True \
     --report_to wandb  \
-    --vlhead_weights_path /network/scratch/l/le.zhang/light_align/logs/dreamclip30m_gtendinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_30.pt \
-    --output_dir /network/scratch/q/qian.yang/light_align/llava_stage1_star7XL_d1024_scale20
+    --vlhead_weights_path /network/scratch/l/le.zhang/light_align/logs/dreamclip30m_NV2dinoL_bs_32768_lion_mean_lr_1e-5_star7XL_d1024_scale20_bias-10_multi_postext_s2/checkpoints/epoch_14.pt \
+    --output_dir /network/scratch/q/qian.yang/light_align/llava_stage1_dreamclip30m_NV2dinoL_bs_32768_sequence

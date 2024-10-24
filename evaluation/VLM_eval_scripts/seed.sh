@@ -13,8 +13,8 @@ IFS=',' read -ra GPULIST <<< "$gpu_list"
 
 CHUNKS=${#GPULIST[@]}
 
-model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20'
-CKPT='llava_stage2_star7XL_d1024_scale20'
+model_path='/network/scratch/q/qian.yang/light_align/llava_stage2_star7XL_d1024_scale20_sequence_align'
+CKPT='llava_stage2_star7XL_d1024_scale20_sequence_align'
 
 for IDX in $(seq 0 $((CHUNKS-1))); do
     CUDA_VISIBLE_DEVICES=${GPULIST[$IDX]} python /home/mila/q/qian.yang/LongVLM/Light_Align/VLM_Training/eval/model_vqa_loader.py \
