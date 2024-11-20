@@ -1,4 +1,4 @@
-from .sail_model import AlignmentLayer, SAILModel
+from .sail_model import AlignmentLayer, SAILModel, ShareLockAlignmentLayer
 from .loss import ClipLoss, SigLipLoss, BarlowTwinsLoss
 from .vision_model import ImageEmbedding
 from .language_model import SentenceEmbedding
@@ -39,11 +39,14 @@ def create_model(
         linear_type: str = 'star',
         logit_scale: float = 20.0,
         logit_bias: float = -10.0,
-        use_gmp: bool = False,
-        gmp_groups: int = 512
+        agg_mode: str = 'concat',
+        width_factor: int = 8,
+        sharelock: bool = False,
 ):  
     if isinstance(device, str):
         device = torch.device(device)
+
+    LayerClass = ShareLockAlignmentLayer if sharelock else AlignmentLayer
 
     cast_dtype = get_cast_dtype(precision)
     if vision_model_name is not None and text_model_name is not None:
@@ -54,11 +57,12 @@ def create_model(
             vlhead_weights_path=head_weights_path, 
             linear_type=linear_type, 
             cast_dtype=cast_dtype, 
-            use_gmp=use_gmp, 
-            gmp_groups=gmp_groups
+            agg_mode=agg_mode,
+            width_factor=width_factor,
+            sharelock=sharelock,
         )
     else:
-       model = AlignmentLayer(
+       model = LayerClass(
             vision_dimesion, 
             text_dimension, 
             target_dimension, 
@@ -66,8 +70,8 @@ def create_model(
             cast_dtype=cast_dtype, 
             logit_scale=logit_scale, 
             logit_bias=logit_bias, 
-            use_gmp=use_gmp, 
-            gmp_groups=gmp_groups)
+            width_factor=width_factor,
+        )
     model.to(device=device)
     return model
 

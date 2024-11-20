@@ -98,10 +98,10 @@ def parse_args(args):
         help="Dimension of text embeddings. Default set to 768 for all-mpnet-base-v2.",
     )
     parser.add_argument(
-        "--diagonal-weight",
-        type=float,
-        default=0.0,
-        help="Weight for diagnal loss.",
+        "--width-factor",
+        type=int,
+        default=8,
+        help="Width factor for star mlp.",
     )
     parser.add_argument(
         "--linear-type",
@@ -122,30 +122,17 @@ def parse_args(args):
         help="Bias for linear layer.",
     )
     parser.add_argument(
-        "--alpha",
-        type=float,
-        default=0.999,
-        help="Alpha for focal loss.",
-    )
-    parser.add_argument(
-        "--gamma",
-        type=float,
-        default=5,
-        help="Gamma for focal loss.",
-    )
-    parser.add_argument(
-        "--use_gmp",
+        "--sharelock",
         default=False,
         action="store_true",
-        help="Use grouped mean pooling for image features.",
+        help="Use sharelock alignment layer.",
     )
     parser.add_argument(
-        "--gmp_groups",
-        type=int,
-        default=512,
-        help="Number of groups for grouped mean pooling.",
+        "--optimizer",
+        type=str,
+        default="lion",
+        help="Optimizer to use.",
     )
-
 
     parser.add_argument(
         "--train-data-upsampling-factors",

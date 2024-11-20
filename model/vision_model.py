@@ -1,4 +1,4 @@
-from transformers import AutoImageProcessor, AutoModel
+from transformers import AutoImageProcessor, AutoModel, CLIPVisionModel
 import torch
 import torch.nn as nn
 from PIL import Image, ImageFile    
@@ -14,10 +14,11 @@ from packaging import version
 import transformers
 from .dinoforseg import Dinov2EncoderForSegmentation
 
-from .resnet import get_simclr_resnet
 from .mae import get_mae_vit
-from .convnextv2 import get_convnextv2
 from .ibot import get_ibot_vit
+from .ijepa import get_ijepa_vit
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 Image.MAX_IMAGE_PIXELS = None
@@ -67,15 +68,15 @@ class ImageEmbedding(nn.Module):
         self.agg_mode = agg_mode
         self.model_name = model_name
 
-        if any(x in model_name for x in ['ibot', 'mae', 'dinov1', 'convnextv2', 'aim']):
+        if any(x in model_name for x in ['ibot', 'mae', 'dinov1', 'aim', 'ijepa']):
+            # load from local
             if 'ibot' in model_name:
                 self.model = get_ibot_vit(model_name)
             elif 'mae' in model_name:
                 self.model = get_mae_vit(model_name)
-            elif 'r101' in model_name or 'r152' in model_name:
-                self.model, _ = get_simclr_resnet(model_name)
-            elif 'convnextv2' in model_name:
-                self.model = get_convnextv2(model_name)
+            elif 'ijepa' in model_name:
+                self.model = get_ijepa_vit(model_name)
+            # load from torch hub
             elif 'dinov1' in model_name:
                 if 'vitb16' in model_name:
                     self.model = torch.hub.load('facebookresearch/dino:main', 'dino_vitb16')
@@ -95,26 +96,50 @@ class ImageEmbedding(nn.Module):
             self.model = self.model.to(self.device).half()
             self.model.dtype = torch.float16
             self.image_processor = CustomImageProcessor()
-        # check if huggingface version is greater than 4.38.0
-        if not seg and any(x in model_name.lower() for x in ['dinov2']) and version.parse(transformers.__version__) >= version.parse("4.46.0"):
+        
+        # load from huggingface
+        elif not seg and any(x in model_name.lower() for x in ['dinov2']) and version.parse(transformers.__version__) >= version.parse("4.46.0"):
+            # check if huggingface version is greater than 4.38.0
             print("Using model with SDPA")
             self.SDPA = True
-            self.model = AutoModel.from_pretrained(model_name, attn_implementation="sdpa", torch_dtype=torch.float16).to(self.device)
+            self.model = AutoModel.from_pretrained(model_name, attn_implementation="sdpa", torch_dtype=torch.float16)
+            self.image_processor = AutoImageProcessor.from_pretrained(model_name)
+        elif any(x in model_name.lower() for x in ['clip']):
+            self.model = CLIPVisionModel.from_pretrained(model_name, torch_dtype=torch.float16)
             self.image_processor = AutoImageProcessor.from_pretrained(model_name)
         else:
             if seg:
                 modify_vit('seg')
             self.SDPA = False
-            self.model = AutoModel.from_pretrained(model_name, attn_implementation="eager", torch_dtype=torch.float16).to(self.device)
+            self.model = AutoModel.from_pretrained(model_name, attn_implementation="eager", torch_dtype=torch.float16)
             self.image_processor = AutoImageProcessor.from_pretrained(model_name)
 
     def load_images_from_directory(self, images_path: List[str]) -> List[Image.Image]:
-        images = []
-        for image_path in images_path:
+
+        def load_single_image(args):
+            idx, image_path = args
             with Image.open(image_path) as img:
-                img = img.convert("RGB")
-                images.append(img)
+                return idx, img.convert("RGB")
+        
+        images = [None] * len(images_path)
+        with ThreadPoolExecutor() as executor:
+            # Submit tasks with indices to maintain order
+            futures = {executor.submit(load_single_image, (i, path)): i 
+                      for i, path in enumerate(images_path)}
+            
+            # Collect results in order
+            for future in as_completed(futures):
+                idx, img = future.result()
+                images[idx] = img
+                
         return images
+    
+    # def load_images_from_directory(self, images_path: List[str]) -> List[Image.Image]:
+    #     images = []
+    #     for image_path in images_path:
+    #         with Image.open(image_path) as img:
+    #             images.append(img.convert("RGB"))
+    #     return images
 
     def get_visual_embeddings_from_directory(self, images_path: List[str]):
         images = self.load_images_from_directory(images_path)
@@ -145,35 +170,41 @@ class ImageEmbedding(nn.Module):
             if isinstance(inputs, torch.Tensor):
                 outputs = self.model(inputs)
             elif isinstance(inputs, dict) or isinstance(inputs, BaseBatchFeature):
-                if any(x in self.model_name.lower() for x in ['ibot', 'dinov1', 'aim']):
+                if any(x in self.model_name.lower() for x in ['ibot', 'dinov1', 'aim', 'ijepa']):
                     outputs = self.model(inputs['pixel_values'])
                 else:
                     outputs = self.model(**inputs)
             else:
                 raise ValueError(f"Unsupported input type: {type(inputs)}")
-        
-        sequence_output = outputs[0]  # batch_size, sequence_length, hidden_size
-
-        if patch_mode:
-            patch_tokens = sequence_output[:, 1:]
-            cls_token = sequence_output[:, 0].unsqueeze(1).repeat(1, patch_tokens.shape[1], 1)
-            linear_input = torch.cat([cls_token, patch_tokens], dim=-1)
+            
+        # extract the embeddings
+        if any(x in self.model_name.lower() for x in ['ijepa']):
+            linear_input = outputs.mean(dim=1)
+        elif any(x in self.model_name.lower() for x in ['clip']):
+            linear_input = outputs.pooler_output
         else:
-            if any(x in self.model_name.lower() for x in ['ibot', 'r101', 'r152', 'mae', 'convnextv2', 'dinov1']):
-                linear_input = outputs
-            elif any(x in self.model_name.lower() for x in ['aim']):
-                linear_input = outputs[1]
-            else:
-                cls_token = sequence_output[:, 0]
+            sequence_output = outputs[0]  # batch_size, sequence_length, hidden_size
+
+            if patch_mode:
                 patch_tokens = sequence_output[:, 1:]
-                if self.agg_mode == 'patch': 
-                    linear_input = patch_tokens.mean(dim=1)
-                elif self.agg_mode == 'cls':
-                    linear_input = cls_token
-                elif self.agg_mode == 'concat':
-                    linear_input = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
+                cls_token = sequence_output[:, 0].unsqueeze(1).repeat(1, patch_tokens.shape[1], 1)
+                linear_input = torch.cat([cls_token, patch_tokens], dim=-1)
+            else:
+                if any(x in self.model_name.lower() for x in ['ibot', 'r101', 'r152', 'mae', 'convnextv2', 'dinov1']):
+                    linear_input = outputs
+                elif any(x in self.model_name.lower() for x in ['aim']):
+                    linear_input = outputs[1]
                 else:
-                    raise ValueError(f"Invalid agg_mode: {self.agg_mode}")
+                    cls_token = sequence_output[:, 0]
+                    patch_tokens = sequence_output[:, 1:]
+                    if self.agg_mode == 'patch': 
+                        linear_input = patch_tokens.mean(dim=1)
+                    elif self.agg_mode == 'cls':
+                        linear_input = cls_token
+                    elif self.agg_mode == 'concat':
+                        linear_input = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
+                    else:
+                        raise ValueError(f"Invalid agg_mode: {self.agg_mode}")
 
         return linear_input
 

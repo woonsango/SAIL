@@ -57,12 +57,13 @@ def benchmark_model(model, benchmark_dir):
             input_text2 = text_processor(text2, padding=True, truncation=True, max_length=1024, return_tensors='pt').to(device)
 
             imgs = img_processor([img1,img2], return_tensors="pt").to(device)   
-            with torch.no_grad():
-                logits_per_text1 = model(imgs, input_text1, text_list=[text1])['logits_per_text']
-                logits_per_text2 = model(imgs, input_text2, text_list=[text2])['logits_per_text']
-                
-                probs1 = logits_per_text1.softmax(dim=-1).cpu().numpy()
-                probs2 = logits_per_text2.softmax(dim=-1).cpu().numpy()
+            with torch.autocast(device_type='cuda', dtype=torch.bfloat16):
+                with torch.no_grad():
+                    logits_per_text1 = model(imgs, input_text1, text_list=[text1])['logits_per_text']
+                    logits_per_text2 = model(imgs, input_text2, text_list=[text2])['logits_per_text']
+                    
+                    probs1 = logits_per_text1.softmax(dim=-1).cpu().numpy()
+                    probs2 = logits_per_text2.softmax(dim=-1).cpu().numpy()
 
             img1_score1 = probs1[0][0]
             img1_score2 = probs2[0][0]

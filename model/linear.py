@@ -9,14 +9,15 @@ class StarMLP(nn.Module):
         self,
         input_dim: int,
         output_dim: int,
+        width_factor: int ,
         intermediate_dim: Optional[int] = None,
         activation: Optional[Callable] = None,
     ):
         super().__init__()
-        self.f1 = nn.Linear(input_dim, 8 * input_dim)
-        self.f2 = nn.Linear(input_dim, 8 * input_dim)
+        self.f1 = nn.Linear(input_dim, width_factor * input_dim)
+        self.f2 = nn.Linear(input_dim, width_factor * input_dim)
         self.act = activation  # 传入的激活函数
-        self.g = nn.Linear(8 * input_dim, output_dim)
+        self.g = nn.Linear(width_factor * input_dim, output_dim)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
         x1, x2 = self.f1(hidden_states), self.f2(hidden_states)
@@ -32,6 +33,34 @@ class StarMLP(nn.Module):
         assert not torch.isinf(x).any(), "Output contains infinite values"
 
         return x
+
+
+class ShareLockMLP(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim, dropout_prob=0.2):
+        super(ShareLockMLP, self).__init__()
+        
+        # Define the layers
+        self.layers = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_prob),
+
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_prob),
+
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout_prob),
+
+            nn.Linear(hidden_dim, output_dim)
+        )
+
+    def forward(self, x):
+        return self.layers(x)
 
 
 
