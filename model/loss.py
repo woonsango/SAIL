@@ -114,6 +114,9 @@ class ClipLoss(nn.Module):
                 logits_per_image = logit_scale * all_image_features @ all_text_features.T
                 logits_per_text = logits_per_image.T
         else:
+
+            image_features = F.normalize(image_features, p=2, dim=-1)
+            text_features = F.normalize(text_features, p=2, dim=-1)
             logits_per_image = logit_scale * image_features @ text_features.T
             logits_per_text = logit_scale * text_features @ image_features.T
         
@@ -366,36 +369,6 @@ class SigLipLoss(nn.Module):
         selected_v2 = v2[:, indices]
         
         return selected_v1, selected_v2
-    
-    def grouped_mean_pooling(self, tensor, m):
-        """
-        在d维度上将张量分成m组，并对每组进行平均池化。
-
-        参数:
-        tensor (torch.Tensor): 输入张量，形状为 (n, d)。
-        m (int): 分组的数量，d 必须能被 m 整除。
-
-        返回:
-        torch.Tensor: 平均池化后的张量，形状为 (n, m)。
-        """
-        n, d = tensor.shape
-
-        # 检查 d 是否能被 m 整除
-        assert d % m == 0, "d 维度必须能被 m 整除"
-
-        # 计算每组的大小
-        group_size = d // m
-
-        # 重塑张量，以便在 m 组上进行平均池化
-        tensor_reshaped = tensor.view(n, m, group_size)
-
-        # 对每组进行平均池化
-        # pooled_result = tensor_reshaped.mean(dim=-1)
-        pooled_result, _ = tensor_reshaped.max(dim=-1)
-
-        return pooled_result
-    
-  
 
     
     def get_logits(self, image_features, text_features, logit_scale, logit_bias=None):
@@ -404,7 +377,7 @@ class SigLipLoss(nn.Module):
             logits += logit_bias
         return logits
     
-    def _loss(self, image_features, text_features, extra_text_features, logit_scale, logit_bias=None, logits_per_text=None, negative_only=False, alpha=0.9999, gamma=5):
+    def _loss(self, image_features, text_features, extra_text_features, logit_scale, logit_bias=None, logits_per_text=None, negative_only=False):
         # breakpoint()
 
         image_features = F.normalize(image_features, p=2, dim=-1)
@@ -435,15 +408,6 @@ class SigLipLoss(nn.Module):
         output = {"positive_loss": positive_loss, "negative_loss": negative_loss}
 
       
-        
-        #Solution 1: images contrast to positive text features
-        # if extra_text_features is not None:
-        #     extra_text_features = F.normalize(extra_text_features, p=2, dim=-1)
-        #     extra_positive_logits = torch.einsum('nd,nd->n', image_features, extra_text_features) # N
-        #     extra_positive_loss = F.logsigmoid(extra_positive_logits)
-        #     loss = torch.cat([loss, extra_positive_loss.unsqueeze(1)], dim=1) 
-        #     output["extra_positive_loss"] = -torch.mean(extra_positive_loss)
-
         #Solution 2: images contrast to all extra text features
         if extra_text_features is not None:
             extra_text_features = F.normalize(extra_text_features, p=2, dim=-1)
@@ -452,62 +416,16 @@ class SigLipLoss(nn.Module):
             output["extra_loss"] = -torch.mean(extra_loss)
             loss = torch.cat([loss, extra_loss], dim=1)
         
-        # my own implementation
-        # pred_prob = torch.sigmoid(logits * labels)
-        # loss = torch.log(pred_prob)
-
-        # with torch.no_grad():
-        #     modulating_factor = (1.0 - pred_prob) ** gamma
-        # loss *= modulating_factor
 
         output["contrastive_loss"] = -torch.mean(loss)
 
         return output
 
-    def _focal_loss(self, image_features, text_features, logit_scale, alpha, gamma):
-        """
-        Compute the focal loss for binary classification.
-
-        Args:
-        logits (torch.Tensor): The raw output of the model, shape (N,).
-        labels (torch.Tensor): The ground truth labels, shape (N,).
-        alpha (float): Weighting factor for the positive class.
-        gamma (float): Focusing parameter.
-
-        Returns:
-        torch.Tensor: The computed focal loss.
-        """
-
-        image_features = F.normalize(image_features, p=2, dim=-1)
-        text_features = F.normalize(text_features, p=2, dim=-1)
-        logits = self.get_logits(image_features, text_features, logit_scale)
-
-        with torch.no_grad():
-            labels = torch.eye(image_features.shape[0], device=image_features.device, dtype=image_features.dtype)
-            pred_prob = torch.sigmoid(logits)
-            p_t = labels * pred_prob + (1 - labels) * (1 - pred_prob)
-            modulating_factor = (1.0 - p_t) ** gamma
-            if alpha > 0:
-                alpha_factor = labels * alpha + (1 - labels) * (1 - alpha)
-
-        loss = F.binary_cross_entropy_with_logits(logits, labels, reduction='none')
-        loss *= modulating_factor
-        if alpha > 0:
-            loss *= alpha_factor
-
-        with torch.no_grad():
-            diag_loss = torch.diagonal(loss).sum()
-            positive_loss = diag_loss/image_features.shape[0]
-            negative_loss = (loss.sum() - diag_loss) / image_features.shape[0]
-
-        return {"contrastive_loss": torch.sum(loss)/image_features.shape[0], "positive_loss": positive_loss, "negative_loss": negative_loss}
-        
 
 
-    def forward(self, image_features, text_features, extra_text_features, logit_scale, logit_bias, logits_per_text=None, output_dict=False, alpha=0.9999, gamma=5, **kwargs):
+    def forward(self, image_features, text_features, extra_text_features, logit_scale, logit_bias, logits_per_text=None, output_dict=False, **kwargs):
        
-        loss = self._loss(image_features, text_features, extra_text_features, logit_scale, logit_bias, logits_per_text, alpha, gamma)
-        # loss = self._focal_loss(image_features, text_features, logit_scale, alpha=alpha, gamma=gamma)
+        loss = self._loss(image_features, text_features, extra_text_features, logit_scale, logit_bias, logits_per_text)
         # if self.world_size > 1:
         #     # exchange text features w/ neighbour world_size - 1 times
         #     right_rank = (self.rank + 1) % self.world_size

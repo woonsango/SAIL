@@ -7,23 +7,60 @@ output/
 *.pdf
 *.png
 *.json
+.vscode/
+__pycache__/
 
-data/tensor_data/
-data/slurm_logs/
+
 evaluation/backbone_features/
 evaluation/MMVP/
 evaluation/ClearCLIP/
 evaluation/MMVP_VLM/
 evaluation/slurm_logs/
+evaluation/eval_result/
+evaluation/__pycache__/
+
+
 model/backbone_checkpoints/
 model/__pycache__/
 
+# ignore data directory
+data/__pycache__/
 data/image/
+data/tensor_data/
+figures/
+
+train/__pycache__/
+
+
+
+
+# mllm
+llava_checkpoints/
+unusedscripts/
+
 logs/
 *.pyc
-# 忽略所有__pychache__文件夹
 __pycache__/
-data/__pycache__/
+
 segmentation/
 mmdetection/
 slurm_logs/
+wandb/
+misc_pyplot/
+
+
+# ignore llava evaluation data
+llava_train/eval/gqa/
+llava_train/eval/mmbench/
+llava_train/eval/pope/
+llava_train/eval/seed_bench/
+llava_train/eval/textvqa/
+llava_train/eval/vizwiz/
+llava_train/eval/vqav2/
+
+scripts/eval.sh
+scripts/knn.sh
+scripts/llava_eval.sh
+scripts/llava_pretrain.sh
+scripts/llava_finetune.sh
+scripts/llava_finetune_visiontune.sh

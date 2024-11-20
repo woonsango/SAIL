@@ -6,7 +6,6 @@ from evaluation import (
     update_results_json,
     extract_info_from_path,
     check_epoch_exists,
-    segmentation_eval,
 )
 import argparse
 from model import create_model
@@ -83,16 +82,16 @@ def parse_args():
         help="Dimension of text embeddings. Default set to 768 for all-mpnet-base-v2.",
     ),
     parser.add_argument(
-        "--use_gmp",
-        default=False,
-        action="store_true",
-        help="Use grouped mean pooling for image features.",
-    )
+        "--agg_mode",
+        type=str,
+        default='concat',
+        help="Aggregation mode for image features.",
+    ),
     parser.add_argument(
-        "--gmp_groups",
+        "--width_factor",
         type=int,
-        default=512,
-        help="Number of groups for grouped mean pooling.",
+        default=8,
+        help="Width factor for the MLP.",
     )
     parser.add_argument(
         "--overwrite",
@@ -113,6 +112,12 @@ def parse_args():
         action="store_true",
         help="Visualize segmentation results.",
     )
+    parser.add_argument(
+        "--sharelock",
+        default=False,
+        action="store_true",
+        help="Use sharelock.",
+    )
     args = parser.parse_args()
 
     # Overide args with model_config.yaml
@@ -131,11 +136,6 @@ def parse_args():
 
 def main(args):
     
-    # for debug
-    # epoch_num = 1
-    # training_info_str = "test"
-    # model_prefix = "test"
-
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
         args.head_weights_path
     )
@@ -144,7 +144,7 @@ def main(args):
         args.results_dir,
         args.task,
         model_prefix,
-        f"{training_info_str}{'gmp_groups'+ str(args.gmp_groups) if args.use_gmp else ''}.json",
+        f"{training_info_str}.json",
     )
     if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
         print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
@@ -158,8 +158,9 @@ def main(args):
         linear_type=args.linear_type,
         target_dimension=args.target_dimension,
         device=args.device,
-        use_gmp=args.use_gmp,
-        gmp_groups=args.gmp_groups,
+        agg_mode=args.agg_mode,
+        sharelock=args.sharelock,
+        width_factor=args.width_factor,
     )
     text_model_name = args.text_model.split("/")[-1]
     vision_model_name = args.vision_model.split("/")[-1]
@@ -221,6 +222,8 @@ def main(args):
             "annotations",
             "captions_val2017.json",
         )
+        if args.agg_mode != 'concat':
+            vision_model_name = vision_model_name + '_' + args.agg_mode
         results = coco_eval(
             model,
             bs=args.batch_size,
@@ -256,8 +259,6 @@ def main(args):
             linear_type=args.linear_type,
             target_dimension=args.target_dimension,
             device=args.device,
-            use_gmp=args.use_gmp,
-            gmp_groups=args.gmp_groups,
             task_config=args.seg_task_config,
             save_dir=args.save_dir,
             visualize=args.visualize_segmentation,

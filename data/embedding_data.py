@@ -28,7 +28,7 @@ def load_vectors(embedding_list: list[str]) -> list[torch.Tensor]:
     for dir_path in embedding_list:
         files.extend(natsorted(glob.glob(os.path.join(dir_path, "*.pt"))))
     vectors = []
-    for file in tqdm(files, desc="Loading vectors", unit="file"):
+    for file in tqdm(files, desc="Loading embedding data", unit="file"):
         vectors.extend(torch.load(file, weights_only=True).to(torch.float16))
     return vectors
 
@@ -36,7 +36,8 @@ class VLEmbeddingDataset(Dataset):
     def __init__(self, text_embedding_list, image_embedding_list, extra_text_embedding_list=None, train_num_samples=None):
 
         self.text_vectors, self.image_vectors = self._load_image_text_vectors(image_embedding_list, text_embedding_list)
-        assert len(self.text_vectors) % len(self.image_vectors) == 0, f"text vectors length ({len(self.text_vectors)}) is not a multiple of image vectors length ({len(self.image_vectors)})"
+        n_img, n_txt = len(self.image_vectors), len(self.text_vectors)
+        assert n_img > 0 and n_txt > 0 and n_txt % n_img == 0, f"text vectors length ({n_txt}) is not a multiple of image vectors length ({n_img})"
 
         if extra_text_embedding_list:
             print(f"Loading extra text vectors from {extra_text_embedding_list}")

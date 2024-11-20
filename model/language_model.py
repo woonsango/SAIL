@@ -1,9 +1,8 @@
 import torch
 import torch.nn.functional as F
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, CLIPTextModel
 import torch.nn as nn
 from typing import List, Dict, Any, Tuple, Optional, Union
-
 
 
 def get_embedding_strategy(model_name):
@@ -47,11 +46,14 @@ class SentenceEmbedding(nn.Module):
     def __init__(self, model_name='sentence-transformers/all-mpnet-base-v2'):
         super(SentenceEmbedding, self).__init__()
         self.model_name = model_name
-        if 'NV' not in model_name:
+        if not any(x in model_name for x in ['NV', 'clip']):
             self.pooling = POOL_CLASSES[get_embedding_strategy(model_name)]
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True, device_map=self.device).half()
+        if 'clip' in model_name:
+            self.model = CLIPTextModel.from_pretrained(model_name, device_map=self.device).half()
+        else:
+            self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True, device_map=self.device).half()
     
     def mean_pooling(self, model_output: torch.Tensor, attention_mask):
         token_embeddings = model_output[0]  # First element of model_output contains all token embeddings
@@ -64,15 +66,26 @@ class SentenceEmbedding(nn.Module):
             with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
                 embeddings = self.model.encode(sentences, max_length=1024).half()
                 return embeddings
+        elif 'clip' in self.model_name:
+            with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
+                inputs = self.tokenizer(sentences, padding=True, truncation=True, return_tensors='pt').to(self.device)
+                outputs = self.model(**inputs)
+                embeddings = outputs.pooler_output
+                return embeddings
         else:
             encoded_input = self.tokenizer(sentences, padding=True, truncation=True, max_length=1024, return_tensors='pt').to(self.device)
             return self.forward(encoded_input)
         
     def forward(self, inputs):
         # Compute token embeddings
-        with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
-            model_output = self.model(**inputs)
-        sentence_embeddings = self.pooling(model_output, inputs['attention_mask'])
+        if 'clip' in self.model_name:
+            with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
+                model_output = self.model(**inputs)
+            sentence_embeddings = model_output.pooler_output
+        else:
+            with torch.autocast(device_type=self.device.type, dtype=self.model.dtype):  # or bfloat16
+                model_output = self.model(**inputs)
+            sentence_embeddings = self.pooling(model_output, inputs['attention_mask'])
         return sentence_embeddings
 
 # Usage example

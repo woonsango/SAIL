@@ -159,11 +159,11 @@ def main(args):
         target_dimension = args.target_dimension,
         precision = args.precision,
         device = device,
-        use_gmp=args.use_gmp,
-        gmp_groups=args.gmp_groups,
         linear_type = args.linear_type,
         logit_scale = args.logit_scale,
         logit_bias = args.logit_bias,
+        width_factor = args.width_factor,
+        sharelock = args.sharelock,
         **model_kwargs
     )
     # print trainanble parameters
@@ -219,19 +219,22 @@ def main(args):
         include = lambda n, p: not exclude(n, p)
 
         named_parameters = list(model.named_parameters())
-        # gain_or_bias_params = [p for n, p in named_parameters if exclude(n, p) and p.requires_grad]
-        # rest_params = [p for n, p in named_parameters if include(n, p) and p.requires_grad]
-
-        # optimizer = optim.AdamW(
-        #     [
-        #         {"params": gain_or_bias_params, "weight_decay": 0.},
-        #         {"params": rest_params, "weight_decay": args.wd},
-        #     ],
-        #     lr=args.lr,
-        #     betas=(args.beta1, args.beta2),
-        #     eps=args.eps,
-        # )
-        optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.wd, betas=(args.beta1, args.beta2))
+        if args.optimizer == "lion":
+            logging.info("Using Lion optimizer")
+            optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.wd, betas=(args.beta1, args.beta2))
+        else:
+            logging.info("Using AdamW optimizer")
+            gain_or_bias_params = [p for n, p in named_parameters if exclude(n, p) and p.requires_grad]
+            rest_params = [p for n, p in named_parameters if include(n, p) and p.requires_grad]
+            optimizer = optim.AdamW(
+                [
+                    {"params": gain_or_bias_params, "weight_decay": 0.},
+                    {"params": rest_params, "weight_decay": args.wd},
+                ],
+                lr=args.lr,
+                betas=(args.beta1, args.beta2),
+                eps=args.eps,
+            )
         scaler = torch.amp.GradScaler() if args.precision == "amp" else None
 
     # optionally resume from a checkpoint
