@@ -7,15 +7,15 @@
 - **[2024/11/20]** 🔥 **SAIL Codebase Open-Sourced!**  
   The repository now includes the complete pipeline for training data preparation and preprocessing, as well as the full training and evaluation codebase.
 
-## Content
+## :bookmark: Content
 
-- [SAIL Training & Evaluation](#SAIL Training & Evaluation)
-  - [Data Preparation](#1-Data Preparation)
+- [SAIL Training & Evaluation](#sail-training--evaluation)
+  - [Data Preparation](#1-data-preparation)
   - [Training](#2-training)
-  - [Evaluation](# 3-Evaluation)
-- [SAIL Enhances SSL Models for MLLMs](#SAIL Enhances SSL Models for MLLMs)
-  - [Train](#Training with SAIL Vision Encoder in LLaVA-1.5)
-  - [Evaluation](#Evaluation)
+  - [Evaluation](#3-evaluation)
+- [SAIL Enhances SSL Models for MLLMs](#sail-enhances-ssl-models-for-mllms)
+  - [LLaVA Train with SAIL](#training-with-sail-vision-encoder-in-llava-15)
+  - [Evaluation](#evaluation)
 
 ## SAIL Training & Evaluation
 
