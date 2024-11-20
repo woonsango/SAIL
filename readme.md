@@ -23,7 +23,7 @@ The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) 
 
 ---
 
-### 1. Data Preparation
+### Data Preparation
 
 SAIL leverages high-quality, MLLM-enhanced captions for training, using datasets introduced in [DreamLIP](https://github.com/zyf0619sjtu/DreamLIP). To streamline this process, we provide a script for automated dataset preparation. Note that this process is time-intensive, as it involves handling 23M data samples.
 
@@ -57,7 +57,7 @@ DATADIR = {
 
 
 
-### 2. Training
+### Training
 
 <div align=center>
 <img width="80%" src="asset/trainpipeline.png"/>
@@ -113,7 +113,7 @@ We only save the alignment layer checkpoint at `./logs/${output_name}`.
 
 ---
 
-### 3. **Evaluation**
+### Evaluation
 
 Evaluation scripts are provided in `scripts/sail_eval.sh`.  
 
