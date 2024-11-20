@@ -78,16 +78,10 @@ if [ "$gpu_count" -eq 4 ]; then # If use multiple GPUs, please make sure the end
     echo "bash output: Using domain: $domain"
     echo "bash output: Each GPU will use save batch size of $batch_size"
     echo "bash output: Using source caption: $source_caption"
-    # 启动第一个任务在GPU 0上
     CUDA_VISIBLE_DEVICES=0 python encode.py --domain $domain --vision_model_name $vision_model --text_model_name $text_model --batch_size $batch_size --data $data --resume --end_index 6144000 --source_caption $source_caption &
-    # 启动第二个任务在GPU 1上   
     CUDA_VISIBLE_DEVICES=1 python encode.py --domain $domain --vision_model_name $vision_model --text_model_name $text_model --batch_size $batch_size --data $data --resume --start_index 6144000 --end_index 12288000 --source_caption $source_caption &
-    # 启动第二个任务在GPU 1上
     CUDA_VISIBLE_DEVICES=2 python encode.py --domain $domain --vision_model_name $vision_model --text_model_name $text_model --batch_size $batch_size --data $data --resume --start_index 12288000 --end_index 18432000 --source_caption $source_caption &
-    # 启动第二个任务在GPU 1上
     CUDA_VISIBLE_DEVICES=3 python encode.py --domain $domain --vision_model_name $vision_model --text_model_name $text_model --batch_size $batch_size --data $data --resume --start_index 18432000 --source_caption $source_caption &
-
-    # 等待所有后台任务完成
     wait
 else
     echo "bash output: Running tasks sequentially on a single GPU..."

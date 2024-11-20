@@ -21,6 +21,11 @@
 
 The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) (for training SAIL) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) (for testing SAIL's vision encoder in MLLMs). Please ensure the necessary dependency packages for these frameworks are installed.
 
+| Data        | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars   | Aircraft | DTD      | Pets   | Cal101   | Flowers  | Avg.   | INet     |
+| ----------- | ------------ | ------- | -------- | -------- | ------ | ------ | -------- | -------- | ------ | -------- | -------- | ------ | -------- |
+| 23M Merged  | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6   | **28.6** | **63.5** | 82.3   | **85.4** | **77.2** | 72.1   | **73.4** |
+| *LAION400M* | *CLIP-L*     | *90.1*  | *94.6*   | *77.4*   | *72.6* | *89.6* | *25*     | *60.4*   | *91.7* | *82.1*   | *75.5*   | *75.9* | *72.7*   |
+
 ---
 
 ### Data Preparation
@@ -57,6 +62,8 @@ DATADIR = {
 
 
 
+---
+
 ### Training
 
 <div align=center>
@@ -64,8 +71,6 @@ DATADIR = {
 </div>
 
 The training framework of SAIL consists of two main steps: **Pre-encoding** and **Alignment Tuning**. This efficient framework allows us to align the representation space of large pretrained unimodal models (e.g., DINOv2 and NV2 models) on a single `A100` GPU with a large `batch size of 32,768`, requiring only approximately `~5 hours` of training during the alignment tuning stage.
-
----
 
 #### stage 1. **Pre-encoding**
 
@@ -83,8 +88,6 @@ We provide scripts to pre-encode image-text pairs into embeddings. The script wi
 ```bash
 bash scripts/encode.sh
 ```
-
----
 
 #### stage 2. **Alignment Tuning**
 
@@ -127,8 +130,6 @@ Evaluation scripts are provided in `scripts/sail_eval.sh`.
 bash scripts/sail_eval.sh
 ```
 
----
-
 
 
 ## SAIL Enhances SSL Models for MLLMs
@@ -162,8 +163,6 @@ We follow the LLaVA-1.5 training process, including pretraining and fine-tuning.
 
 1. [Pretraining data](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain)
 2. Visual instruction tuning data
-
----
 
 #### Pretraining SAIL with LLaVA-1.5
 
@@ -209,8 +208,6 @@ deepspeed llava_train/train_mem.py \
     --tune_alignment_layer False \
     --output_dir ./llava_checkpoints/sail_llava_pretrain
 ```
-
----
 
 #### Fine-Tuning SAIL with LLaVA-1.5
 
