@@ -21,6 +21,12 @@
 
 The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) (for training SAIL) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) (for testing SAIL's vision encoder in MLLMs). Please ensure the necessary dependency packages for these frameworks are installed.
 
+| **Data**    | **Model**    | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
+| ----------- | ------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
+| 23M Merged  | SAIL-L (GTE) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
+| 23M Merged  | SAIL-L (NV2) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
+| *LAION400M* | *CLIP-L*     | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
+
 | Data      | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars | Aircraft | DTD      | Pets | Cal101   | Flowers  | Avg. | INet     |
 | --------- | ------------ | ------- | -------- | -------- | ------ | ---- | -------- | -------- | ---- | -------- | -------- | ---- | -------- |
 | 23M       | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6 | **28.6** | **63.5** | 82.3 | **85.4** | **77.2** | 72.1 | **73.4** |
@@ -50,7 +56,7 @@ bash download_mllm_enhanced_data.sh
 
 #### Updating Data Paths:
 
-Once the preprocessing is complete, update the dataset paths in `data/data_config.py` to reflect the location of the prepared data.
+Once the preprocessing is complete, update the dataset paths including `annotation` and `imagedir` field in `data/data_config.py` :
 
 ``````python
 DATADIR = {
@@ -135,7 +141,7 @@ bash scripts/sail_eval.sh
 
 The evaluation results will be saved to `evaluation/eval_result/{task}`
 
-Instructions for open-vocabulary semantic segmentation please refer to [here](https://github.com/lezhang7/SAIL/blob/main/evaluation/segmentation_readme.md)
+##### Open-vocabulary semantic segmentation Instructions please refer to [here](https://github.com/lezhang7/SAIL/blob/main/evaluation/segmentation_readme.md)
 
 ## SAIL Enhances SSL Models for MLLMs
 
