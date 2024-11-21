@@ -28,8 +28,8 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
    ```
 
 2. **Download the Alignment Layer Checkpoint**
-    Download the pretrained alignment layer checkpoint: `wget https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true `
-    [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true)
+    Download the pretrained alignment layer checkpoint: 
+   [ [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true) | [sail_dinov2l_gte.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_gte.pt?download=true) ]
 
 3. **Run the Model**
 
@@ -41,7 +41,7 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
    # Path to the downloaded checkpoint
    checkpoint_path = "checkpoint/sail_dinov2l_nv2.pt"
    
-   # Create the model
+   # Create the model, change the text_model to `Alibaba-NLP/gte-large-en-v1.5` if use sail_dinov2_gte
    model = create_model(
        text_model_name="nvidia/NV-Embed-v2",
        vision_model_name="facebook/dinov2-large",
