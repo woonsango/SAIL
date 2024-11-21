@@ -9,7 +9,7 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
 
 ## :bookmark: Content
 
-- [Quick Usage](#Quick Usage)
+- Quick Usage
 - [SAIL Training & Evaluation](#sail-training--evaluation)
   - [Data Preparation](#1-data-preparation)
   - [Training](#2-training)
@@ -115,8 +115,6 @@ DATADIR = {
     }
 }
 ``````
-
-
 
 ---
 
