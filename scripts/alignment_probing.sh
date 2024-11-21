@@ -18,10 +18,10 @@ conda activate openflamingo
 # ----------------------TRAIN SETTING------------------------
 
 
-text_embedding_list="data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc3m_raw_caption"
-image_embedding_list="data/tensor_data/image_embedding/dinov2-large/dreamclipcc3m"
-extra_text_embedding_list="data/tensor_data/text_embedding/NV-Embed-v2/dreamclipcc3m_longSV_captions"
-output_name="alignment_probing_dinov2l_nv2"
+text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
+extra_text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_longSV"
+image_embedding_list="data/tensor_data/image_embedding/dinov2-base/dreamclipcc3m"
+output_name="alignment_probing_dinov2b_gte"
 
 
 
@@ -32,7 +32,6 @@ alpha=0.995
 lr=1e-5
 bs=32768
 d=2048
-width_factor=8
 linear_type="linear"
 
 
@@ -61,8 +60,7 @@ python main.py \
     --name $output_name \
     --logit_scale $logit_scale \
     --logit_bias $logit_bias \
-    --siglip \
-    --width-factor $width_factor
+    --siglip
 
 
 

@@ -27,8 +27,6 @@ class SAILModelSegmentation(BaseSegmentor):
         vision_model_name,
         target_dimension,
         linear_type,
-        use_gmp,
-        gmp_groups,
         device,
         precision: str = "fp32",
         name_path="./cls_ade20k.txt",
@@ -61,8 +59,6 @@ class SAILModelSegmentation(BaseSegmentor):
             vlhead_weights_path=head_weights_path,
             linear_type=linear_type,
             cast_dtype=cast_dtype,
-            use_gmp=use_gmp,
-            gmp_groups=gmp_groups,
             seg=True,
             agg_mode=agg_mode
         )
@@ -407,8 +403,6 @@ def segmentation_eval(
     linear_type,
     target_dimension,
     device,
-    use_gmp,
-    gmp_groups,
     task_config,
     save_dir,
     precision="fp32",
@@ -423,8 +417,6 @@ def segmentation_eval(
     cfg.model.head_weights_path = head_weights_path
     cfg.model.linear_type = linear_type
     cfg.model.target_dimension = target_dimension
-    cfg.model.use_gmp = use_gmp
-    cfg.model.gmp_groups = gmp_groups
     cfg.model.device = device
     cfg.model.save_dir = save_dir
     cfg.model.precision = precision

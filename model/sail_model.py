@@ -14,32 +14,6 @@ from torch.cuda.amp import autocast
 from functools import partial
 import numpy as np
 
-def grouped_mean_pooling(tensor, m):
-    """
-    在d维度上将张量分成m组，并对每组进行平均池化。
-
-    参数:
-    tensor (torch.Tensor): 输入张量，形状为 (n, d)。
-    m (int): 分组的数量，d 必须能被 m 整除。
-
-    返回:
-    torch.Tensor: 平均池化后的张量，形状为 (n, m)。
-    """
-    n, d = tensor.shape
-
-    # 检查 d 是否能被 m 整除
-    assert d % m == 0, "d 维度必须能被 m 整除"
-
-    # 计算每组的大小
-    group_size = d // m
-
-    # 重塑张量，以便在 m 组上进行平均池化
-    tensor_reshaped = tensor.view(n, m, group_size)
-
-    # 对每组进行平均池化
-    pooled_result = tensor_reshaped.mean(dim=-1)
-
-    return pooled_result
 
 class AlignmentLayer(nn.Module):
     def __init__(
@@ -253,7 +227,7 @@ class SAILModel(nn.Module):
         super(SAILModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
         self.vision_model = ImageEmbedding(vision_model_name, seg=seg, agg_mode=agg_mode)
-        if any(x in vision_model_name for x in ['mae','r101','r152','ibot','convnextv2','dinov1','aim','ijepa','clip']) or 'patch' in agg_mode or 'cls' in agg_mode:
+        if any(x in vision_model_name for x in ['mae','ibot','dinov1','aim','ijepa','clip']) or 'patch' in agg_mode or 'cls' in agg_mode:
             if hasattr(self.vision_model.model, 'config'):
                 vision_dimesion = self.vision_model.model.config.hidden_size
             else:
@@ -289,8 +263,8 @@ class SAILModel(nn.Module):
         weights = torch.load(vlhead_weights_path)
         if "state_dict" in weights:
             weights = weights["state_dict"]
-        self.vlhead.load_state_dict(weights, strict=False)
-        print(f"Loaded VL head weights from {vlhead_weights_path}")
+        msg = self.vlhead.load_state_dict(weights, strict=False)
+        print(f"Loaded VL head weights from {vlhead_weights_path}, {msg}")
 
     @torch.no_grad()
     def encode_image(
@@ -419,23 +393,22 @@ if __name__ == "__main__":
     from thop import profile
     # 初始化模型
     model = AlignmentLayer(
-        vision_dimesion=2048,  # 假设图像特征维度
-        text_dimension=1024,   # 假设文本特征维度
-        target_dimension=1024, # 输出目标维度
-        linear_type="raw"     # 使用 StarMLP
+        vision_dimesion=2048,
+        text_dimension=1024,  
+        target_dimension=1024, 
+        linear_type="raw"    
     )
     
     print(model)
     # 假设输入图像和文本特征
-    image_features = torch.randn(1, 2048)  # 1张图像，2048维特征
-    text_features = torch.randn(1, 1024)   # 1个文本，1024维特征
+    image_features = torch.randn(1, 2048)  
+    text_features = torch.randn(1, 1024)   
 
-    # 前向传播计算
+
     # output = model(image_features=image_features, text_features=text_features)
-    # 计算 FLOPs 和参数量
+
     flops, params = profile(model, inputs=(image_features,text_features))
 
-    # 输出 FLOPs 和参数量
     print(f"FLOPs: {flops/1e6}")
     print(f"Params: {params/1e6}")
     

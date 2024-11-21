@@ -82,14 +82,6 @@ def create_loss(args):
         return SigLipLoss(
             rank=args.rank,
             world_size=args.world_size,
-            diagonal_weight=args.diagonal_weight
-        )
-    elif args.barlowtwins:
-        print("Using Barlow Twins loss")
-        return BarlowTwinsLoss(
-            rank=args.rank,
-            world_size=args.world_size,
-            lambda_param=args.lambda_param
         )
     else:
         print("Using Clip (infoNCE) loss")

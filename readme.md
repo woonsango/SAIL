@@ -21,10 +21,10 @@
 
 The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) (for training SAIL) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) (for testing SAIL's vision encoder in MLLMs). Please ensure the necessary dependency packages for these frameworks are installed.
 
-| Data        | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars   | Aircraft | DTD      | Pets   | Cal101   | Flowers  | Avg.   | INet     |
-| ----------- | ------------ | ------- | -------- | -------- | ------ | ------ | -------- | -------- | ------ | -------- | -------- | ------ | -------- |
-| 23M Merged  | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6   | **28.6** | **63.5** | 82.3   | **85.4** | **77.2** | 72.1   | **73.4** |
-| *LAION400M* | *CLIP-L*     | *90.1*  | *94.6*   | *77.4*   | *72.6* | *89.6* | *25*     | *60.4*   | *91.7* | *82.1*   | *75.5*   | *75.9* | *72.7*   |
+| Data      | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars | Aircraft | DTD      | Pets | Cal101   | Flowers  | Avg. | INet     |
+| --------- | ------------ | ------- | -------- | -------- | ------ | ---- | -------- | -------- | ---- | -------- | -------- | ---- | -------- |
+| 23M       | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6 | **28.6** | **63.5** | 82.3 | **85.4** | **77.2** | 72.1 | **73.4** |
+| LAION400M | CLIP-L       | 90.1    | 94.6     | 77.4     | 72.6   | 89.6 | 25       | 60.4     | 91.7 | 82.1     | 75.5     | 75.9 | 72.7     |
 
 ---
 
@@ -124,13 +124,18 @@ Evaluation scripts are provided in `scripts/sail_eval.sh`.
 
 - Set the `vision_model`, `text_model`, and `checkpoint_path` in `scripts/sail_eval.sh`.  
   - Ensure that the vision and text models match the embedding data used to train the alignment layers.
-- Specify the task from `imagenetv1 COCO winoground MMVP` in `sail_eval.sh`, then evaluate by running:
+- Prepare datasets
+  - Download [MMVP_VLM](https://huggingface.co/datasets/MMVP/MMVP_VLM/tree/main) and save it to `evaluation/MMVP_VLM`
+  - ImageNet and Winoground will be automatically downloadad and processed
+- Specify the task from `imagenetv1 winoground MMVP` in `sail_eval.sh`, then evaluate by running:
 
 ```bash
 bash scripts/sail_eval.sh
 ```
 
+The evaluation results will be saved to `evaluation/eval_result/{task}`
 
+Instructions for open-vocabulary semantic segmentation please refer to [here](https://github.com/lezhang7/SAIL/blob/main/evaluation/segmentation_readme.md)
 
 ## SAIL Enhances SSL Models for MLLMs
 
@@ -260,4 +265,9 @@ deepspeed llava_train/train_mem.py \
 
 ### Evaluation
 
-We provide evaluation scripts in `scripts/llava_eval_scripts`. Update the dataset path and run the evaluation to test the model's performance.  
+We provide evaluation scripts in `scripts/llava_eval_scripts`. Download the evaluation dataset following [here](https://github.com/haotian-liu/LLaVA/blob/main/docs/Evaluation.md) and update the dataset path for each task bash script, then run the evaluation to test the model's performance.  
+
+## Acknowledgement
+
+This project is based on [open_clip](https://github.com/mlfoundations/open_clip/tree/main), [DreamLIP](https://github.com/zyf0619sjtu/DreamLIP) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) , we appreicate their great work!
+
