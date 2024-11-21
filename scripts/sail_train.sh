@@ -1,19 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=sharelock
-#SBATCH --partition=long       # Ask for unkillable job
-#SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
-#SBATCH --nodes=1
-#SBATCH --gres=gpu:a100l:1
-#SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-#SBATCH --mem=128G           
-#SBATCH --time=5:00:00                                    
-#SBATCH --output=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j.out
-#SBATCH --error=./slurm_logs/train/%(%Y-%m-%d)T/%x_%j.err 
-
-module load miniconda/3
-conda init
-conda activate openflamingo
-
 # ----------------------TRAIN SETTING------------------------
 
 epoch_num=100

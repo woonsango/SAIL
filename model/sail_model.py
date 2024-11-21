@@ -266,6 +266,10 @@ class SAILModel(nn.Module):
         msg = self.vlhead.load_state_dict(weights, strict=False)
         print(f"Loaded VL head weights from {vlhead_weights_path}, {msg}")
 
+    @property
+    def image_processor(self):
+        return self.vision_model.image_processor
+
     @torch.no_grad()
     def encode_image(
         self,
