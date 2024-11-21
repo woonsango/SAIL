@@ -28,8 +28,10 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
    ```
 
 2. **Download the Alignment Layer Checkpoint**
-    Download the pretrained alignment layer checkpoint: 
-   [ [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true) | [sail_dinov2l_gte.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_gte.pt?download=true) ]
+   You can download the pretrained alignment layer checkpoints from the links below: 
+
+   - **SAIL DinoV2 Large with NV-Embed V2**: [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true) 
+   - **SAIL DinoV2 Large with GTE**: [sail_dinov2l_gte.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_gte.pt?download=true)
 
 3. **Run the Model**
 
@@ -71,11 +73,11 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
 
 The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) (for training SAIL) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) (for testing SAIL's vision encoder in MLLMs). Please ensure the necessary dependency packages for these frameworks are installed.
 
-| **Data**    | **Model**    | Alignment Layer CKPT                                         | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
-| ----------- | ------------ | ------------------------------------------------------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
-| 23M         | SAIL-L (GTE) | [sail_dinov2l_gte.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_gte.pt?download=true) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
-| 23M         | SAIL-L (NV2) | [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
-| *LAION400M* | *CLIP-L*     |                                                              | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
+| **Data**    | **Model**    | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
+| ----------- | ------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
+| 23M         | SAIL-L (GTE) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
+| 23M         | SAIL-L (NV2) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
+| *LAION400M* | *CLIP-L*     | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
 
 | Data        | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars   | Aircraft | DTD      | Pets   | Cal101   | Flowers  | Avg.   | INet     |
 | ----------- | ------------ | ------- | -------- | -------- | ------ | ------ | -------- | -------- | ------ | -------- | -------- | ------ | -------- |
