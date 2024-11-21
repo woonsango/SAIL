@@ -1,6 +1,6 @@
 # SAIL: Swift Alignment of Image and Language
 
-
+This codebase enables you to train your own CLIP-like model on a single GPU by aligning pretrained vision models, such as DINOv2, with language models like NV-Embed-2. Our approach demonstrates that training only a lightweight alignment layer while keeping the backbones frozen is sufficient to bridge the vision and language representation spaces. Using just **23M** web-collected and synthetic image-text pairs, we developed a foundational model called **SAIL-L**, which **surpasses CLIP-L (LAION400M) in vairous retrieval tasks and ImageNet** while also **serving as a strong vision encoder for building Multimodal LLMs.**  We hope this codebase serve as a useful testbed for resource-limited community to explore multimodal representation learning in terms of new losses, new data combination as well as new modality-merge strategy.
 
 ## :postal_horn: Release
 
@@ -9,6 +9,7 @@
 
 ## :bookmark: Content
 
+- [Quick Usage](#Quick Usage)
 - [SAIL Training & Evaluation](#sail-training--evaluation)
   - [Data Preparation](#1-data-preparation)
   - [Training](#2-training)
@@ -17,15 +18,64 @@
   - [LLaVA Train with SAIL](#training-with-sail-vision-encoder-in-llava-15)
   - [Evaluation](#evaluation)
 
+## :gear: Quick Usage
+
+1. **Clone the Repository**
+
+   ```bash
+   git clone https://github.com/lezhang7/SAIL.git
+   pip install -r requirements.txt
+   ```
+
+2. **Download the Alignment Layer Checkpoint**
+    Download the pretrained alignment layer checkpoint: `wget https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true `
+    [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true)
+
+3. **Run the Model**
+
+   ```python
+   from model import create_model
+   from PIL import Image
+   import torch
+   
+   # Path to the downloaded checkpoint
+   checkpoint_path = "checkpoint/sail_dinov2l_nv2.pt"
+   
+   # Create the model
+   model = create_model(
+       text_model_name="nvidia/NV-Embed-v2",
+       vision_model_name="facebook/dinov2-large",
+       head_weights_path=checkpoint_path,
+       target_dimension=1024,
+   )
+   model.eval()  # Set model to evaluation mode
+   
+   # Prepare images and texts
+   image_processor = model.image_processor
+   texts = ["a dog", "a cat"]
+   dog_image = Image.open("asset/dog.jpg").convert("RGB")
+   cat_image = Image.open("asset/cat.jpg").convert("RGB")
+   images = image_processor(images=[dog_image, cat_image], return_tensors="pt")
+   
+   # Generate features and probabilities
+   with torch.no_grad():
+       image_features = model.encode_image(images, normalize=True)
+       text_features = model.encode_text(texts, text_list=texts, normalize=True)
+   text_probs = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+   
+   # Print the label probabilities
+   print("Label probs:", text_probs)
+   ```
+
 ## SAIL Training & Evaluation
 
 The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) (for training SAIL) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) (for testing SAIL's vision encoder in MLLMs). Please ensure the necessary dependency packages for these frameworks are installed.
 
-| **Data**    | **Model**    | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
-| ----------- | ------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
-| 23M         | SAIL-L (GTE) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
-| 23M         | SAIL-L (NV2) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
-| *LAION400M* | *CLIP-L*     | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
+| **Data**    | **Model**    | Alignment Layer CKPT                                         | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
+| ----------- | ------------ | ------------------------------------------------------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
+| 23M         | SAIL-L (GTE) | [sail_dinov2l_gte.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_gte.pt?download=true) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
+| 23M         | SAIL-L (NV2) | [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
+| *LAION400M* | *CLIP-L*     |                                                              | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
 
 | Data        | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars   | Aircraft | DTD      | Pets   | Cal101   | Flowers  | Avg.   | INet     |
 | ----------- | ------------ | ------- | -------- | -------- | ------ | ------ | -------- | -------- | ------ | -------- | -------- | ------ | -------- |
@@ -118,7 +168,7 @@ To probe the alignment, execute:
 bash scripts/alignment_probing.sh
 ```
 
-We only save the alignment layer checkpoint at `./logs/${output_name}`.
+We only save the `alignment layer` checkpoint at `./logs/${output_name}`.
 
 ---
 
@@ -143,7 +193,7 @@ The evaluation results will be saved to `evaluation/eval_result/{task}`
 
 ##### Open-vocabulary semantic segmentation Instructions please refer to [here](https://github.com/lezhang7/SAIL/blob/main/evaluation/segmentation_readme.md)
 
-## SAIL Enhances SSL Models for MLLMs
+## SAIL Enhances SSL Vision Models for MLLMs
 
 SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for MLLMs. Specifically, we replace the vision encoder in LLaVA-1.5 with the SAIL vision encoder, which consists of a DINOv2 backbone combined with an alignment layer. This additional alignment layer dramatically improves DINOv2's performance on MLLM tasks, even surpassing language-supervised CLIP vision encoders in certain tasks!
 
@@ -158,24 +208,24 @@ SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for M
 
 **VTune** indicates whether the vision encoder is fine-tuned during the instruction tuning stage.
 
-| Model@224px  | VTune | SEED<sup>IMG</sup> | GQA       | VizWiz    | PoPE      | TextVQA | MMB   | VQA<sup>v2</sup> |
-| ------------ | ----- | ------------------ | --------- | --------- | --------- | ------- | ----- | ---------------- |
-| **DINOv2-L** | ✗     | 61.47              | 61.08     | 44.12     | 85.5      | 45.37   | 56.96 | 74.4             |
-| **DINOv2-L** | ✓     | 62.12              | 61.53     | 46.59     | 85.7      | 45.92   | 58.85 | 74.69            |
-| **SAIL-L**   | ✓     | **65.43**          | **62.63** | **50.00** | **86.16** | 46.53   | 60.14 | **76.77**        |
-| *CLIP-L/14*  | ✗     | 64.05              | 61.58     | 48.87     | 85.74     | 54.56   | 63.06 | 75.32            |
-| *CLIP-L/14*  | ✓     | 64.15              | 61.54     | 49.93     | 85.73     | 54.18   | 64.12 | 76.36            |
+| Model@224px  | VTune | SEED<sup>IMG</sup> | GQA       | VizWiz    | PoPE      | TextVQA | MMB     | VQA<sup>v2</sup> |
+| ------------ | ----- | ------------------ | --------- | --------- | --------- | ------- | ------- | ---------------- |
+| **DINOv2-L** | ✗     | 61.47              | 61.08     | 44.12     | 85.5      | 45.37   | 56.96   | 74.4             |
+| **DINOv2-L** | ✓     | 62.12              | 61.53     | 46.59     | 85.7      | 45.92   | 58.85   | 74.69            |
+| **SAIL-L**   | ✓     | **65.43**          | **62.63** | **50.00** | **86.16** | 46.53   | 60.14   | **76.77**        |
+| *CLIP-L/14*  | ✗     | *64.05*            | *61.58*   | *48.87*   | *85.74*   | *54.56* | *63.06* | *75.32*          |
+| *CLIP-L/14*  | ✓     | *64.15*            | *61.54*   | *49.93*   | *85.73*   | *54.18* | *64.12* | *76.36*          |
 
 ---
 
-### Training with SAIL Vision Encoder in LLaVA
+### Training LLaVA with SAIL Vision Encoder
 
 We follow the LLaVA-1.5 training process, including pretraining and fine-tuning. To get started, please prepare the data following the instructions in the [original codebase](https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file):
 
 1. [Pretraining data](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain)
 2. Visual instruction tuning data
 
-Then install the dependency packages following [here](https://github.com/haotian-liu/LLaVA/tree/main) for training llava-1.5.
+Then install the dependency packages following [here](https://github.com/haotian-liu/LLaVA/tree/main) for training llava-1.5. Recommend using `cudatoolkit/12.1.1` for reproducibility.
 
 #### Pretraining SAIL with LLaVA-1.5
 

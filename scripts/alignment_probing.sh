@@ -1,29 +1,11 @@
 #!/bin/bash
-#SBATCH --job-name=NV2CLIP
-#SBATCH --partition=unkillable         # Ask for unkillable job
-#SBATCH --cpus-per-task=4                             # Ask for 2 CPUs
-#SBATCH --nodes=1
-#SBATCH --gres=gpu:a100l:1
-#SBATCH --ntasks-per-node=1                                  # Ask for 1 GPU
-#SBATCH --mem=32G           
-#SBATCH --time=9:00:00                                    
-#SBATCH --output=./slurm_logs/train/abaltion/%x_%j_%A_%a_${data}.out
-#SBATCH --error=./slurm_logs/train/abaltion/%x_%j_%A_%a_${data}.err 
-
-module load miniconda/3
-conda init
-conda activate openflamingo
-
 
 # ----------------------TRAIN SETTING------------------------
-
 
 text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
 extra_text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_longSV"
 image_embedding_list="data/tensor_data/image_embedding/dinov2-base/dreamclipcc3m"
 output_name="alignment_probing_dinov2b_gte"
-
-
 
 epoch_num=100
 logit_scale=20
@@ -33,8 +15,6 @@ lr=1e-5
 bs=32768
 d=2048
 linear_type="linear"
-
-
 
 python main.py \
     --text-embedding-list $text_embedding_list \
@@ -61,7 +41,6 @@ python main.py \
     --logit_scale $logit_scale \
     --logit_bias $logit_bias \
     --siglip
-
 
 
 if [ $? -ne 0 ]; then

@@ -1,18 +1,4 @@
 #!/bin/bash
-#SBATCH --job-name=encode_data
-#SBATCH --partition=unkillable                       # Ask for unkillable job
-#SBATCH --cpus-per-task=4                         # Ask for 8 CPUs
-#SBATCH --gres=gpu:a100l:1                         # Request 2 GPUs
-#SBATCH --ntasks-per-node=1                        # Ask for 1 task per node
-#SBATCH --mem=32G           
-#SBATCH --time=12:00:00                                    
-#SBATCH --output=./slurm_logs/encode/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.out
-#SBATCH --error=./slurm_logs/encode/%(%Y-%m-%d)T/%x_%j_%A_%a_${data}.err 
-
-module load miniconda/3
-conda init
-conda activate openflamingo
-module load cudatoolkit/12.4.0
 
 #==============================================================================#
 #                              VISION MODEL                                      #
