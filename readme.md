@@ -23,14 +23,14 @@ The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) 
 
 | **Data**    | **Model**    | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
 | ----------- | ------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
-| 23M Merged  | SAIL-L (GTE) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
-| 23M Merged  | SAIL-L (NV2) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
+| 23M         | SAIL-L (GTE) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
+| 23M         | SAIL-L (NV2) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
 | *LAION400M* | *CLIP-L*     | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
 
-| Data      | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars | Aircraft | DTD      | Pets | Cal101   | Flowers  | Avg. | INet     |
-| --------- | ------------ | ------- | -------- | -------- | ------ | ---- | -------- | -------- | ---- | -------- | -------- | ---- | -------- |
-| 23M       | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6 | **28.6** | **63.5** | 82.3 | **85.4** | **77.2** | 72.1 | **73.4** |
-| LAION400M | CLIP-L       | 90.1    | 94.6     | 77.4     | 72.6   | 89.6 | 25       | 60.4     | 91.7 | 82.1     | 75.5     | 75.9 | 72.7     |
+| Data        | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars   | Aircraft | DTD      | Pets   | Cal101   | Flowers  | Avg.   | INet     |
+| ----------- | ------------ | ------- | -------- | -------- | ------ | ------ | -------- | -------- | ------ | -------- | -------- | ------ | -------- |
+| 23M         | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6   | **28.6** | **63.5** | 82.3   | **85.4** | **77.2** | 72.1   | **73.4** |
+| *LAION400M* | *CLIP-L*     | *90.1*  | *94.6*   | *77.4*   | *72.6* | *89.6* | *25*     | *60.4*   | *91.7* | *82.1*   | *75.5*   | *75.9* | *72.7*   |
 
 ---
 
@@ -168,12 +168,14 @@ SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for M
 
 ---
 
-### Training with SAIL Vision Encoder in LLaVA-1.5
+### Training with SAIL Vision Encoder in LLaVA
 
 We follow the LLaVA-1.5 training process, including pretraining and fine-tuning. To get started, please prepare the data following the instructions in the [original codebase](https://github.com/haotian-liu/LLaVA/tree/main?tab=readme-ov-file):
 
 1. [Pretraining data](https://huggingface.co/datasets/liuhaotian/LLaVA-Pretrain)
 2. Visual instruction tuning data
+
+Then install the dependency packages following [here](https://github.com/haotian-liu/LLaVA/tree/main) for training llava-1.5.
 
 #### Pretraining SAIL with LLaVA-1.5
 

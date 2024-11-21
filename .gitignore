@@ -36,7 +36,7 @@ train/__pycache__/
 
 # mllm
 llava_checkpoints/
-unusedscripts/
+unusedscirpts/
 
 logs/
 *.pyc
