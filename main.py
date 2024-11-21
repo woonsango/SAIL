@@ -190,8 +190,6 @@ def main(args):
         # Save model configuration as YAML file
         model_config = {
             'target_dimension': args.target_dimension,
-            'use_gmp': args.use_gmp,
-            'gmp_groups': args.gmp_groups,
             'linear_type': args.linear_type,
         }
         

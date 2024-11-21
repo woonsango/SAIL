@@ -2,7 +2,6 @@ from evaluation import (
     imagenet_eval,
     winoground_eval,
     coco_eval,
-    SugarCrepe_eval,
     update_results_json,
     extract_info_from_path,
     check_epoch_exists,
@@ -23,7 +22,6 @@ def parse_args():
             "COCO",
             "winoground",
             "imagenetv1",
-            "sugar_crepe",
             "segmentation",
             "MMVP",
         ],
@@ -60,19 +58,19 @@ def parse_args():
     parser.add_argument(
         "--results_dir",
         type=str,
-        default="/home/mila/l/le.zhang/scratch/light_align/evaluation/eval_result",
+        default="evaluation/eval_result",
         help="Path to results file",
     )
     parser.add_argument(
         "--dataset_root_dir",
         type=str,
-        default="/home/mila/l/le.zhang/scratch/datasets",
+        required=True,
         help="Path to images",
     )
     parser.add_argument(
         "--save_dir",
         type=str,
-        default="/home/mila/l/le.zhang/scratch/light_align/evaluation/backbone_features",
+        default="evaluation/backbone_features",
         help="Path to images",
     )
     parser.add_argument(
@@ -102,7 +100,7 @@ def parse_args():
     parser.add_argument(
         "--seg_task_config",
         type=str,
-        default="/home/mila/l/le.zhang/scratch/light_align/evaluation/ClearCLIP/configs/cfg_ade20k.py",
+        default="evaluation/ClearCLIP/configs/cfg_ade20k.py",
         help="Task for segmentation evaluation",
     )
 
@@ -136,16 +134,17 @@ def parse_args():
 
 def main(args):
     
+
     epoch_num, training_info_str, model_prefix = extract_info_from_path(
-        args.head_weights_path
+        args
     )
-  
     output_path = os.path.join(
         args.results_dir,
         args.task,
         model_prefix,
         f"{training_info_str}.json",
     )
+    
     if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
         print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
         return None
@@ -222,6 +221,8 @@ def main(args):
             "annotations",
             "captions_val2017.json",
         )
+        assert os.path.exists(coco_root), f"COCO root directory does not exist: {coco_root}"
+        assert os.path.exists(coco_ann_file), f"COCO annotation file does not exist: {coco_ann_file}"
         if args.agg_mode != 'concat':
             vision_model_name = vision_model_name + '_' + args.agg_mode
         results = coco_eval(
@@ -241,16 +242,6 @@ def main(args):
             vision_model_name=vision_model_name,
             save_dir=args.save_dir,
         )
-    elif args.task.lower() == "sugar_crepe":
-        coco_root = os.path.join(args.dataset_root_dir, "coco", "2017", "val2017")
-        results = SugarCrepe_eval(
-            model,
-            text_model_name=text_model_name,
-            vision_model_name=vision_model_name,
-            images_dir=coco_root,
-            save_dir=args.save_dir,
-            bs=args.batch_size,
-        )
     elif args.task.lower() == "segmentation":
         results = segmentation_eval(
             text_model_name=args.text_model,
@@ -266,7 +257,7 @@ def main(args):
         )
     elif args.task.lower() == "mmvp":
         from evaluation import mmvp_eval
-        mmvp_dir = "/home/mila/l/le.zhang/scratch/light_align/evaluation/MMVP_VLM"
+        mmvp_dir = "evaluation/MMVP_VLM"
         results = mmvp_eval(
             model,
             text_model_name=text_model_name,

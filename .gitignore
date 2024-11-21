@@ -5,7 +5,6 @@ output/
 *.zip
 *.ipynb
 *.pdf
-*.png
 *.json
 .vscode/
 __pycache__/
@@ -27,6 +26,7 @@ model/__pycache__/
 data/__pycache__/
 data/image/
 data/tensor_data/
+data/examples/
 figures/
 
 train/__pycache__/

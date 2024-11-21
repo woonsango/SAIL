@@ -261,8 +261,8 @@ def recall_at_k(
 def coco_eval(
     model: nn.Module,
     bs: int = 1024,
-    coco_root: str = "/home/mila/l/le.zhang/scratch/datasets",
-    coco_ann_file: str = "/home/mila/l/le.zhang/scratch/datasets/coco/2017/annotations/captions_val2017.json",
+    coco_root: str = "datasets",
+    coco_ann_file: str = "datasets/coco/2017/annotations/captions_val2017.json",
     k_vals: List[int] = [1, 5, 10],
     text_model_name: str = "sentence-transformers/all-mpnet-base-v2",
     vision_model_name: str = "facebook/dinov2-base",

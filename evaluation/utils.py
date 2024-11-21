@@ -45,21 +45,40 @@ def update_results_json(json_file, epoch, results):
     with open(json_file, 'w') as file:
         json.dump(data, file, indent=4)
 
-def extract_info_from_path(path):
+def extract_info_from_path(args):
+    path = args.head_weights_path
     # 提取 epoch 后的数字
     epoch_pattern = r'epoch_(\d+)\.pt'
     epoch_match = re.search(epoch_pattern, path)
     epoch_number = epoch_match.group(1) if epoch_match else None
 
-    # 提取从 bs 开始到 / 结束的字符串
-    bs_pattern = r'bs_[^/]+'
-    bs_match = re.search(bs_pattern, path)
-    bs_string = bs_match.group(0) if bs_match else None
+    if 'bs_' in path:
+        # 提取从 bs 开始到 / 结束的字符串
+        bs_pattern = r'bs_[^/]+'
+        bs_match = re.search(bs_pattern, path)
+        bs_string = bs_match.group(0) if bs_match else None
 
-    # 提取在 _bs 之前的字符串
-    prefix_pattern = r'logs/([^/]+)_bs_'
-    prefix_match = re.search(prefix_pattern, path)
-    prefix_string = prefix_match.group(1) if prefix_match else None
+        # 提取在 _bs 之前的字符串
+        prefix_pattern = r'logs/([^/]+)_bs_'
+        prefix_match = re.search(prefix_pattern, path)
+        prefix_string = prefix_match.group(1) if prefix_match else None
+    else:
+        # Extract ${train} from path like "./logs/${train}/checkpoints/epoch_${epoch}.pt"
+        prefix_pattern = r'logs/([^/]+)/checkpoints'
+        prefix_match = re.search(prefix_pattern, path)
+        prefix_string = prefix_match.group(1) if prefix_match else None
+        
+        if args.task == 'segmentation':
+            if 'voc20' in args.seg_task_config:
+                bs_string = 'voc20'
+            elif 'coco' in args.seg_task_config:
+                bs_string = 'coco_stuff'
+            elif 'ade20k' in args.seg_task_config:
+                bs_string = 'ade20k'
+            else:
+                raise ValueError(f"Unknown dataset in path: {args.seg_task_config}")
+        else:
+            bs_string = 'alignment_probing'
 
     return epoch_number, bs_string, prefix_string
 
