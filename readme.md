@@ -30,8 +30,8 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
 2. **Download the Alignment Layer Checkpoint**
    You can download the pretrained alignment layer checkpoints from the links below: 
 
-   - **SAIL DinoV2 Large with NV-Embed V2**: [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_nv2.pt?download=true) 
-   - **SAIL DinoV2 Large with GTE**: [sail_dinov2l_gte.pt](https://huggingface.co/le723z/SAIL/resolve/main/sail_dinov2l_gte.pt?download=true)
+   - **SAIL DinoV2 Large with NV-Embed V2**: [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/sail/resolve/main/sail_dinov2l_nv2.pt?download=true) 
+   - **SAIL DinoV2 Large with GTE**: [sail_dinov2l_gte.pt](https://huggingface.co/le723z/sail/resolve/main/sail_dinov2l_gte.pt?download=true)
 
 3. **Run the Model**
 
@@ -195,14 +195,13 @@ The evaluation results will be saved to `evaluation/eval_result/{task}`
 
 ## SAIL Enhances SSL Vision Models for MLLMs
 
-SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for MLLMs. Specifically, we replace the vision encoder in LLaVA-1.5 with the SAIL vision encoder, which consists of a DINOv2 backbone combined with an alignment layer. This additional alignment layer dramatically improves DINOv2's performance on MLLM tasks, even surpassing language-supervised CLIP vision encoders in certain tasks!
+SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for MLLMs. Specifically, we replace the vision encoder in LLaVA-1.5 with the SAIL vision encoder, which consists of a DINOv2 backbone combined with an alignment layer. This additional alignment layer dramatically improves DINOv2's performance on MLLM tasks, even surpassing language-supervised CLIP vision encoders in certain tasks! We provide trained checkpoint at [le723z/sail-llava-v1.5-7b](le723z/sail-llava-v1.5-7b).
 
 <div align="center">
     <img src="asset/mllm.png" alt="SAIL Vision Encoder in MLLMs" width="50%"/>
 </div>
 
 
----
 
 #### Table: LLaVA-1.5 with Various Vision Models
 
