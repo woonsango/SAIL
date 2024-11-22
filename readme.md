@@ -195,7 +195,7 @@ The evaluation results will be saved to `evaluation/eval_result/{task}`
 
 ## SAIL Enhances SSL Vision Models for MLLMs
 
-SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for MLLMs. Specifically, we replace the vision encoder in LLaVA-1.5 with the SAIL vision encoder, which consists of a DINOv2 backbone combined with an alignment layer. This additional alignment layer dramatically improves DINOv2's performance on MLLM tasks, even surpassing language-supervised CLIP vision encoders in certain tasks! We provide trained checkpoint at [le723z/sail-llava-v1.5-7b](le723z/sail-llava-v1.5-7b).
+SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for MLLMs. Specifically, we replace the vision encoder in LLaVA-1.5 with the SAIL vision encoder, which consists of a DINOv2 backbone combined with an alignment layer. This additional alignment layer dramatically improves DINOv2's performance on MLLM tasks, even surpassing language-supervised CLIP vision encoders in certain tasks! We provide trained checkpoint at [le723z/sail-llava-v1.5-7b](https://huggingface.co/le723z/sail-llava-v1.5-7b).
 
 <div align="center">
     <img src="asset/mllm.png" alt="SAIL Vision Encoder in MLLMs" width="50%"/>
