@@ -30,8 +30,11 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
 2. **Download the Alignment Layer Checkpoint**
    You can download the pretrained alignment layer checkpoints from the links below: 
 
-   - **SAIL DinoV2 Large with NV-Embed V2**: [sail_dinov2l_nv2.pt](https://huggingface.co/le723z/sail/resolve/main/sail_dinov2l_nv2.pt?download=true) 
-   - **SAIL DinoV2 Large with GTE**: [sail_dinov2l_gte.pt](https://huggingface.co/le723z/sail/resolve/main/sail_dinov2l_gte.pt?download=true)
+   | **Data**     | **Model**    | Alignment Layer                                              | IN-1K    | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
+   | ------------ | ------------ | ------------------------------------------------------------ | -------- | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
+   | 23M          | SAIL-L (GTE) | [download](https://huggingface.co/le723z/sail/resolve/main/sail_dinov2l_gte.pt?download=true) | 65.4     | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
+   | 23M          | SAIL-L (NV2) | [download](https://huggingface.co/le723z/sail/resolve/main/sail_dinov2l_nv2.pt?download=true) | **73.4** | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
+   | *LAION-400M* | *CLIP-L*     |                                                              | 72.7     | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
 
 3. **Run the Model**
 
@@ -72,19 +75,6 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
 ## SAIL Training & Evaluation
 
 The codebase builds upon [OpenCLIP](https://github.com/mlfoundations/open_clip) (for training SAIL) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) (for testing SAIL's vision encoder in MLLMs). Please ensure the necessary dependency packages for these frameworks are installed.
-
-| **Data**    | **Model**    | **I2T R@1 (MSCOCO)** | **T2I R@1 (MSCOCO)** | **I2T R@1 (Flickr30k)** | **T2I R@1 (Flickr30k)** | **Text (Winoground)** | **Image (Winoground)** | **Group (Winoground)** | **Avg. (MMVP)** |
-| ----------- | ------------ | -------------------- | -------------------- | ----------------------- | ----------------------- | --------------------- | ---------------------- | ---------------------- | --------------- |
-| 23M         | SAIL-L (GTE) | 54.1                 | 42.7                 | 80.8                    | 68.9                    | 34.0                  | 13.25                  | 8.75                   | 22.2            |
-| 23M         | SAIL-L (NV2) | **62.4**             | **48.6**             | **87.6**                | **75.7**                | **40.25**             | **18.75**              | **15.0**               | **28.9**        |
-| *LAION400M* | *CLIP-L*     | *59.7*               | *43.0*               | *87.6*                  | *70.2*                  | *30.5*                | *11.5*                 | *8.75*                 | *20.0*          |
-
-| Data        | Model        | Food101 | CIFAR10  | CIFAR100 | SUN397 | Cars   | Aircraft | DTD      | Pets   | Cal101   | Flowers  | Avg.   | INet     |
-| ----------- | ------------ | ------- | -------- | -------- | ------ | ------ | -------- | -------- | ------ | -------- | -------- | ------ | -------- |
-| 23M         | SAIL-L (NV2) | 86.1    | **96.7** | **86.7** | 69.8   | 44.6   | **28.6** | **63.5** | 82.3   | **85.4** | **77.2** | 72.1   | **73.4** |
-| *LAION400M* | *CLIP-L*     | *90.1*  | *94.6*   | *77.4*   | *72.6* | *89.6* | *25*     | *60.4*   | *91.7* | *82.1*   | *75.5*   | *75.9* | *72.7*   |
-
----
 
 ### Data Preparation
 

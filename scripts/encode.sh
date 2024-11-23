@@ -3,14 +3,16 @@
 #==============================================================================#
 #                              VISION MODEL                                      #
 #==============================================================================#
-vision_model="facebook/dinov2-large"
+vision_model="apple/aimv2-large-patch14-224"
 # Available options:
 # vision_model="ijepa-huge"                    # IJEPA
 # vision_model="openai/clip-vit-large-patch14" # OpenAI CLIP
 # vision_model="mae-base"                      # MAE
 # vision_model="dinov1-vitb16"                # DINOv1
+# vision_model="facebook/dinov2-large"        # DINOv2
 # vision_model="aim_1B"                       # AIM
 # vision_model="ibot-base"                    # iBOT
+# vision_model="aimv2-large-patch14-224"     # AIMv2
 
 #==============================================================================#
 #                               TEXT MODEL                                       #
@@ -40,7 +42,7 @@ domain="image" # "image" or "text", each time we only encode one modality
 #==============================================================================#
 #                             BATCH SIZE                                         #
 #==============================================================================#
-batch_size=2048 # adjust based on GPU memory
+batch_size=1024 # adjust based on GPU memory
 #==============================================================================#
 #                           Additional options                                  #
 #==============================================================================#
