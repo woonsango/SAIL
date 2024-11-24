@@ -4,8 +4,8 @@
 
 text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_raw"
 extra_text_embedding_list="data/tensor_data/text_embedding/gte-large-en-v1.5/dreamclipcc3m_longSV"
-image_embedding_list="data/tensor_data/image_embedding/dinov2-base/dreamclipcc3m"
-output_name="alignment_probing_dinov2b_gte"
+image_embedding_list="data/tensor_data/image_embedding/aimv2-large-patch14-224/dreamclipcc3m_concat"
+output_name="alignment_probing_aimv2l_gte"
 
 epoch_num=100
 logit_scale=20

@@ -1,0 +1,106 @@
+/var/spool/slurmd/job5671467/slurm_script: line 61: [: : integer expression expected
+bash output: Running tasks sequentially on a single GPU...
+bash output: Using vision model: apple/aimv2-large-patch14-224
+bash output: Using text model: nvidia/NV-Embed-v2
+bash output: Processing dataset: dreamclipcc3m
+bash output: Using domain: image
+bash output: Using batch size: 1024
+bash output: Using source caption: longSV_captions
+2024-11-22,18:30:26 | INFO | Start index: 0, End index: 2238073
+2024-11-22,18:30:26 | INFO | Number of sentences: 0
+2024-11-22,18:30:26 | INFO | Number of image_paths: 2238073
+2024-11-22,18:30:26 | INFO | Encoding image data dreamclipcc3m with model apple/aimv2-large-patch14-224 of batch size 1024...
+2024-11-22,18:30:26 | INFO | First 5 items of image_paths paths: ['/network/scratch/l/le.zhang/datasets/DownloadCC3M/CC3M/images/0000000/0000000.jpg', '/network/scratch/l/le.zhang/datasets/DownloadCC3M/CC3M/images/0000000/0000002.jpg', '/network/scratch/l/le.zhang/datasets/DownloadCC3M/CC3M/images/0000000/0000004.jpg', '/network/scratch/l/le.zhang/datasets/DownloadCC3M/CC3M/images/0000000/0000005.jpg', '/network/scratch/l/le.zhang/datasets/DownloadCC3M/CC3M/images/0000000/0000006.jpg']
+loading configuration file config.json from cache at /network/scratch/l/le.zhang/hub/hub/models--apple--aimv2-large-patch14-224/snapshots/7f072a185935008b4d46a880cd4d33ff5acc08f3/config.json
+loading configuration file config.json from cache at /network/scratch/l/le.zhang/hub/hub/models--apple--aimv2-large-patch14-224/snapshots/7f072a185935008b4d46a880cd4d33ff5acc08f3/config.json
+Model config AIMv2Config {
+  "_name_or_path": "apple/aimv2-large-patch14-224",
+  "architectures": [
+    "AIMv2Model"
+  ],
+  "attention_dropout": 0.0,
+  "auto_map": {
+    "AutoConfig": "apple/aimv2-large-patch14-224--configuration_aimv2.AIMv2Config",
+    "AutoModel": "apple/aimv2-large-patch14-224--modeling_aimv2.AIMv2Model",
+    "FlaxAutoModel": "apple/aimv2-large-patch14-224--modeling_flax_aimv2.FlaxAIMv2Model"
+  },
+  "hidden_size": 1024,
+  "image_size": 224,
+  "intermediate_size": 2816,
+  "model_type": "aimv2",
+  "num_attention_heads": 8,
+  "num_channels": 3,
+  "num_hidden_layers": 24,
+  "patch_size": 14,
+  "projection_dropout": 0.0,
+  "qkv_bias": false,
+  "rms_norm_eps": 1e-05,
+  "torch_dtype": "float16",
+  "transformers_version": "4.47.0.dev0",
+  "use_bias": false
+}
+
+loading weights file model.safetensors from cache at /network/scratch/l/le.zhang/hub/hub/models--apple--aimv2-large-patch14-224/snapshots/7f072a185935008b4d46a880cd4d33ff5acc08f3/model.safetensors
+Instantiating AIMv2Model model under default dtype torch.float16.
+All model checkpoint weights were used when initializing AIMv2Model.
+
+All the weights of AIMv2Model were initialized from the model checkpoint at apple/aimv2-large-patch14-224.
+If your task is similar to the task the model of the checkpoint was trained on, you can already use AIMv2Model for predictions without further training.
+loading configuration file preprocessor_config.json from cache at /network/scratch/l/le.zhang/hub/hub/models--apple--aimv2-large-patch14-224/snapshots/7f072a185935008b4d46a880cd4d33ff5acc08f3/preprocessor_config.json
+Image processor CLIPImageProcessor {
+  "crop_size": {
+    "height": 224,
+    "width": 224
+  },
+  "do_center_crop": true,
+  "do_convert_rgb": true,
+  "do_normalize": true,
+  "do_rescale": true,
+  "do_resize": true,
+  "image_mean": [
+    0.48145466,
+    0.4578275,
+    0.40821073
+  ],
+  "image_processor_type": "CLIPImageProcessor",
+  "image_std": [
+    0.26862954,
+    0.26130258,
+    0.27577711
+  ],
+  "resample": 3,
+  "rescale_factor": 0.00392156862745098,
+  "size": {
+    "shortest_edge": 224
+  }
+}
+
+Time taken to read 'Image Path' column: 23.73 seconds
+Traceback (most recent call last):
+  File "/network/scratch/l/le.zhang/light_align/encode.py", line 195, in <module>
+    main()
+  File "/network/scratch/l/le.zhang/light_align/encode.py", line 192, in main
+    encode_image(args, image_paths, start_index)
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/utils/_contextlib.py", line 115, in decorate_context
+    return func(*args, **kwargs)
+  File "/network/scratch/l/le.zhang/light_align/encode.py", line 167, in encode_image
+    model = model.to('cuda')  # Move model to GPU
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1160, in to
+    return self._apply(convert)
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/nn/modules/module.py", line 810, in _apply
+    module._apply(fn)
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/nn/modules/module.py", line 810, in _apply
+    module._apply(fn)
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/nn/modules/module.py", line 810, in _apply
+    module._apply(fn)
+  [Previous line repeated 1 more time]
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/nn/modules/module.py", line 833, in _apply
+    param_applied = fn(param)
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1158, in convert
+    return t.to(device, dtype if t.is_floating_point() or t.is_complex() else None, non_blocking)
+  File "/home/mila/l/le.zhang/.conda/envs/openflamingo/lib/python3.9/site-packages/torch/cuda/__init__.py", line 298, in _lazy_init
+    torch._C._cuda_init()
+RuntimeError: Found no NVIDIA driver on your system. Please check that you have an NVIDIA GPU and installed a driver from http://www.nvidia.com/Download/index.aspx
+[2024-11-22 18:30:32,242] torch._dynamo.utils: [INFO] TorchDynamo compilation metrics:
+[2024-11-22 18:30:32,242] torch._dynamo.utils: [INFO] Function    Runtimes (s)
+[2024-11-22 18:30:32,242] torch._dynamo.utils: [INFO] ----------  --------------

@@ -68,7 +68,7 @@ class ImageEmbedding(nn.Module):
         self.agg_mode = agg_mode
         self.model_name = model_name
 
-        if any(x in model_name for x in ['ibot', 'mae', 'dinov1', 'aim', 'ijepa']):
+        if any(x in model_name for x in ['ibot', 'mae', 'dinov1', 'ml-aim', 'ijepa']):
             # load from local
             if 'ibot' in model_name:
                 self.model = get_ibot_vit(model_name)
@@ -84,7 +84,7 @@ class ImageEmbedding(nn.Module):
                 elif 'resnet' in model_name:
                     self.model = torch.hub.load('facebookresearch/dino:main', 'dino_resnet50')
                     self.model.embed_dim = 2048
-            elif 'aim' in model_name:
+            elif 'ml-aim' in model_name:
                 if '1B' in model_name:
                     self.model = torch.hub.load("apple/ml-aim", "aim_1B")
                     self.model.embed_dim = 2048
@@ -106,6 +106,9 @@ class ImageEmbedding(nn.Module):
             self.image_processor = AutoImageProcessor.from_pretrained(model_name)
         elif any(x in model_name.lower() for x in ['clip']):
             self.model = CLIPVisionModel.from_pretrained(model_name, torch_dtype=torch.float16)
+            self.image_processor = AutoImageProcessor.from_pretrained(model_name)
+        elif any(x in model_name.lower() for x in ['aimv2']):
+            self.model = AutoModel.from_pretrained(model_name, torch_dtype=torch.float16, trust_remote_code=True)
             self.image_processor = AutoImageProcessor.from_pretrained(model_name)
         else:
             if seg:
@@ -133,13 +136,6 @@ class ImageEmbedding(nn.Module):
                 images[idx] = img
                 
         return images
-    
-    # def load_images_from_directory(self, images_path: List[str]) -> List[Image.Image]:
-    #     images = []
-    #     for image_path in images_path:
-    #         with Image.open(image_path) as img:
-    #             images.append(img.convert("RGB"))
-    #     return images
 
     def get_visual_embeddings_from_directory(self, images_path: List[str]):
         images = self.load_images_from_directory(images_path)
@@ -161,7 +157,7 @@ class ImageEmbedding(nn.Module):
             self.model.encoder.attetion_type = attetion_type
             self.model.encoder.ignore_residual = ignore_residual
                 
-        if any(x in self.model_name.lower() for x in ['mae', 'convnextv2']):
+        if any(x in self.model_name.lower() for x in ['mae']):
             if isinstance(inputs, torch.Tensor):
                 outputs = self.model.forward_features(inputs)
             else:
@@ -170,43 +166,46 @@ class ImageEmbedding(nn.Module):
             if isinstance(inputs, torch.Tensor):
                 outputs = self.model(inputs)
             elif isinstance(inputs, dict) or isinstance(inputs, BaseBatchFeature):
-                if any(x in self.model_name.lower() for x in ['ibot', 'dinov1', 'aim', 'ijepa']):
+                if any(x in self.model_name.lower() for x in ['ibot', 'dinov1', 'ml-aim', 'ijepa']):
                     outputs = self.model(inputs['pixel_values'])
                 else:
+                    # huggingface transformer vision model
                     outputs = self.model(**inputs)
             else:
                 raise ValueError(f"Unsupported input type: {type(inputs)}")
             
         # extract the embeddings
         if any(x in self.model_name.lower() for x in ['ijepa']):
-            linear_input = outputs.mean(dim=1)
+            embedding = outputs.mean(dim=1)
         elif any(x in self.model_name.lower() for x in ['clip']):
-            linear_input = outputs.pooler_output
+            embedding = outputs.pooler_output
+        elif any(x in self.model_name.lower() for x in ['aimv2']):
+            embedding = torch.mean(outputs.last_hidden_state, dim=1)
         else:
             sequence_output = outputs[0]  # batch_size, sequence_length, hidden_size
 
             if patch_mode:
                 patch_tokens = sequence_output[:, 1:]
                 cls_token = sequence_output[:, 0].unsqueeze(1).repeat(1, patch_tokens.shape[1], 1)
-                linear_input = torch.cat([cls_token, patch_tokens], dim=-1)
+                embedding = torch.cat([cls_token, patch_tokens], dim=-1)
             else:
-                if any(x in self.model_name.lower() for x in ['ibot', 'r101', 'r152', 'mae', 'convnextv2', 'dinov1']):
-                    linear_input = outputs
+                if any(x in self.model_name.lower() for x in ['ibot', 'mae', 'dinov1']):
+                    embedding = outputs
                 elif any(x in self.model_name.lower() for x in ['aim']):
-                    linear_input = outputs[1]
+                    embedding = outputs[1]
                 else:
                     cls_token = sequence_output[:, 0]
                     patch_tokens = sequence_output[:, 1:]
                     if self.agg_mode == 'patch': 
-                        linear_input = patch_tokens.mean(dim=1)
+                        embedding = patch_tokens.mean(dim=1)
                     elif self.agg_mode == 'cls':
-                        linear_input = cls_token
+                        embedding = cls_token
                     elif self.agg_mode == 'concat':
-                        linear_input = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
+                        embedding = torch.cat([cls_token, patch_tokens.mean(dim=1)], dim=1)
                     else:
                         raise ValueError(f"Invalid agg_mode: {self.agg_mode}")
 
-        return linear_input
+        return embedding
 
 
 if __name__ == "__main__":

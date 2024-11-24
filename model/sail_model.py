@@ -227,7 +227,7 @@ class SAILModel(nn.Module):
         super(SAILModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
         self.vision_model = ImageEmbedding(vision_model_name, seg=seg, agg_mode=agg_mode)
-        if any(x in vision_model_name for x in ['mae','ibot','dinov1','aim','ijepa','clip']) or 'patch' in agg_mode or 'cls' in agg_mode:
+        if any(x in vision_model_name for x in ['mae','ibot','dinov1','ml-aim','ijepa','clip','aimv2']) or 'patch' in agg_mode or 'cls' in agg_mode:
             if hasattr(self.vision_model.model, 'config'):
                 vision_dimesion = self.vision_model.model.config.hidden_size
             else:
