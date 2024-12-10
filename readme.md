@@ -1,5 +1,28 @@
 # SAIL: Swift Alignment of Image and Language
 
+<div style="text-align: center; margin-top: 2rem;">
+    <a href="https://arxiv.org/abs/2412.04616" target="_blank" style="margin: 0 10px;">
+        <img alt="arXiv" src="https://img.shields.io/badge/arXiv-SAIL-red?logo=arxiv" height="30" />
+    </a>
+    <a href="https://lezhang7.github.io/sail.github.io/" target="_blank" style="margin: 0 10px;">
+        <img alt="Website" src="https://img.shields.io/badge/Website-SAIL_Project-0078D7?logo=sailboat&logoColor=white" height="30" />
+    </a>
+</div>
+
+<div style="font-family: charter; text-align: center; margin-top: 2rem;">
+    <a href="https://lezhang7.github.io/" target="_blank" style="color: #333; font-size: 1.4rem; font-weight: bold; text-decoration: none; transition: color 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+        Le Zhang
+    </a>
+    <span style="margin: 0 0.5rem; color: #666;">•</span>
+    <a href="https://mylittlechange.github.io/" target="_blank" style="color: #333; font-size: 1.4rem; font-weight: bold; text-decoration: none; transition: color 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+        Qian Yang
+    </a>
+    <span style="margin: 0 0.5rem; color: #666;">•</span>
+    <a href="https://www.iro.umontreal.ca/~agrawal/" target="_blank" style="color: #333; font-size: 1.4rem; font-weight: bold; text-decoration: none; transition: color 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+        Aishwarya Agrawal
+    </a>
+</div>
+
 This codebase enables you to train your own CLIP-like model on a single GPU by aligning pretrained vision models, such as DINOv2, with language models like NV-Embed-2. Our approach demonstrates that training only a lightweight alignment layer while keeping the backbones frozen is sufficient to bridge the vision and language representation spaces. Using just **23M** web-collected and synthetic image-text pairs, we developed a foundational model called **SAIL-L**, which **surpasses CLIP-L (LAION400M) in vairous retrieval tasks and ImageNet** while also **serving as a strong vision encoder for building Multimodal LLMs.**  We hope this codebase serve as a useful testbed for resource-limited community to explore multimodal representation learning in terms of new losses, new data combination as well as new modality-merge strategy.
 
 ## :postal_horn: Release
@@ -116,6 +139,7 @@ DATADIR = {
 <img width="80%" src="asset/trainpipeline.png"/>
 </div>
 
+
 The training framework of SAIL consists of two main steps: **Pre-encoding** and **Alignment Tuning**. This efficient framework allows us to align the representation space of large pretrained unimodal models (e.g., DINOv2 and NV2 models) on a single `A100` GPU with a large `batch size of 32,768`, requiring only approximately `~5 hours` of training during the alignment tuning stage.
 
 #### stage 1. **Pre-encoding**
@@ -190,6 +214,7 @@ SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for M
 <div align="center">
     <img src="asset/mllm.png" alt="SAIL Vision Encoder in MLLMs" width="50%"/>
 </div>
+
 
 
 
@@ -317,4 +342,3 @@ We provide evaluation scripts in `scripts/llava_eval_scripts`. Download the eval
 ## Acknowledgement
 
 This project is based on [open_clip](https://github.com/mlfoundations/open_clip/tree/main), [DreamLIP](https://github.com/zyf0619sjtu/DreamLIP) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) , we appreicate their great work!
-
