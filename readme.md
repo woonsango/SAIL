@@ -28,11 +28,10 @@ This codebase enables you to train your own CLIP-like model on a single GPU by a
 ## :postal_horn: Release
 
 - **[2025/02/27]** 🚀 **SAIL Paper Accepted to CVPR 2025!**  
-  Exciting news! Our work on the SAIL Codebase has been officially accepted for presentation at CVPR 2025.
+  Exciting news! This work on assessing and learning cross-modal alignment has been officially accepted by CVPR 2025!
 
 - **[2024/11/20]** 🔥 **SAIL Codebase Open-Sourced!**  
   The repository now includes the complete pipeline for training data preparation and preprocessing, as well as the full training and evaluation codebase.  
-  **This work has been accepted to CVPR 2025.**
 
 
 ## :bookmark: Content
