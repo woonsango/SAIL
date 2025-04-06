@@ -9,6 +9,7 @@
     </a>
 </div>
 
+
 <div style="font-family: charter; text-align: center; margin-top: 2rem;">
     <a href="https://lezhang7.github.io/" target="_blank" style="color: #333; font-size: 1.4rem; font-weight: bold; text-decoration: none; transition: color 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
         Le Zhang
@@ -23,11 +24,14 @@
     </a>
 </div>
 
+
 This codebase enables you to train your own CLIP-like model on a single GPU by aligning pretrained vision models, such as DINOv2, with language models like NV-Embed-2. Our approach demonstrates that training only a lightweight alignment layer while keeping the backbones frozen is sufficient to bridge the vision and language representation spaces. Using just **23M** web-collected and synthetic image-text pairs, we developed a foundational model called **SAIL-L**, which **surpasses CLIP-L (LAION400M) in vairous retrieval tasks and ImageNet** while also **serving as a strong vision encoder for building Multimodal LLMs.**  We hope this codebase serve as a useful testbed for resource-limited community to explore multimodal representation learning in terms of new losses, new data combination as well as new modality-merge strategy.
 
 ## :postal_horn: Release
 
-- **[2025/02/27]** 🚀 **SAIL Paper Accepted to CVPR 2025!**  
+- **[2025/04/04]** 🚀 **SAIL is selected as CVPR 2025 Highlight !**  
+
+- **[2025/02/27]** 🚀 **SAIL Paper Accepted to CVPR 2025 !**  
   Exciting news! This work on assessing and learning cross-modal alignment has been officially accepted by CVPR 2025!
 
 - **[2024/11/20]** 🔥 **SAIL Codebase Open-Sourced!**  
@@ -144,6 +148,7 @@ DATADIR = {
 </div>
 
 
+
 The training framework of SAIL consists of two main steps: **Pre-encoding** and **Alignment Tuning**. This efficient framework allows us to align the representation space of large pretrained unimodal models (e.g., DINOv2 and NV2 models) on a single `A100` GPU with a large `batch size of 32,768`, requiring only approximately `~5 hours` of training during the alignment tuning stage.
 
 #### stage 1. **Pre-encoding**
@@ -218,6 +223,7 @@ SAIL significantly enhances SSL models, such as DINOv2, as vision encoders for M
 <div align="center">
     <img src="asset/mllm.png" alt="SAIL Vision Encoder in MLLMs" width="50%"/>
 </div>
+
 
 
 
