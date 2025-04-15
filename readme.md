@@ -9,6 +9,10 @@
     </a>
 </div>
 
+[![Paper](https://img.shields.io/badge/paper-arxiv.2412.03561-B31B1B.svg)](https://arxiv.org/abs/2412.04616)
+[![project Page](https://img.shields.io/badge/HuggingFace-FLAIR-FFD700?logo=huggingface&logoColor=yellow)](https://lezhang7.github.io/sail.github.io/)
+[![Hugging Face](https://img.shields.io/badge/HuggingFace-FLAIR-FFD700?logo=huggingface&logoColor=yellow)](https://huggingface.co/le723z/sail/tree/main)
+
 
 <div style="font-family: charter; text-align: center; margin-top: 2rem;">
     <a href="https://lezhang7.github.io/" target="_blank" style="color: #333; font-size: 1.4rem; font-weight: bold; text-decoration: none; transition: color 0.3s; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
