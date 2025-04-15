@@ -1,14 +1,5 @@
 # [CVPR 2025] SAIL: Swift Alignment of Image and Language
 
-<div style="text-align: center; margin-top: 2rem;">
-    <a href="https://arxiv.org/abs/2412.04616" target="_blank" style="margin: 0 10px;">
-        <img alt="arXiv" src="https://img.shields.io/badge/arXiv-SAIL-red?logo=arxiv" height="30" />
-    </a>
-    <a href="https://lezhang7.github.io/sail.github.io/" target="_blank" style="margin: 0 10px;">
-        <img alt="Website" src="https://img.shields.io/badge/Website-SAIL_Project-0078D7?logo=sailboat&logoColor=white" height="30" />
-    </a>
-</div>
-
 [![Paper](https://img.shields.io/badge/paper-arxiv.2412.03561-B31B1B.svg)](https://arxiv.org/abs/2412.04616)
 [![project Page](https://img.shields.io/badge/HuggingFace-FLAIR-FFD700?logo=huggingface&logoColor=yellow)](https://lezhang7.github.io/sail.github.io/)
 [![Hugging Face](https://img.shields.io/badge/HuggingFace-FLAIR-FFD700?logo=huggingface&logoColor=yellow)](https://huggingface.co/le723z/sail/tree/main)
