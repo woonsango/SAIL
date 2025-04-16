@@ -193,9 +193,12 @@ We only save the `alignment layer` checkpoint at `./logs/${output_name}`.
 
 ### Evaluation
 
-Evaluation scripts are provided in `scripts/sail_eval.sh`.  
+We provide comprehensive evaluation scripts for classification and general retrieval tasks in our repository: [clip_eval](https://github.com/lezhang7/clip_eval/tree/main).
 
-##### Instructions:
+
+We also provide evaluation scripts for MMVP, imagenet, winoground in `scripts/sail_eval.sh`.  
+
+##### Instructions for MMVP, imagenet, winoground:
 
 - Set the `vision_model`, `text_model`, and `checkpoint_path` in `scripts/sail_eval.sh`.  
   - Ensure that the vision and text models match the embedding data used to train the alignment layers.
