@@ -351,3 +351,16 @@ We provide evaluation scripts in `scripts/llava_eval_scripts`. Download the eval
 ## Acknowledgement
 
 This project is based on [open_clip](https://github.com/mlfoundations/open_clip/tree/main), [DreamLIP](https://github.com/zyf0619sjtu/DreamLIP) and [LLaVA](https://github.com/haotian-liu/LLaVA/tree/main) , we appreicate their great work!
+
+## Citation
+
+If you find our work useful, please consider citing:
+
+```bibtex
+@article{zhang2024assessing,
+  title={Assessing and Learning Alignment of Unimodal Vision and Language Models},
+  author={Zhang, Le and Yang, Qian and Agrawal, Aishwarya},
+  journal={arXiv preprint arXiv:2412.04616},
+  year={2024}
+}
+```
