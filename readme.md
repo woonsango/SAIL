@@ -1,4 +1,4 @@
-# [CVPR 2025 Highlight] SAIL: Swift Alignment of Image and Language
+# [CVPR 2025 Highlight] Assessing and Learning Alignment of Unimodal Vision and Language Models
 
 [![Paper](https://img.shields.io/badge/paper-arxiv.2412.03561-B31B1B.svg)](https://arxiv.org/abs/2412.04616)
 [![SAIL](https://img.shields.io/badge/Project-Page-FFD700?style=for-the-badge?logo=flag)](https://lezhang7.github.io/sail.github.io/)
