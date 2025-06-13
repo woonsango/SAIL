@@ -1,4 +1,4 @@
-# [CVPR 2025] SAIL: Swift Alignment of Image and Language
+# [CVPR 2025 Highlight] SAIL: Swift Alignment of Image and Language
 
 [![Paper](https://img.shields.io/badge/paper-arxiv.2412.03561-B31B1B.svg)](https://arxiv.org/abs/2412.04616)
 [![SAIL](https://img.shields.io/badge/Project-Page-FFD700?style=for-the-badge?logo=flag)](https://lezhang7.github.io/sail.github.io/)
@@ -357,10 +357,11 @@ This project is based on [open_clip](https://github.com/mlfoundations/open_clip/
 If you find our work useful, please consider citing:
 
 ```bibtex
-@article{zhang2024assessing,
+@inproceedings{zhang2025assessing,
   title={Assessing and Learning Alignment of Unimodal Vision and Language Models},
   author={Zhang, Le and Yang, Qian and Agrawal, Aishwarya},
-  journal={arXiv preprint arXiv:2412.04616},
-  year={2024}
+  booktitle={Proceedings of the Computer Vision and Pattern Recognition Conference},
+  pages={14604--14614},
+  year={2025}
 }
 ```
