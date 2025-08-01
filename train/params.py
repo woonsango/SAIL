@@ -1,6 +1,10 @@
 import argparse
 import ast
 
+import os
+
+from train.distributed import is_master, init_distributed_device, broadcast_object
+
 
 def get_default_params(model_name):
     # Params from paper (https://arxiv.org/pdf/2103.00020.pdf)
@@ -34,25 +38,25 @@ def parse_args(args):
     parser.add_argument(
         "--text-model",
         type=str,
-        default=None,
+        default="Alibaba-NLP/gte-base-en-v1.5",
         help="e.g sentence-transformers/all-mpnet-base-v2. If provided, will load a text model and use it for text embeddings."
     )
     parser.add_argument(
         "--vision-model",
         type=str,
-        default=None,
+        default="facebook/dinov2-base",
         help="e.g facebook/dinov2-base. If provided, will load a vision model and use it for image embeddings."
     )
     parser.add_argument(
         "--text-embedding-list",
         nargs='+',
-        default=None,
+        default="data/tensor_data/text_embedding/gte-base-en-v1.5/coco2017_captions",
         help="Path to file(s) with text emebdding training data. ",
     )
     parser.add_argument(
         "--image-embedding-list",
         nargs='+',
-        default=None,
+        default="data/tensor_data/image_embedding/dinov2-base/coco2017_concat",
         help="Path to file(s) with image embedding training data.",
     )
     parser.add_argument(
@@ -94,7 +98,7 @@ def parse_args(args):
     parser.add_argument(
         "--target-dimension",
         type=int,
-        default=512,
+        default=1024,
         help="Dimension of text embeddings. Default set to 768 for all-mpnet-base-v2.",
     )
     parser.add_argument(
@@ -106,13 +110,13 @@ def parse_args(args):
     parser.add_argument(
         "--linear-type",
         type=str,
-        default="linear",
+        default="star",
         help="Type of linear layer to use.",
     )
     parser.add_argument(
         "--logit_scale",
         type=float,
-        default=10.0,
+        default=20.0,
         help="Scale for linear layer.",
     )
     parser.add_argument(
@@ -165,7 +169,7 @@ def parse_args(args):
     parser.add_argument(
         "--dataset-type",
         choices=["webdataset", "csv", "synthetic", "auto", "embedding"],
-        default="auto",
+        default="embedding",
         help="Which type of dataset to process."
     )
     parser.add_argument(
@@ -219,27 +223,27 @@ def parse_args(args):
     parser.add_argument(
         "--name",
         type=str,
-        default=None,
+        default="SAIL_epoch10_gete-base-en-v1.5_dinov2-base",
         help="Optional identifier for the experiment when storing logs. Otherwise use current time.",
     )
     parser.add_argument(
-        "--workers", type=int, default=4, help="Number of dataloader workers per GPU."
+        "--workers", type=int, default=0, help="Number of dataloader workers per GPU."
     )
     parser.add_argument(
-        "--batch-size", type=int, default=64, help="Batch size per GPU."
+        "--batch-size", type=int, default=5000, help="Batch size per GPU."
     )
     parser.add_argument(
-        "--epochs", type=int, default=32, help="Number of epochs to train for."
+        "--epochs", type=int, default=10, help="Number of epochs to train for."
     )
     parser.add_argument(
         "--epochs-cooldown", type=int, default=None,
         help="When scheduler w/ cooldown used, perform cooldown from total_epochs - cooldown_epochs onwards."
     )
-    parser.add_argument("--lr", type=float, default=None, help="Learning rate.")
+    parser.add_argument("--lr", type=float, default=1e-5, help="Learning rate.")
     parser.add_argument("--beta1", type=float, default=0.9, help="Adam beta 1.")
     parser.add_argument("--beta2", type=float, default=0.99, help="Adam beta 2.")
     parser.add_argument("--eps", type=float, default=None, help="Adam epsilon.")
-    parser.add_argument("--wd", type=float, default=0.2, help="Weight decay.")
+    parser.add_argument("--wd", type=float, default=1e-4, help="Weight decay.")
     parser.add_argument(
         "--warmup", type=int, default=10000, help="Number of steps to warmup for."
     )
@@ -269,7 +273,7 @@ def parse_args(args):
         help="Power for polynomial cooldown schedule. Default: 1.0 (linear decay)"
     )
     parser.add_argument(
-        "--save-frequency", type=int, default=1, help="How often to save checkpoints."
+        "--save-frequency", type=int, default=2, help="How often to save checkpoints."
     )
     parser.add_argument(
         "--save-most-recent",
@@ -285,7 +289,7 @@ def parse_args(args):
     )
     parser.add_argument(
         "--resume",
-        default=None,
+        default="latest",
         type=str,
         help="path to latest checkpoint (default: none)",
     )
@@ -434,7 +438,7 @@ def parse_args(args):
     parser.add_argument(
         "--wandb-project-name",
         type=str,
-        default='open-clip',
+        default='sail_train',
         help="Name of the project if logging with wandb.",
     )
     parser.add_argument(
@@ -468,7 +472,7 @@ def parse_args(args):
         help="Don't set device index from local rank (when CUDA_VISIBLE_DEVICES restricted to one per proc)."
     )
     parser.add_argument(
-        "--seed", type=int, default=0, help="Default random seed."
+        "--seed", type=int, default=42, help="Default random seed."
     )
     parser.add_argument(
         "--grad-clip-norm", type=float, default=None, help="Gradient clip."
@@ -494,7 +498,7 @@ def parse_args(args):
     parser.add_argument(
         "--log-every-n-steps",
         type=int,
-        default=100,
+        default=5,
         help="Log every n steps to tensorboard/console/wandb.",
     )
     parser.add_argument(
@@ -567,8 +571,25 @@ def parse_args(args):
         default=0.0051,
         help='Lambda parameter for Barlow Twins loss.'
     )
+    parser.add_argument(
+        "--sail_model",
+        default=False,  
+        action="store_true",
+    )
+    parser.add_argument(
+        "--only_text",
+        default=False,  
+        action="store_true",
+    )
+    parser.add_argument(
+        "--wandb",
+        default=None,  
+    )
 
     args = parser.parse_args(args)
+
+    args.text_embedding_list = [args.text_embedding_list]
+    args.image_embedding_list = [args.image_embedding_list]
 
     # If some params are not passed, we use the default values based on model name.
     default_params = get_default_params(args.model)
@@ -577,3 +598,93 @@ def parse_args(args):
             setattr(args, name, val)
 
     return args
+
+import random
+import numpy as np
+import torch
+
+def random_seed(seed=42, rank=0):
+    torch.manual_seed(seed + rank)
+    np.random.seed(seed + rank)
+    random.seed(seed + rank)
+
+def set(args):
+    resume_latest = args.resume == 'latest'
+    log_base_path = os.path.join(args.logs, args.name)
+    args.log_path = None
+    os.makedirs(log_base_path, exist_ok=True)
+    log_filename = f'out-{args.rank}' if args.log_local else 'out.log'
+    args.log_path = os.path.join(log_base_path, log_filename)
+    if os.path.exists(args.log_path) and not resume_latest:
+        print(
+            "Error. Experiment already exists. Use --name {} to specify a new experiment."
+        )
+        return -1
+    
+    device = init_distributed_device(args)
+
+    random_seed(args.seed, 0)
+
+    return device
+
+import logging
+from train.optimizer import Lion
+from torch import optim
+from torch.cuda.amp import GradScaler
+
+
+def set_optimizer(args, model):
+    optimizer = None
+    scaler = None
+    if getattr(args,"train_data") or args.dataset_type in ["synthetic", "embedding"]:
+
+        exclude = lambda n, p: p.ndim < 2 or "bn" in n or "ln" in n or "bias" in n or 'logit_scale' in n
+        include = lambda n, p: not exclude(n, p)
+
+        named_parameters = list(model.named_parameters())
+        if args.optimizer == "lion":
+            logging.info("Using Lion optimizer")
+            optimizer = Lion(model.parameters(), lr=args.lr, weight_decay=args.wd, betas=(args.beta1, args.beta2))
+        else:
+            logging.info("Using AdamW optimizer")
+            gain_or_bias_params = [p for n, p in named_parameters if exclude(n, p) and p.requires_grad]
+            rest_params = [p for n, p in named_parameters if include(n, p) and p.requires_grad]
+            optimizer = optim.AdamW(
+                [
+                    {"params": gain_or_bias_params, "weight_decay": 0.},
+                    {"params": rest_params, "weight_decay": args.wd},
+                ],
+                lr=args.lr,
+                betas=(args.beta1, args.beta2),
+                eps=args.eps,
+            )
+        scaler = GradScaler() if args.precision == "amp" else None
+
+    return optimizer, scaler
+
+from train.scheduler import cosine_lr, const_lr, const_lr_cooldown
+import math
+
+def set_scheduler(optimizer, data, args):
+    # create scheduler if train
+    scheduler = None
+    if 'train' in data and optimizer is not None:
+        total_steps = (data["train"].dataloader.num_batches // args.accum_freq) * args.epochs
+        args.warmup = math.ceil(0.1 * total_steps)
+        if args.lr_scheduler == "cosine":
+            scheduler = cosine_lr(optimizer, args.lr, args.warmup, total_steps)
+        elif args.lr_scheduler == "const":
+            scheduler = const_lr(optimizer, args.lr, args.warmup, total_steps)
+        elif args.lr_scheduler == "const-cooldown":
+            assert args.epochs_cooldown is not None,\
+                "Please specify the number of cooldown epochs for this lr schedule."
+            cooldown_steps = (data["train"].dataloader.num_batches // args.accum_freq) * args.epochs_cooldown
+            scheduler = const_lr_cooldown(
+                optimizer, args.lr, args.warmup, total_steps,
+                cooldown_steps, args.lr_cooldown_power, args.lr_cooldown_end)
+        else:
+            logging.error(
+                f'Unknown scheduler, {args.lr_scheduler}. Available options are: cosine, const, const-cooldown.')
+            exit(1)
+
+    return scheduler

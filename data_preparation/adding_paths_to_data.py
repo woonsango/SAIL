@@ -17,7 +17,7 @@ def add_image_paths(input_csv_file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Add image paths to CSV file')
-    parser.add_argument('input_csv_file', type=str, help='Input CSV file path')
+    parser.add_argument('--input_csv_file', type=str, help='Input CSV file path')
     
     args = parser.parse_args()
     add_image_paths(args.input_csv_file)

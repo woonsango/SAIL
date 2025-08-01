@@ -14,9 +14,46 @@ try:
 except ImportError:
     wandb = None
 
+from IPython.display import clear_output
+import matplotlib.pyplot as plt
+from collections import defaultdict
+
 from train.distributed import is_master
 from train.precision import get_autocast
 from model import get_input_dtype
+
+import math
+
+def update_loss_plot_iter(losses_m, iteration, iter_loss_history):
+    # 현재 iteration의 loss 값 기록
+    for loss_name, loss_m in losses_m.items():
+        iter_loss_history[loss_name].append(loss_m.val)
+
+    clear_output(wait=True)
+
+    # 설정: 1행에 3개씩
+    num_losses = len(iter_loss_history)
+    cols = 3
+    rows = math.ceil(num_losses / cols)
+
+    fig, axes = plt.subplots(rows, cols, figsize=(cols * 5, rows * 4))
+    axes = axes.flatten()  # 2D -> 1D 배열로
+
+    for i, (loss_name, values) in enumerate(iter_loss_history.items()):
+        ax = axes[i]
+        ax.plot(values, label=loss_name, color='tab:blue')
+        ax.set_title(f"{loss_name}")
+        ax.set_xlabel("Iteration")
+        ax.set_ylabel("Loss")
+        ax.legend()
+        ax.grid(True)
+
+    # 남는 subplot 비우기
+    for j in range(i + 1, len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.tight_layout()
+    plt.show()
 
 
 class AverageMeter(object):
@@ -48,8 +85,13 @@ def postprocess_clip_output(model_out):
 
 def unwrap_model(model):
     if hasattr(model, 'module'):
+        # print("mudule")
         return model.module
+    elif hasattr(model, "vlhead"):
+        # print("vlhead")
+        return model.vlhead
     else:
+        # print("model")
         return model
 
 
@@ -60,7 +102,7 @@ def backward(total_loss, scaler):
         total_loss.backward()
 
 
-def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args):
+def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args, iter_loss_history=None):
     device = torch.device(args.device)
     autocast = get_autocast(args.precision)
     input_dtype = get_input_dtype(args.precision)
@@ -143,6 +185,12 @@ def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, args
                     for loss_name, loss_m in losses_m.items()
                 ]
             )
+            if args.wandb is None:
+                if i % 10 == 0:
+                    update_loss_plot_iter(losses_m, i, iter_loss_history)
+
+
+            
             logging.info(
                 f"Train Epoch: {epoch} [{num_samples:>{sample_digits}}/{samples_per_epoch} ({percent_complete:.0f}%)] "
                 f"LR: {optimizer.param_groups[0]['lr']:5f} "

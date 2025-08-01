@@ -12,7 +12,7 @@ import os
 import yaml
 
 
-def parse_args():
+def parse_args(args=None):
     parser = argparse.ArgumentParser(description="Zero-shot evaluation")
     parser.add_argument(
         "--task",
@@ -25,19 +25,19 @@ def parse_args():
             "segmentation",
             "MMVP",
         ],
-        default="imagenetv1",
+        default="COCO",
         help="Task",
     )
     parser.add_argument(
         "--text-model",
         type=str,
-        default=None,
+        default="Alibaba-NLP/gte-base-en-v1.5",
         help="e.g sentence-transformers/all-mpnet-base-v2. If provided, will load a text model and use it for text embeddings.",
     )
     parser.add_argument(
         "--vision-model",
         type=str,
-        default=None,
+        default="facebook/dinov2-base",
         help="e.g facebook/dinov2-base. If provided, will load a vision model and use it for image embeddings.",
     )
     parser.add_argument(
@@ -54,7 +54,7 @@ def parse_args():
         help="Type of linear layer to use.",
     )
     parser.add_argument("--device", type=str, default="cuda", help="Device")
-    parser.add_argument("--batch_size", type=int, default=1024, help="Batch size")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
     parser.add_argument(
         "--results_dir",
         type=str,
@@ -64,7 +64,7 @@ def parse_args():
     parser.add_argument(
         "--dataset_root_dir",
         type=str,
-        required=True,
+        default="/home/dataset",
         help="Path to images",
     )
     parser.add_argument(
@@ -76,7 +76,7 @@ def parse_args():
     parser.add_argument(
         "--target-dimension",
         type=int,
-        default=512,
+        default=1024,
         help="Dimension of text embeddings. Default set to 768 for all-mpnet-base-v2.",
     ),
     parser.add_argument(
@@ -116,7 +116,17 @@ def parse_args():
         action="store_true",
         help="Use sharelock.",
     )
-    args = parser.parse_args()
+    parser.add_argument(
+        "--sail_model",
+        default=False,  
+        action="store_true",
+    )
+    parser.add_argument(
+        "--only_text",
+        default=False,  
+        action="store_true",
+    )
+    args = parser.parse_args(args)
 
     # Overide args with model_config.yaml
     config_file = os.path.join(
@@ -160,6 +170,8 @@ def main(args):
         agg_mode=args.agg_mode,
         sharelock=args.sharelock,
         width_factor=args.width_factor,
+        sail_model=args.sail_model,
+        only_text = args.only_text, 
     )
     text_model_name = args.text_model.split("/")[-1]
     vision_model_name = args.vision_model.split("/")[-1]
@@ -213,11 +225,10 @@ def main(args):
         )
     elif args.task.lower() == "coco":
 
-        coco_root = os.path.join(args.dataset_root_dir, "coco", "2017", "val2017")
+        coco_root = os.path.join(args.dataset_root_dir, "coco2017", "val2017")
         coco_ann_file = os.path.join(
             args.dataset_root_dir,
-            "coco",
-            "2017",
+            "coco2017",
             "annotations",
             "captions_val2017.json",
         )

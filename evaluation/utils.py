@@ -64,7 +64,7 @@ def extract_info_from_path(args):
         prefix_string = prefix_match.group(1) if prefix_match else None
     else:
         # Extract ${train} from path like "./logs/${train}/checkpoints/epoch_${epoch}.pt"
-        prefix_pattern = r'logs/([^/]+)/checkpoints'
+        prefix_pattern = r'checkpoint/([^/]+)/epoch'
         prefix_match = re.search(prefix_pattern, path)
         prefix_string = prefix_match.group(1) if prefix_match else None
         

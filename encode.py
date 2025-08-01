@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument('--start_index', type=int, default=0, help='Start index for data processing')
     parser.add_argument('--end_index', type=int, default=None, help='End index for data processing')
     parser.add_argument('--domain', type=str, choices=['text', 'image'], required=True, help='Domain to encode')
-    parser.add_argument('--source_caption', type=str, choices=['raw_caption', 'shortIB_captions', 'longIB_captions', 'shortSV_captions', 'longSV_captions', 'shortLLA_captions', 'longLLA_captions','caption'], required=True, help='Source caption')
+    parser.add_argument('--source_caption', type=str, choices=['raw_caption', 'shortIB_captions', 'longIB_captions', 'shortSV_captions', 'longSV_captions', 'shortLLA_captions', 'longLLA_captions','captions', "caption"], required=True, help='Source caption')
     parser.add_argument('--save_name', type=str, default=None, help='Save name')
     parser.add_argument('--batch_size', type=int, default=32, help='Save batch size')
     parser.add_argument('--agg_mode', type=str, default='concat', help='Aggregation mode')

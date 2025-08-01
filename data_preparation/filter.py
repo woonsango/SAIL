@@ -5,6 +5,8 @@ from PIL import ImageFile, UnidentifiedImageError, Image  # Import UnidentifiedI
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, message="Corrupt EXIF data")
 
+import argparse
+
 
 
 

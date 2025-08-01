@@ -1,4 +1,4 @@
-from .sail_model import AlignmentLayer, SAILModel, ShareLockAlignmentLayer
+from .sail_model import AlignmentLayer, SAILModel, ShareLockAlignmentLayer, AlignmentLayer_custom, ShareLockAlignmentLayer_custom
 from .loss import ClipLoss, SigLipLoss, BarlowTwinsLoss
 from .vision_model import ImageEmbedding
 from .language_model import SentenceEmbedding
@@ -42,6 +42,8 @@ def create_model(
         agg_mode: str = 'concat',
         width_factor: int = 8,
         sharelock: bool = False,
+        sail_model: bool = False,
+        only_text: bool = False
 ):  
     if isinstance(device, str):
         device = torch.device(device)
@@ -49,7 +51,10 @@ def create_model(
     LayerClass = ShareLockAlignmentLayer if sharelock else AlignmentLayer
 
     cast_dtype = get_cast_dtype(precision)
-    if vision_model_name is not None and text_model_name is not None:
+    if sail_model:
+        print("use SAILModel")
+        if sharelock:
+            print("use sharelock")
         model = SAILModel(
             text_model_name=text_model_name, 
             vision_model_name=vision_model_name, 
@@ -60,8 +65,12 @@ def create_model(
             agg_mode=agg_mode,
             width_factor=width_factor,
             sharelock=sharelock,
+            only_text=only_text,
         )
     else:
+       print("don't use SAILModel")
+       if sharelock:
+            print("use sharelock")
        model = LayerClass(
             vision_dimesion, 
             text_dimension, 
@@ -71,7 +80,84 @@ def create_model(
             logit_scale=logit_scale, 
             logit_bias=logit_bias, 
             width_factor=width_factor,
+            only_text=only_text
         )
+    model.to(device=device)
+    return model
+
+def create_model_custom(
+        vision_dimesion:int = 1536,
+        text_dimension:int = 768,
+        target_dimension:int = 512,
+        precision: str = 'fp32', 
+        device: Union[str, torch.device] = 'cpu', 
+        logit_scale: float = 20.0,
+        logit_bias: float = -10.0,
+        custom_Layer = None,
+):
+    if isinstance(device, str):
+        device = torch.device(device)
+
+    cast_dtype = get_cast_dtype(precision)
+
+    model = AlignmentLayer_custom(
+            vision_dimesion, 
+            text_dimension, 
+            target_dimension, 
+            cast_dtype=cast_dtype, 
+            logit_scale=logit_scale, 
+            logit_bias=logit_bias, 
+            custom_Layer=custom_Layer
+        )
+    model.to(device=device)
+    return model
+
+def create_model_LiT(
+        vision_dimesion:int = 1536,
+        text_dimension:int = 768,
+        target_dimension:int = 512,
+        precision: str = 'fp32', 
+        device: Union[str, torch.device] = 'cpu', 
+        logit_scale: float = 20.0,
+        logit_bias: float = -10.0,
+        custom_Layer = None,
+        alignmentLayer = None,
+):
+    if isinstance(device, str):
+        device = torch.device(device)
+
+    model = alignmentLayer
+    model.to(device=device)
+    return model
+
+def create_model_ShareLock(
+        vision_dimesion:int = 1536,
+        text_dimension:int = 768,
+        target_dimension:int = 512,
+        precision: str = 'fp32', 
+        device: Union[str, torch.device] = 'cpu', 
+        logit_scale: float = 20.0,
+        logit_bias: float = -10.0,
+        width_factor: int = 8,
+        sharelock: bool = False,
+        custom_Layer = None,
+):  
+    if isinstance(device, str):
+        device = torch.device(device)
+
+    cast_dtype = get_cast_dtype(precision)
+
+
+    model = ShareLockAlignmentLayer_custom(
+        vision_dimesion, 
+        text_dimension, 
+        target_dimension, 
+        cast_dtype=cast_dtype, 
+        logit_scale=logit_scale, 
+        logit_bias=logit_bias, 
+        width_factor=width_factor,
+        custom_Layer=custom_Layer
+    )
     model.to(device=device)
     return model
 

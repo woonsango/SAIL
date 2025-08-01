@@ -14,13 +14,41 @@ instruction = ""
 def load_data(data_config, source_caption, domain):
     data_file = data_config['annotation']
     if data_file.endswith('.json'):
-        return load_json_data(data_file, data_config['imagedir'])
+        if data_config['imagedir'].endswith("train2017"):
+            return load_json_data_coco(data_file, data_config['imagedir'])
+        else:
+            return load_json_data(data_file, data_config['imagedir'])
     elif data_file.endswith('.jsonl'):
         return load_jsonl_data(data_file, data_config['imagedir'])
     elif data_file.endswith('.csv'):
         return load_csv_data(data_file, data_config['imagedir'], source_caption, domain)
     else:
         raise ValueError('Unsupported data format')
+    
+def load_json_data_coco(data_file, image_dir):
+    with open(data_file, 'r') as f:
+        data = json.load(f)
+    
+    id_to_filename = {img["id"]: img["file_name"] for img in data["images"]}
+
+    # 결과 리스트 생성
+    sentences = []
+    images = []
+
+    # annotations를 순회하면서 매칭되는 file_name과 caption을 추출
+    for anno in data["annotations"]:
+        image_id = anno["image_id"]
+        caption = anno["caption"]
+        
+        # image_id에 해당하는 file_name이 존재할 경우만 처리
+        if image_id in id_to_filename:
+            file_name = id_to_filename[image_id]
+            file_name = os.path.join(image_dir,file_name)
+            sentences.append(caption)
+            images.append(file_name)
+    
+    return sentences, images
+    
 
 def load_json_data(data_file, image_dir):
     with open(data_file, 'r') as f:

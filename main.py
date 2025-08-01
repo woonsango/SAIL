@@ -18,6 +18,8 @@ try:
 except ImportError:
     wandb = None
 
+from torch.cuda.amp import GradScaler
+
 from train.params import parse_args
 from train.logger import setup_logging, format_num_params
 from train.scheduler import cosine_lr, const_lr, const_lr_cooldown
@@ -164,8 +166,12 @@ def main(args):
         logit_bias = args.logit_bias,
         width_factor = args.width_factor,
         sharelock = args.sharelock,
+        sail_model=args.sail_model,
+        only_text = args.only_text, 
         **model_kwargs
     )
+    if args.sail_model:
+        model.freeze_except_vlhead()
     # print trainanble parameters
     random_seed(args.seed, args.rank)
 
@@ -233,7 +239,7 @@ def main(args):
                 betas=(args.beta1, args.beta2),
                 eps=args.eps,
             )
-        scaler = torch.amp.GradScaler() if args.precision == "amp" else None
+        scaler = GradScaler() if args.precision == "amp" else None
 
     # optionally resume from a checkpoint
     
@@ -323,12 +329,20 @@ def main(args):
             evaluate(model, data, loss, epoch, args)
         # Saving checkpoints.
         if args.save_logs:
-            checkpoint_dict = {
-                "epoch": completed_epoch,
-                "name": args.name,
-                "state_dict": original_model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-            }
+            if args.sail_model:
+                checkpoint_dict = {
+                    "epoch": completed_epoch,
+                    "name": args.name,
+                    "state_dict": original_model.vlhead.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                }
+            else:
+                checkpoint_dict = {
+                    "epoch": completed_epoch,
+                    "name": args.name,
+                    "state_dict": original_model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                }
             if scaler is not None:
                 checkpoint_dict["scaler"] = scaler.state_dict()
 
@@ -350,6 +364,9 @@ def main(args):
                 latest_save_path = os.path.join(args.checkpoint_path, LATEST_CHECKPOINT_NAME)
                 torch.save(checkpoint_dict, tmp_save_path)
                 os.replace(tmp_save_path, latest_save_path)
+
+    for name, param in model.named_parameters():
+        print(f"Name: {name}, Shape: {param.shape}")
 
     if args.wandb and is_master(args):
         wandb.finish()

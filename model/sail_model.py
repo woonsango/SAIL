@@ -26,26 +26,38 @@ class AlignmentLayer(nn.Module):
         logit_scale: float = 10.0,
         logit_bias: float = -10.0,
         only_vision: bool = False,
+        only_text: bool = False,
         width_factor: int = 8,
     ):
         super(AlignmentLayer, self).__init__()
         assert only_vision or text_dimension is not None, "text_dimension must be provided if only_vision is False"
 
+        self.only_text = only_text
+
+        if only_text:
+            print("only text : ", only_text)
+        
         self.cast_dtype = cast_dtype
         self.linear_type = linear_type
         if linear_type == "star":
+            print("linear_type: ", "SAIL")
             LinearLayer = partial(StarMLP, width_factor=width_factor, activation=nn.ReLU6())
         elif linear_type == "mlp":
+            print("linear_type: ", "MLP")
             LinearLayer = SiglipMLP
         else:
+            print("linear_type: ", "FC")
             LinearLayer = nn.Linear
 
-        self.vision_mapping_network = LinearLayer(
-            vision_dimesion, target_dimension
-        )
+        if not only_text:
+            self.vision_mapping_network = LinearLayer(
+                vision_dimesion, target_dimension
+            )
         self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
 
         if not only_vision:
+            if only_text:
+                target_dimension = vision_dimesion
             self.text_mapping_network = LinearLayer(
                 text_dimension, target_dimension
             )
@@ -88,7 +100,8 @@ class AlignmentLayer(nn.Module):
         if image_features is not None:
             image_features = image_features.to(self.cast_dtype)
             image_features = self.vision_layer_norm(image_features)
-            image_features = self.vision_mapping_network(image_features)
+            if not self.only_text:
+                image_features = self.vision_mapping_network(image_features)
         else:
             image_features = None
 
@@ -126,6 +139,81 @@ class AlignmentLayer(nn.Module):
             "logit_scale": self.logit_scale.exp(),
             "logit_bias": self.logit_bias
         }
+    
+
+class AlignmentLayer_custom(nn.Module):
+    def __init__(
+        self,
+        vision_dimesion: int,
+        text_dimension: int = None,
+        target_dimension: int = 1024,
+        cast_dtype: Optional[torch.dtype] = None,
+        logit_scale: float = 10.0,
+        logit_bias: float = -10.0,
+        custom_Layer = None,
+    ):
+        super(AlignmentLayer_custom, self).__init__()
+
+        
+        self.cast_dtype = cast_dtype
+
+        LinearLayer = custom_Layer
+
+        self.vision_mapping_network = LinearLayer(
+            vision_dimesion, target_dimension
+        )
+        self.vision_layer_norm = nn.LayerNorm(vision_dimesion)
+
+        self.text_mapping_network = LinearLayer(
+            text_dimension, target_dimension
+        )
+        self.text_layer_norm = nn.LayerNorm(text_dimension)
+
+        self.logit_scale = nn.Parameter(torch.randn(1))
+        self.logit_bias = nn.Parameter(torch.randn(1))
+        self._initialize_weights(logit_scale, logit_bias)
+
+    def _initialize_weights(self, scale: float, bias: float):
+
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                torch.nn.init.xavier_uniform_(module.weight)
+                if module.bias is not None:
+                    torch.nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.LayerNorm):
+                torch.nn.init.ones_(module.weight)
+                torch.nn.init.zeros_(module.bias)
+
+        # Initialize logit_scale and logit_bias
+        logit_scale_init = torch.log(torch.tensor(scale))                           
+        self.logit_scale.data.fill_(logit_scale_init)
+        self.logit_bias.data.fill_(torch.tensor(bias))
+    
+    @property
+    def get_logit_scale(self):
+        return self.logit_scale.exp()
+    
+    @property
+    def get_logit_bias(self):
+        return self.logit_bias
+     
+    def forward(self, image_features=None, text_features=None, extra_text_features=None, compute_logits=False):
+
+        image_features = image_features.to(self.cast_dtype)
+        image_features = self.vision_layer_norm(image_features)
+        image_features = self.vision_mapping_network(image_features)
+
+        text_features = text_features.to(self.cast_dtype)
+        text_features = self.text_layer_norm(text_features)
+        text_features = self.text_mapping_network(text_features)
+
+        return {
+            "image_features": image_features,
+            "text_features": text_features,
+            "extra_text_features": extra_text_features,
+            "logit_scale": self.logit_scale.exp(),
+            "logit_bias": self.logit_bias
+        }
 
 class ShareLockAlignmentLayer(nn.Module):
     def __init__(
@@ -137,6 +225,7 @@ class ShareLockAlignmentLayer(nn.Module):
         cast_dtype: Optional[torch.dtype] = None,
         logit_scale: float = np.log(1 / 0.07),
         logit_bias: float = -10.0,
+        only_text: bool = False,
         *args,
         **kwargs,
     ):
@@ -204,8 +293,92 @@ class ShareLockAlignmentLayer(nn.Module):
             "text_features": text_features,
             "logits_per_text": logits_per_text,
             "logit_scale": self.get_logit_scale,
-            "logit_bias": self.get_logit_bias
+            "logit_bias": self.get_logit_bias,
+            "extra_text_features": extra_text_features
         }
+    
+class ShareLockAlignmentLayer_custom(nn.Module):
+    def __init__(
+        self,
+        vision_dimesion: int,
+        text_dimension: int = None,
+        target_dimension: int = None,
+        cast_dtype: Optional[torch.dtype] = None,
+        logit_scale: float = np.log(1 / 0.07),
+        logit_bias: float = -10.0,
+        custom_Layer = None,
+        *args,
+        **kwargs,
+    ):
+        super(ShareLockAlignmentLayer_custom, self).__init__()
+        self.cast_dtype = cast_dtype
+        # no vision alignment layer overhead
+        target_dimension = vision_dimesion 
+        hidden_dim = 4096
+        self.text_mapping_network = custom_Layer(text_dimension, hidden_dim, target_dimension)
+        # ShareLockMLP(
+        #     text_dimension, hidden_dim, target_dimension
+        # )
+     
+        self.text_layer_norm = nn.LayerNorm(text_dimension)
+        self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
+        self.logit_bias = nn.Parameter(torch.ones([]) * -10.0)
+        self._initialize_weights(logit_scale, logit_bias)
+
+    def _initialize_weights(self, scale: float, bias: float):
+    
+        for module in self.modules():
+            if isinstance(module, nn.Linear):
+                torch.nn.init.xavier_uniform_(module.weight)
+                if module.bias is not None:
+                    torch.nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.LayerNorm):
+                torch.nn.init.ones_(module.weight)
+                torch.nn.init.zeros_(module.bias)                     
+
+    @property
+    def get_logit_scale(self):
+        return self.logit_scale.exp()
+    
+    @property
+    def get_logit_bias(self):
+        return self.logit_bias
+
+    def forward(self, image_features=None, text_features=None, extra_text_features=None, compute_logits=False):
+    
+        if image_features is None and text_features is None:
+            raise ValueError(
+                "At least one of image_features and text_features should be provided."
+            )
+
+        if text_features is not None:
+            text_features = text_features.to(self.cast_dtype)
+            text_features = self.text_layer_norm(text_features)
+            text_features = self.text_mapping_network(text_features)
+        else:
+            text_features = None
+
+        if compute_logits and image_features is not None and text_features is not None and image_features.nelement() > 0 and text_features.nelement() > 0:
+            logits_per_text = (
+                torch.matmul(
+                    F.normalize(text_features, dim=-1),
+                    F.normalize(image_features, dim=-1).t(),
+                )
+                * self.logit_scale.exp()
+                + self.logit_bias
+            )
+        else:
+            logits_per_text = None
+
+        return {
+            "image_features": image_features,
+            "text_features": text_features,
+            "logits_per_text": logits_per_text,
+            "logit_scale": self.get_logit_scale,
+            "logit_bias": self.get_logit_bias,
+            "extra_text_features": extra_text_features
+        }
+
 
 
         
@@ -223,6 +396,7 @@ class SAILModel(nn.Module):
         agg_mode: str = 'concat',
         width_factor: int = 8,
         sharelock: bool = False,
+        only_text: bool = False,
     ):
         super(SAILModel, self).__init__()
         self.text_model = SentenceEmbedding(text_model_name)
@@ -234,6 +408,10 @@ class SAILModel(nn.Module):
                 vision_dimesion = self.vision_model.model.embed_dim
         else:
             vision_dimesion = self.vision_model.model.config.hidden_size * 2
+        if sharelock:
+            print("SAIL sharelock")
+        else:
+            print("SAIL AlignmentLayer")
         LayerClass = ShareLockAlignmentLayer if sharelock else AlignmentLayer
         self.vlhead = LayerClass(
             vision_dimesion = vision_dimesion,
@@ -242,7 +420,9 @@ class SAILModel(nn.Module):
             linear_type = linear_type,
             cast_dtype = cast_dtype,
             width_factor = width_factor,
+            only_text = only_text,
         )  
+        print("vlhead_weights_path", vlhead_weights_path)
         if vlhead_weights_path is not None:
             self.load_vlhead_weights(vlhead_weights_path)
 
@@ -270,7 +450,6 @@ class SAILModel(nn.Module):
     def image_processor(self):
         return self.vision_model.image_processor
 
-    @torch.no_grad()
     def encode_image(
         self,
         image,
@@ -294,7 +473,6 @@ class SAILModel(nn.Module):
         else:
             return F.normalize(image_features, dim=-1) if normalize else image_features
 
-    @torch.no_grad()
     def encode_text(
         self,
         text,
@@ -329,8 +507,9 @@ class SAILModel(nn.Module):
         images, 
         texts, 
         text_list: List[str] = None,
-        is_pre_encoded: bool = False,
+        is_pre_encoded: bool = True,
         return_encoded: bool = False,
+        extra_text_features = None
     ):
         if is_pre_encoded:
             # if its pre-encoded, we do not need to return encoded features
@@ -381,6 +560,7 @@ class SAILModel(nn.Module):
                 "logit_bias": self.vlhead.get_logit_bias,
                 "encoded_image_features": encoded_image_features,
                 "encoded_text_features": encoded_text_features,
+                "extra_text_features": extra_text_features
             }
         else:
             return {
@@ -389,6 +569,7 @@ class SAILModel(nn.Module):
                 "logits_per_text": logits_per_text,
                 "logit_scale": self.vlhead.get_logit_scale,
                 "logit_bias": self.vlhead.get_logit_bias,
+                "extra_text_features": extra_text_features
             }
 
 if __name__ == "__main__":
