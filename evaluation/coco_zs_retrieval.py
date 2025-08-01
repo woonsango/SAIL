@@ -271,12 +271,13 @@ def coco_eval(
     model.eval()
     device = get_model_device(model)
     processor = Processor(model.vision_model.image_processor)
-    dataset = CocoCaptions(
-        root=coco_root,
-        annFile=coco_ann_file,
-        transform=processor,
-        # Note: almost all images have 5 captions, but 12/5000 have 6, and 1/5000 has 7 - I ignore these few extra captions.
-    )
+    dataset = None
+    # CocoCaptions(
+    #     root=coco_root,
+    #     annFile=coco_ann_file,
+    #     transform=processor,
+    #     # Note: almost all images have 5 captions, but 12/5000 have 6, and 1/5000 has 7 - I ignore these few extra captions.
+    # )
     with autocast():
         with torch.no_grad():
             t2i, i2t = recall_at_k(
