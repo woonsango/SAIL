@@ -232,8 +232,8 @@ def main(args):
             "annotations",
             "captions_val2017.json",
         )
-        assert os.path.exists(coco_root), f"COCO root directory does not exist: {coco_root}"
-        assert os.path.exists(coco_ann_file), f"COCO annotation file does not exist: {coco_ann_file}"
+        # assert os.path.exists(coco_root), f"COCO root directory does not exist: {coco_root}"
+        # assert os.path.exists(coco_ann_file), f"COCO annotation file does not exist: {coco_ann_file}"
         if args.agg_mode != 'concat':
             vision_model_name = vision_model_name + '_' + args.agg_mode
         results = coco_eval(
