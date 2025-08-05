@@ -64,7 +64,7 @@ def parse_args(args=None):
     parser.add_argument(
         "--dataset_root_dir",
         type=str,
-        default="/home/dataset",
+        default="./data/test",
         help="Path to images",
     )
     parser.add_argument(
@@ -225,11 +225,9 @@ def main(args):
         )
     elif args.task.lower() == "coco":
 
-        coco_root = os.path.join(args.dataset_root_dir, "coco2017", "val2017")
+        coco_root = os.path.join(args.dataset_root_dir, "val2017")
         coco_ann_file = os.path.join(
             args.dataset_root_dir,
-            "coco2017",
-            "annotations",
             "captions_val2017.json",
         )
         # assert os.path.exists(coco_root), f"COCO root directory does not exist: {coco_root}"
