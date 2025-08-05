@@ -118,8 +118,7 @@ def parse_args(args=None):
     )
     parser.add_argument(
         "--sail_model",
-        default=False,  
-        action="store_true",
+        default=True,  
     )
     parser.add_argument(
         "--only_text",
@@ -155,11 +154,11 @@ def main(args):
         f"{training_info_str}.json",
     )
     
-    if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
-        print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
-        return None
-    elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
-        print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
+    # if check_epoch_exists(output_path, epoch_num) and not args.overwrite:
+    #     print(f"Epoch {epoch_num} already exists in {args.task}, skipping.")
+    #     return None
+    # elif check_epoch_exists(output_path, epoch_num) and args.overwrite:
+    #     print(f"Epoch {epoch_num} already exists in {args.task}, overwriting.")
     model = create_model(
         text_model_name=args.text_model,
         vision_model_name=args.vision_model,
