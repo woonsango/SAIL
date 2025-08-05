@@ -112,6 +112,24 @@ def create_model_custom(
     model.to(device=device)
     return model
 
+def create_model_CLIP(
+        vision_dimesion:int = 1536,
+        text_dimension:int = 768,
+        target_dimension:int = 512,
+        precision: str = 'fp32', 
+        device: Union[str, torch.device] = 'cpu', 
+        logit_scale: float = 20.0,
+        logit_bias: float = -10.0,
+        custom_Layer = None,
+        alignmentLayer = None,
+):
+    if isinstance(device, str):
+        device = torch.device(device)
+
+    model = alignmentLayer
+    model.to(device=device)
+    return model
+
 def create_model_LiT(
         vision_dimesion:int = 1536,
         text_dimension:int = 768,
