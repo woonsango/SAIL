@@ -172,42 +172,42 @@ def encode_dataset(
 import matplotlib.pyplot as plt
 from torchvision.transforms.functional import to_pil_image
 
-def visualize_text_to_image_retrieval(
-    dataset,
-    text_idx: int,
-    topk_indices: torch.Tensor,
-    correct: bool,
-    k: int,
-    image_to_tensor,
-):
-    """
-    dataset: custom dataset with __getitem__(index) returning (image, text, ...)
-    text_idx: index of the text query
-    topk_indices: top-k image indices retrieved for this text
-    correct: whether ground truth image is in top-k
-    k: number of top-k
-    image_to_tensor: function to convert image to tensor (if needed)
-    """
-    fig, axes = plt.subplots(1, k + 1, figsize=(15, 3))
-    plt.suptitle(f'Text-to-Image Retrieval Example\nText idx: {text_idx} | Correct: {correct}', fontsize=14)
+# def visualize_text_to_image_retrieval(
+#     dataset,
+#     text_idx: int,
+#     topk_indices: torch.Tensor,
+#     correct: bool,
+#     k: int,
+#     image_to_tensor,
+# ):
+#     """
+#     dataset: custom dataset with __getitem__(index) returning (image, text, ...)
+#     text_idx: index of the text query
+#     topk_indices: top-k image indices retrieved for this text
+#     correct: whether ground truth image is in top-k
+#     k: number of top-k
+#     image_to_tensor: function to convert image to tensor (if needed)
+#     """
+#     fig, axes = plt.subplots(1, k + 1, figsize=(15, 3))
+#     plt.suptitle(f'Text-to-Image Retrieval Example\nText idx: {text_idx} | Correct: {correct}', fontsize=14)
 
-    # Text query
-    _, text_query, *_ = dataset[text_idx]
-    axes[0].text(0.5, 0.5, text_query, wrap=True, ha='center', va='center')
-    axes[0].set_title("Text Query")
-    axes[0].axis('off')
+#     # Text query
+#     _, text_query, *_ = dataset[text_idx]
+#     axes[0].text(0.5, 0.5, text_query, wrap=True, ha='center', va='center')
+#     axes[0].set_title("Text Query")
+#     axes[0].axis('off')
 
-    # Retrieved images
-    for i, idx in enumerate(topk_indices):
-        img, *_ = dataset[idx.item()]
-        if not isinstance(img, torch.Tensor):
-            img = image_to_tensor(img)
-        axes[i + 1].imshow(to_pil_image(img))
-        axes[i + 1].set_title(f"Top {i+1}")
-        axes[i + 1].axis('off')
+#     # Retrieved images
+#     for i, idx in enumerate(topk_indices):
+#         img, *_ = dataset[idx.item()]
+#         if not isinstance(img, torch.Tensor):
+#             img = image_to_tensor(img)
+#         axes[i + 1].imshow(to_pil_image(img))
+#         axes[i + 1].set_title(f"Top {i+1}")
+#         axes[i + 1].axis('off')
     
-    plt.tight_layout()
-    plt.show()
+#     plt.tight_layout()
+#     plt.show()
 
 
 def recall_at_k(
@@ -293,6 +293,14 @@ def recall_at_k(
 
     visualize = True
     if visualize:
+        for i in [5, 15, 55]:
+            visualize_image_to_text_retrieval(
+                dataset=dataset,
+                text_encodings=text_encodings,
+                image_encodings=image_encodings,
+                k=5,
+                image_idx=i
+            )
         for i in [0, 10, 50]:  # 텍스트 인덱스 몇 개 골라서 보기
             visualize_text_to_image_retrieval(
                 dataset=dataset,
@@ -421,18 +429,6 @@ def visualize_retrieval(
 
 
 def visualize_text_to_image_retrieval(dataset, text_encodings, image_encodings, text_to_image_map, k=5, text_idx=0):
-    """
-    Visualize top-k image retrieval results for a given text query (by index).
-    Assumes dataset returns (image, target) where target is a list of captions.
-    
-    Args:
-        dataset: custom COCO-format dataset
-        text_encodings: [num_texts, dim] torch.Tensor
-        image_encodings: [num_images, dim] torch.Tensor
-        text_to_image_map: [num_texts] torch.Tensor, mapping text idx to image idx
-        k: top-k images to show
-        text_idx: index of the query text
-    """
     # Query caption
     img_idx = text_to_image_map[text_idx].item()
     _, caption_list, _ = dataset[img_idx]  # ✅ 수정: 3개 unpack
@@ -459,7 +455,36 @@ def visualize_text_to_image_retrieval(dataset, text_encodings, image_encodings, 
     plt.tight_layout()
     plt.show()
 
+def visualize_image_to_text_retrieval(dataset, text_encodings, image_encodings, k=5, image_idx=0):
+    # Query image
+    img = dataset._load_image(dataset.ids[image_idx])
+    _, caption_list, _ = dataset[image_idx]
+    
+    print(f"query image caption(s):")
+    for cap in caption_list:
+        print(f"- {cap}")
 
+    # Similarity 계산
+    sim = torch.matmul(image_encodings[image_idx], text_encodings.T)
+    topk_indices = torch.topk(sim, k=k).indices.tolist()
+
+    # 쿼리 이미지 시각화
+    plt.imshow(img)
+    plt.axis("off")
+    plt.title("Query Image")
+    plt.show()
+
+    # top-k caption 출력
+    print("\nTop-k retrieved captions:")
+    for i, text_idx in enumerate(topk_indices):
+        # 텍스트 인덱스를 통해 어떤 이미지에서 왔는지를 추정할 필요 없이 직접 접근
+        # 텍스트 인덱스가 텍스트 기반 순서라면 직접 캡션 로딩 로직 필요
+        img_idx = text_idx // 5  # 예: 각 이미지당 5개의 캡션이 있다고 가정
+        _, caption_list, _ = dataset[img_idx]
+        print(f"[Rank {i+1}] {caption_list[text_idx % 5]}")
+
+    print()
+    print()
 
 def coco_eval(
     model: nn.Module,
